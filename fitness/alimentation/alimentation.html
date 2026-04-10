@@ -37,13 +37,6 @@
     </div>
   </main>
 
-  <script>
-    document.querySelector('.page-header__subtitle').textContent =
-      new Date().toLocaleDateString('fr-FR', {
-        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-      });
-  </script>
-
   <!-- ===== NAVBAR FIXE EN BAS ===== -->
   <nav class="bottom-nav" role="navigation" aria-label="Navigation principale">
 
@@ -102,6 +95,17 @@
 
   </nav>
   <!-- ===== FIN NAVBAR ===== -->
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var el = document.querySelector('.page-header__subtitle');
+      if (el) {
+        el.textContent = new Date().toLocaleDateString('fr-FR', {
+          weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+        });
+      }
+    });
+  </script>
 
 </body>
 </html>
