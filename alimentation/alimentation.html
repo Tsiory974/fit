@@ -96,5 +96,16 @@
   </nav>
   <!-- ===== FIN NAVBAR ===== -->
 
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var el = document.querySelector('.page-header__subtitle');
+      if (el) {
+        el.textContent = new Date().toLocaleDateString('fr-FR', {
+          weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+        });
+      }
+    });
+  </script>
+
 </body>
 </html>
