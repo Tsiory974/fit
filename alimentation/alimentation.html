@@ -9,6 +9,18 @@
 </head>
 <body>
 
+  <!-- ============================================================
+       RADIO INPUTS — pilotent les 4 onglets via CSS ~
+       alim-aujourdhui → onglet 1 : Aujourd'hui
+       alim-planning   → onglet 2 : Planning
+       alim-recettes   → onglet 3 : Repas / Recettes
+       alim-aliments   → onglet 4 : Aliments
+       ============================================================ -->
+  <input type="radio" id="alim-aujourdhui" name="alim-tabs" checked>
+  <input type="radio" id="alim-planning"   name="alim-tabs">
+  <input type="radio" id="alim-recettes"   name="alim-tabs">
+  <input type="radio" id="alim-aliments"   name="alim-tabs">
+
   <!-- ===== EN-TÊTE DE PAGE ===== -->
   <header class="page-header">
     <div class="page-header__inner">
@@ -29,13 +41,92 @@
     </div>
   </header>
 
-  <!-- ===== CONTENU PLACEHOLDER ===== -->
-  <main class="main-content">
-    <div class="empty-state">
-      <p class="empty-state__title">Page alimentation en construction</p>
-      <p class="empty-state__desc">Cette section sera disponible prochainement.</p>
-    </div>
-  </main>
+  <!-- ===== BARRE D'ONGLETS (4 onglets) ===== -->
+  <div class="tabs-header" role="tablist" aria-label="Sections alimentation">
+
+    <!-- Onglet 1 : Aujourd'hui -->
+    <label for="alim-aujourdhui" class="tab-btn" role="tab" aria-controls="alim-panel-aujourdhui">
+      <span class="tab-btn__icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/>
+          <polyline points="12 7 12 12 16 12"/>
+        </svg>
+      </span>
+      <span class="tab-btn__label">Aujourd'hui</span>
+    </label>
+
+    <!-- Onglet 2 : Planning -->
+    <label for="alim-planning" class="tab-btn" role="tab" aria-controls="alim-panel-planning">
+      <span class="tab-btn__icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <line x1="16" y1="2" x2="16" y2="6"/>
+          <line x1="8"  y1="2" x2="8"  y2="6"/>
+          <line x1="3"  y1="10" x2="21" y2="10"/>
+        </svg>
+      </span>
+      <span class="tab-btn__label">Planning</span>
+    </label>
+
+    <!-- Onglet 3 : Repas / Recettes -->
+    <label for="alim-recettes" class="tab-btn" role="tab" aria-controls="alim-panel-recettes">
+      <span class="tab-btn__icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
+          <path d="M7 2v20"/>
+          <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3"/>
+          <line x1="21" y1="15" x2="21" y2="22"/>
+        </svg>
+      </span>
+      <span class="tab-btn__label">Recettes</span>
+    </label>
+
+    <!-- Onglet 4 : Aliments -->
+    <label for="alim-aliments" class="tab-btn" role="tab" aria-controls="alim-panel-aliments">
+      <span class="tab-btn__icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="8"  y1="6"  x2="21" y2="6"/>
+          <line x1="8"  y1="12" x2="21" y2="12"/>
+          <line x1="8"  y1="18" x2="21" y2="18"/>
+          <circle cx="3.5" cy="6"  r="1.5" fill="currentColor" stroke="none"/>
+          <circle cx="3.5" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+          <circle cx="3.5" cy="18" r="1.5" fill="currentColor" stroke="none"/>
+        </svg>
+      </span>
+      <span class="tab-btn__label">Aliments</span>
+    </label>
+
+    <span class="tab-indicator" aria-hidden="true"></span>
+  </div>
+
+  <!-- ===== TRACK HORIZONTAL (4 panneaux) ===== -->
+  <div class="tabs-track">
+
+    <!-- PANNEAU 1 : AUJOURD'HUI -->
+    <section class="tab-panel" id="alim-panel-aujourdhui" role="tabpanel">
+      <p class="panel-placeholder">Contenu aujourd'hui</p>
+    </section>
+
+    <!-- PANNEAU 2 : PLANNING -->
+    <section class="tab-panel" id="alim-panel-planning" role="tabpanel">
+      <p class="panel-placeholder">Planning alimentaire</p>
+    </section>
+
+    <!-- PANNEAU 3 : RECETTES -->
+    <section class="tab-panel" id="alim-panel-recettes" role="tabpanel">
+      <p class="panel-placeholder">Recettes / repas</p>
+    </section>
+
+    <!-- PANNEAU 4 : ALIMENTS -->
+    <section class="tab-panel" id="alim-panel-aliments" role="tabpanel">
+      <p class="panel-placeholder">Base d'aliments</p>
+    </section>
+
+  </div>
 
   <!-- ===== NAVBAR FIXE EN BAS ===== -->
   <nav class="bottom-nav" role="navigation" aria-label="Navigation principale">
@@ -96,16 +187,8 @@
   </nav>
   <!-- ===== FIN NAVBAR ===== -->
 
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      var el = document.querySelector('.page-header__subtitle');
-      if (el) {
-        el.textContent = new Date().toLocaleDateString('fr-FR', {
-          weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-        });
-      }
-    });
-  </script>
+  <script src="../js/data.js"></script>
+  <script src="../js/alimentation.js"></script>
 
 </body>
 </html>
