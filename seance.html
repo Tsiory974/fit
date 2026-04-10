@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>FitTrack — Séance en cours</title>
+  <link rel="stylesheet" href="navbar.css">
+  <link rel="stylesheet" href="seance.css">
+</head>
+<body>
+
+  <!-- ============================================================
+       HEADER FIXE
+       Bouton retour | Nom séance + dots séries | Compteur exercice
+       ============================================================ -->
+  <header class="ws-header">
+    <button class="ws-header__back" id="btn-back" aria-label="Quitter la séance">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+    </button>
+    <div class="ws-header__center">
+      <p class="ws-session-name" id="ws-session-name">Séance</p>
+      <div class="ws-dots" id="ws-dots" aria-hidden="true"></div>
+    </div>
+    <div class="ws-header__right" id="ws-exo-counter" aria-label="Exercice">1/1</div>
+  </header>
+
+  <!-- ============================================================
+       ZONE PRINCIPALE — contient les 5 écrans
+       ============================================================ -->
+  <main class="ws-main">
+
+    <!-- ══════════════════════════════════════════
+         ÉCRAN 1 : PRÊT
+         Infos exercice + bouton "Commencer"
+    ══════════════════════════════════════════ -->
+    <div class="ws-screen" id="screen-ready">
+
+      <!-- Carte exercice -->
+      <div class="ws-exo-card">
+        <span class="ws-muscle-tag" id="ready-muscle-tag">—</span>
+        <h1 class="ws-exo-title" id="ready-exo-name">—</h1>
+
+        <div class="ws-serie-meta">
+          <div class="ws-serie-meta__item">
+            <span class="ws-serie-meta__label">Série</span>
+            <span class="ws-serie-meta__value">
+              <span id="ready-serie-num">1</span>/<span id="ready-serie-total">4</span>
+            </span>
+          </div>
+          <div class="ws-serie-meta__item">
+            <span class="ws-serie-meta__label">Reps</span>
+            <span class="ws-serie-meta__value" id="ready-reps">10</span>
+          </div>
+          <div class="ws-serie-meta__item">
+            <span class="ws-serie-meta__label">Repos</span>
+            <span class="ws-serie-meta__value" id="ready-repos">90 s</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Résultats des séries déjà faites (injecté par JS) -->
+      <div class="ws-prev-series" id="ready-prev-series" aria-label="Séries précédentes"></div>
+
+      <!-- Charge prévue pour cette série (masquée pour Poids du corps) -->
+      <div id="ready-weight-section" class="ws-ready-weight">
+        <div class="ws-ready-weight__header">
+          <span class="ws-ready-weight__title">Charge prévue</span>
+          <span class="ws-ready-weight__last" id="ready-last-session"></span>
+        </div>
+        <div class="ws-weight-input-row">
+          <button class="ws-stepper__btn" id="btn-pre-weight-minus" aria-label="Moins 2.5 kg">−</button>
+          <div class="ws-weight-val-wrap">
+            <input class="ws-weight-input" type="number" id="pre-weight-input"
+                   step="0.5" min="0" max="500" inputmode="decimal" aria-label="Poids en kg">
+            <span class="ws-weight-unit">kg</span>
+          </div>
+          <button class="ws-stepper__btn" id="btn-pre-weight-plus" aria-label="Plus 2.5 kg">＋</button>
+        </div>
+        <p class="ws-weight-hint" id="pre-weight-hint"></p>
+      </div>
+
+      <div class="ws-screen__cta">
+        <button class="ws-btn ws-btn--primary" id="btn-start-serie">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+               width="20" height="20" aria-hidden="true">
+            <polygon points="5 3 19 12 5 21 5 3"/>
+          </svg>
+          Commencer la série
+        </button>
+      </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════
+         ÉCRAN 2 : SÉRIE EN COURS
+         Chrono qui tourne + bouton "Terminé"
+    ══════════════════════════════════════════ -->
+    <div class="ws-screen" id="screen-active">
+
+      <div class="ws-active-top">
+        <span class="ws-muscle-tag" id="active-muscle-tag">—</span>
+        <p class="ws-active-exo"    id="active-exo-name">—</p>
+        <p class="ws-active-target" id="active-target">—</p>
+      </div>
+
+      <div class="ws-stopwatch-wrap">
+        <span class="ws-stopwatch" id="ws-stopwatch" aria-live="polite">0:00</span>
+      </div>
+
+      <div class="ws-screen__cta">
+        <button class="ws-btn ws-btn--done" id="btn-serie-done">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+               width="22" height="22" aria-hidden="true">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Série terminée
+        </button>
+      </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════
+         ÉCRAN 3 : VALIDATION
+         Toutes les reps ? Ou combien ?
+    ══════════════════════════════════════════ -->
+    <div class="ws-screen" id="screen-validate">
+
+      <div class="ws-validate-info">
+        <p class="ws-validate-label">Comment s'est passée la série ?</p>
+        <p class="ws-validate-target" id="validate-target">Objectif : 10 reps</p>
+      </div>
+
+      <div class="ws-validate-actions">
+
+        <!-- Chemin facile : tout bon -->
+        <button class="ws-btn ws-btn--success" id="btn-full-reps">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+               width="20" height="20" aria-hidden="true">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Toutes les reps <span id="validate-full-label">(10)</span>
+        </button>
+
+        <!-- Séparateur -->
+        <div class="ws-validate-sep"><span>ou j'ai fait moins</span></div>
+
+        <!-- Stepper : combien de reps réelles ? -->
+        <div class="ws-stepper-wrap">
+          <button class="ws-stepper__btn" id="btn-rep-minus" aria-label="Moins une rep">−</button>
+          <span   class="ws-stepper__val" id="stepper-val"   aria-live="polite">10</span>
+          <button class="ws-stepper__btn" id="btn-rep-plus"  aria-label="Plus une rep">＋</button>
+        </div>
+
+        <button class="ws-btn ws-btn--outline" id="btn-adjust-reps">
+          Valider avec ce nombre
+        </button>
+
+      </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════
+         ÉCRAN 3b : POIDS UTILISÉ
+         Saisie ou confirmation du poids par série
+         (masqué pour les exercices poids du corps)
+    ══════════════════════════════════════════ -->
+    <div class="ws-screen" id="screen-weight">
+
+      <div class="ws-weight-header">
+        <p class="ws-weight-label">Quel poids as-tu utilisé ?</p>
+        <p class="ws-weight-serie" id="weight-serie-info">Série 1</p>
+      </div>
+
+      <div class="ws-weight-center">
+        <div class="ws-weight-input-row">
+          <button class="ws-stepper__btn" id="btn-weight-minus" aria-label="Moins 2.5 kg">−</button>
+          <div class="ws-weight-val-wrap">
+            <input class="ws-weight-input" type="number" id="weight-input"
+                   step="0.5" min="0" max="500" inputmode="decimal" aria-label="Poids en kg">
+            <span class="ws-weight-unit">kg</span>
+          </div>
+          <button class="ws-stepper__btn" id="btn-weight-plus" aria-label="Plus 2.5 kg">＋</button>
+        </div>
+        <p class="ws-weight-hint" id="weight-hint"></p>
+      </div>
+
+      <!-- Ressenti — inline sur l'écran poids -->
+      <div class="ws-ressenti" id="weight-ressenti">
+        <p class="ws-ressenti__label">Comment tu te sens ?</p>
+        <div class="ws-ressenti__chips">
+          <button class="ws-ressenti__chip ws-ressenti__chip--dur"
+                  data-ressenti="dur" type="button" aria-pressed="false">😰 Trop dur</button>
+          <button class="ws-ressenti__chip ws-ressenti__chip--ok ws-ressenti__chip--selected"
+                  data-ressenti="ok" type="button" aria-pressed="true">👍 OK</button>
+          <button class="ws-ressenti__chip ws-ressenti__chip--facile"
+                  data-ressenti="facile" type="button" aria-pressed="false">💪 Facile</button>
+        </div>
+      </div>
+
+      <div class="ws-screen__cta">
+        <button class="ws-btn ws-btn--primary" id="btn-weight-confirm">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+               width="20" height="20" aria-hidden="true">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Confirmer
+        </button>
+        <button class="ws-btn ws-btn--ghost" id="btn-weight-skip">
+          Sans poids / ignorer
+        </button>
+      </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════
+         ÉCRAN 4 : REPOS
+         Ring SVG countdown + exercice suivant
+    ══════════════════════════════════════════ -->
+    <div class="ws-screen" id="screen-rest">
+
+      <p class="ws-rest-label">Récupération</p>
+
+      <div class="ws-rest-center">
+        <div class="ws-ring-wrap">
+          <svg class="ws-ring" viewBox="0 0 120 120" aria-hidden="true">
+            <circle class="ws-ring__track" cx="60" cy="60" r="54"/>
+            <circle class="ws-ring__arc"   cx="60" cy="60" r="54" id="rest-arc"/>
+          </svg>
+          <span class="ws-ring__time" id="rest-time" aria-live="polite">1:30</span>
+        </div>
+
+        <p class="ws-rest-next" id="rest-next-text">Prochain : Série 2</p>
+      </div>
+
+      <!-- Toggle son de fin de repos -->
+      <div class="ws-rest-sound">
+        <button class="ws-sound-btn" id="btn-sound-toggle" type="button" aria-pressed="true">
+          <!-- contenu injecté par JS -->
+        </button>
+      </div>
+
+      <div class="ws-screen__cta">
+        <button class="ws-btn ws-btn--ghost" id="btn-skip-rest">
+          Passer le repos →
+        </button>
+      </div>
+    </div>
+
+
+    <!-- ══════════════════════════════════════════
+         ÉCRAN 5 : RÉCAP
+         Résumé complet + enregistrement
+    ══════════════════════════════════════════ -->
+    <div class="ws-screen" id="screen-recap">
+
+      <div class="ws-recap-hero">
+        <div class="ws-recap-icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 21h8M12 17v4"/>
+            <path d="M7 4h10l1 7H6L7 4z"/>
+            <path d="M6 11c-1.5 0-3 .5-3 2s1.5 2 3 2"/>
+            <path d="M18 11c1.5 0 3 .5 3 2s-1.5 2-3 2"/>
+          </svg>
+        </div>
+        <h1 class="ws-recap-title">Séance terminée !</h1>
+        <p  class="ws-recap-subtitle" id="recap-session-name">Push A</p>
+      </div>
+
+      <!-- Liste injectée par JS -->
+      <div id="recap-list" class="ws-recap-list"></div>
+
+      <!-- Bilan & suggestions (injectés par JS) -->
+      <div id="recap-suggestions" class="ws-recap-suggestions"></div>
+
+      <div class="ws-screen__cta">
+        <a href="musculation.html" class="ws-btn ws-btn--primary">
+          Retour à mes séances
+        </a>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script src="js/data.js"></script>
+  <script src="js/seance.js"></script>
+</body>
+</html>

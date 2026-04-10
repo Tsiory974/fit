@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+  <!-- Le titre est mis à jour par JS selon l'exercice chargé -->
+  <title>FitTrack — Exercice</title>
+  <link rel="stylesheet" href="navbar.css">
+  <link rel="stylesheet" href="exercice.css">
+</head>
+<body>
+
+
+
+  <!-- ============================================================
+       ÉCRAN 2 — PAGE EXERCICE (onglets stats + historique)
+       Affiché par JS quand le 1RM est connu.
+       Les radio inputs sont enfants directs de .exercise-page :
+       sélecteurs CSS ~ (tab-header, tabs-track) fonctionnent.
+       ============================================================ -->
+  <div class="exercise-page" id="exercise-page" style="display:none" aria-live="polite">
+
+    <input type="radio" id="tab-stats"   name="exercise-tabs" checked>
+    <input type="radio" id="tab-history" name="exercise-tabs">
+    <input type="radio" id="tab-info"    name="exercise-tabs">
+
+    <!-- ===== EN-TÊTE ===== -->
+    <header class="exercise-header">
+
+      <a href="musculation.html" class="exercise-header__back" aria-label="Retour aux exercices">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </a>
+
+      <div class="exercise-header__info">
+        <!-- data-exo-name / data-exo-muscle : peuplés par exercice.js -->
+        <h1 class="exercise-header__name"  data-exo-name></h1>
+        <span class="exercise-header__muscle" data-exo-muscle></span>
+      </div>
+
+      <!-- data-exo-rm : conteneur, .rm-value peuplé par exercice.js -->
+      <div class="exercise-header__rm" data-exo-rm>
+        <span class="exercise-header__rm-value rm-value">—</span>
+        <span class="exercise-header__rm-unit">kg</span>
+      </div>
+
+    </header>
+
+    <!-- ===== BARRE D'ONGLETS ===== -->
+    <nav class="tabs-header" role="tablist" aria-label="Sections de l'exercice">
+
+      <label for="tab-stats" class="tab-btn" role="tab" aria-controls="panel-stats">
+        <span class="tab-btn__icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="20" x2="18" y2="10"/>
+            <line x1="12" y1="20" x2="12" y2="4"/>
+            <line x1="6"  y1="20" x2="6"  y2="14"/>
+          </svg>
+        </span>
+        <span class="tab-btn__label">Mes stats</span>
+      </label>
+
+      <label for="tab-history" class="tab-btn" role="tab" aria-controls="panel-history">
+        <span class="tab-btn__icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <polyline points="12 7 12 12 15 15"/>
+          </svg>
+        </span>
+        <span class="tab-btn__label">Historique</span>
+      </label>
+
+      <label for="tab-info" class="tab-btn" role="tab" aria-controls="panel-info">
+        <span class="tab-btn__icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+          </svg>
+        </span>
+        <span class="tab-btn__label">Info</span>
+      </label>
+
+      <span class="tab-indicator" aria-hidden="true"></span>
+
+    </nav>
+
+    <!-- ===== ZONE DE CONTENU — TRACK HORIZONTAL ===== -->
+    <div class="tabs-track">
+
+      <!-- ── ONGLET 1 : MES STATS ── -->
+      <section class="tab-panel stats-tab" id="panel-stats" role="tabpanel" aria-labelledby="tab-stats">
+
+        <!-- BLOC 1 : CARTE 1RM (calculé automatiquement via l'historique) -->
+        <div class="stat-hero">
+          <div class="stat-hero__label">1RM estimé <span class="stat-hero__badge">automatique</span></div>
+          <div class="stat-hero__value">
+            <span class="rm-value">—</span><span class="stat-hero__unit">kg</span>
+          </div>
+          <div class="stat-hero__meta" data-rm-date>Réalise des séances pour estimer ton 1RM</div>
+        </div>
+
+        <!-- BLOC 2 : SÉLECTEUR DE ZONE D'ENTRAÎNEMENT
+             Technique CSS : radio inputs + sélecteurs ~
+             Les poids (data-zone-weight) sont mis à jour par exercice.js -->
+        <div class="zone-selector-wrapper">
+
+          <input type="radio" id="z50"  name="zone-pct" class="zone-radio" value="50">
+          <input type="radio" id="z60"  name="zone-pct" class="zone-radio" value="60">
+          <input type="radio" id="z70"  name="zone-pct" class="zone-radio" value="70" checked>
+          <input type="radio" id="z75"  name="zone-pct" class="zone-radio" value="75">
+          <input type="radio" id="z80"  name="zone-pct" class="zone-radio" value="80">
+          <input type="radio" id="z85"  name="zone-pct" class="zone-radio" value="85">
+          <input type="radio" id="z90"  name="zone-pct" class="zone-radio" value="90">
+          <input type="radio" id="z100" name="zone-pct" class="zone-radio" value="100">
+
+          <h2 class="section-title">Zone d'entraînement</h2>
+          <p  class="section-sub">Sélectionne un pourcentage de ton 1RM</p>
+
+          <div class="zone-chips" role="group" aria-label="Pourcentage du 1RM">
+            <label for="z50"  class="zone-chip">50 %</label>
+            <label for="z60"  class="zone-chip">60 %</label>
+            <label for="z70"  class="zone-chip">70 %</label>
+            <label for="z75"  class="zone-chip">75 %</label>
+            <label for="z80"  class="zone-chip">80 %</label>
+            <label for="z85"  class="zone-chip">85 %</label>
+            <label for="z90"  class="zone-chip">90 %</label>
+            <label for="z100" class="zone-chip">100 %</label>
+          </div>
+
+          <!-- Cartes résultat — une visible à la fois (CSS :checked ~)
+               data-zone-weight : valeur mise à jour par exercice.js -->
+
+          <div class="zone-result zone-result--activation">
+            <div class="zone-result__header">
+              <span class="zone-result__pct">50 %</span>
+              <span class="zone-result__weight" data-zone-weight="50">— <small>kg</small></span>
+            </div>
+            <div class="zone-result__badge">Activation</div>
+            <p class="zone-result__desc">Échauffement et mobilité articulaire.</p>
+            <div class="zone-result__prescription">
+              <span>🔁 15–20 reps</span><span>📦 2–3 séries</span><span>⏱ 45 s repos</span>
+            </div>
+          </div>
+
+          <div class="zone-result zone-result--endurance">
+            <div class="zone-result__header">
+              <span class="zone-result__pct">60 %</span>
+              <span class="zone-result__weight" data-zone-weight="60">— <small>kg</small></span>
+            </div>
+            <div class="zone-result__badge">Endurance</div>
+            <p class="zone-result__desc">Développe la résistance musculaire sur la durée.</p>
+            <div class="zone-result__prescription">
+              <span>🔁 15+ reps</span><span>📦 3–4 séries</span><span>⏱ 60 s repos</span>
+            </div>
+          </div>
+
+          <div class="zone-result zone-result--hypertrophy">
+            <div class="zone-result__header">
+              <span class="zone-result__pct">70 %</span>
+              <span class="zone-result__weight" data-zone-weight="70">— <small>kg</small></span>
+            </div>
+            <div class="zone-result__badge">Hypertrophie</div>
+            <p class="zone-result__desc">Zone principale de prise de masse musculaire.</p>
+            <div class="zone-result__prescription">
+              <span>🔁 10–12 reps</span><span>📦 3–4 séries</span><span>⏱ 60–90 s repos</span>
+            </div>
+          </div>
+
+          <div class="zone-result zone-result--hypertrophy-plus">
+            <div class="zone-result__header">
+              <span class="zone-result__pct">75 %</span>
+              <span class="zone-result__weight" data-zone-weight="75">— <small>kg</small></span>
+            </div>
+            <div class="zone-result__badge">Hypertrophie+</div>
+            <p class="zone-result__desc">Volume modéré, charge plus lourde — compromis masse/force.</p>
+            <div class="zone-result__prescription">
+              <span>🔁 8–10 reps</span><span>📦 3–5 séries</span><span>⏱ 90 s repos</span>
+            </div>
+          </div>
+
+          <div class="zone-result zone-result--strength">
+            <div class="zone-result__header">
+              <span class="zone-result__pct">80 %</span>
+              <span class="zone-result__weight" data-zone-weight="80">— <small>kg</small></span>
+            </div>
+            <div class="zone-result__badge">Force</div>
+            <p class="zone-result__desc">Développe la force fonctionnelle et la densité musculaire.</p>
+            <div class="zone-result__prescription">
+              <span>🔁 5–8 reps</span><span>📦 4–5 séries</span><span>⏱ 2 min repos</span>
+            </div>
+          </div>
+
+          <div class="zone-result zone-result--heavy-strength">
+            <div class="zone-result__header">
+              <span class="zone-result__pct">85 %</span>
+              <span class="zone-result__weight" data-zone-weight="85">— <small>kg</small></span>
+            </div>
+            <div class="zone-result__badge">Force lourde</div>
+            <p class="zone-result__desc">Recrutement neuromusculaire maximal, charges lourdes.</p>
+            <div class="zone-result__prescription">
+              <span>🔁 3–5 reps</span><span>📦 4–5 séries</span><span>⏱ 2–3 min repos</span>
+            </div>
+          </div>
+
+          <div class="zone-result zone-result--power">
+            <div class="zone-result__header">
+              <span class="zone-result__pct">90 %</span>
+              <span class="zone-result__weight" data-zone-weight="90">— <small>kg</small></span>
+            </div>
+            <div class="zone-result__badge">Puissance</div>
+            <p class="zone-result__desc">Explosivité maximale — approche du maximum absolu.</p>
+            <div class="zone-result__prescription">
+              <span>🔁 1–3 reps</span><span>📦 3–5 séries</span><span>⏱ 3–5 min repos</span>
+            </div>
+          </div>
+
+          <div class="zone-result zone-result--max">
+            <div class="zone-result__header">
+              <span class="zone-result__pct">100 %</span>
+              <span class="zone-result__weight" data-zone-weight="100">— <small>kg</small></span>
+            </div>
+            <div class="zone-result__badge">1RM — Test max</div>
+            <p class="zone-result__desc">Effort maximum absolu. À faire rarement, avec un pareur.</p>
+            <div class="zone-result__prescription">
+              <span>🔁 1 rep</span><span>📦 1–2 essais</span><span>⏱ 5+ min repos</span>
+            </div>
+          </div>
+
+        </div><!-- fin .zone-selector-wrapper -->
+
+        <!-- BLOC 3 : GRAPHIQUE D'ÉVOLUTION DU 1RM
+             Barres + labels rendus dynamiquement par exercice.js -->
+        <div class="rm-chart-block">
+          <div class="rm-chart-block__header">
+            <h2 class="section-title">Évolution du 1RM</h2>
+            <span class="rm-chart-block__trend rm-chart-block__trend--up"></span>
+          </div>
+          <p class="section-sub">Poids max enregistré par séance</p>
+
+          <div class="rm-chart" role="img" aria-label="Graphique d'évolution du poids maximal">
+            <!-- Grille Y — mise à jour par exercice.js -->
+            <div class="chart-grid" aria-hidden="true"></div>
+            <!-- Barres — rendu complet par exercice.js -->
+            <div class="chart-bars"></div>
+            <!-- Labels X — rendu complet par exercice.js -->
+            <div class="chart-labels" aria-hidden="true"></div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ── ONGLET 2 : HISTORIQUE ── -->
+      <section class="tab-panel history-tab" id="panel-history" role="tabpanel" aria-labelledby="tab-history">
+
+        <div class="history-header">
+          <h2 class="history-header__title">Historique</h2>
+          <span class="history-header__count">0 séance</span>
+        </div>
+
+        <!-- Liste rendue dynamiquement par exercice.js -->
+        <ol class="history-list"></ol>
+
+        <div class="history-empty-hint">
+          Les prochaines séances apparaîtront ici automatiquement.
+        </div>
+
+      </section>
+
+      <!-- ── ONGLET 3 : INFO ── -->
+      <section class="tab-panel info-tab" id="panel-info" role="tabpanel" aria-labelledby="tab-info">
+
+        <!-- Recommandations (déplacées depuis l'onglet Stats) -->
+        <div id="reco-block" class="reco-block" style="display:none">
+          <h2 class="section-title">Recommandations Hypertrophie</h2>
+          <p  class="section-sub" id="reco-type-label"></p>
+          <div class="reco-grid" id="reco-grid"></div>
+        </div>
+
+        <!-- Photos de l'exercice -->
+        <div class="info-section">
+          <div class="info-section__header">
+            <h2 class="section-title">Photos</h2>
+            <button class="info-add-btn" id="btn-add-photo" type="button">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                   width="14" height="14" aria-hidden="true">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Ajouter
+            </button>
+          </div>
+          <!-- Input fichier caché — déclenché par le bouton -->
+          <input type="file" id="photo-input" accept="image/*" style="display:none">
+          <!-- Grille injectée par exercice.js -->
+          <div class="info-images-grid" id="info-images-grid"></div>
+          <p class="info-images-hint" id="info-images-hint">Max 3 photos · stockées sur cet appareil</p>
+        </div>
+
+        <!-- Notes libres -->
+        <div class="info-section">
+          <h2 class="section-title">Notes</h2>
+          <p class="section-sub">Exécution, conseils, erreurs à éviter…</p>
+          <textarea class="info-notes" id="info-notes" rows="7"
+                    placeholder="Décris comment effectuer cet exercice, les points clés à respecter, les erreurs courantes à éviter…"></textarea>
+          <div class="info-notes-footer">
+            <button class="info-save-btn" id="btn-save-notes" type="button">Enregistrer</button>
+            <span class="info-save-status" id="notes-save-status"></span>
+          </div>
+        </div>
+
+      </section>
+
+    </div>
+    <!-- ===== FIN TABS TRACK ===== -->
+
+  </div>
+  <!-- ===== FIN ÉCRAN 2 ===== -->
+
+
+  <!-- ===== NAVBAR FIXE EN BAS ===== -->
+  <nav class="bottom-nav" role="navigation" aria-label="Navigation principale">
+
+    <a href="index.html" class="nav-item" aria-label="Accueil">
+      <span class="nav-icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             width="24" height="24"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
+          <polyline points="9 21 9 12 15 12 15 21"/>
+        </svg>
+      </span>
+      <span class="nav-label">Accueil</span>
+    </a>
+
+    <a href="musculation.html" class="nav-item active" aria-label="Musculation">
+      <span class="nav-icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             width="24" height="24"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2"  y="10" width="3" height="4" rx="1"/>
+          <rect x="19" y="10" width="3" height="4" rx="1"/>
+          <rect x="5"  y="8"  width="3" height="8" rx="1"/>
+          <rect x="16" y="8"  width="3" height="8" rx="1"/>
+          <line x1="8" y1="12" x2="16" y2="12"/>
+        </svg>
+      </span>
+      <span class="nav-label">Musculation</span>
+    </a>
+
+    <a href="alimentation/alimentation.html" class="nav-item" aria-label="Alimentation">
+      <span class="nav-icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             width="24" height="24"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
+          <path d="M7 2v20"/>
+          <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3"/>
+          <line x1="21" y1="15" x2="21" y2="22"/>
+        </svg>
+      </span>
+      <span class="nav-label">Alimentation</span>
+    </a>
+
+    <a href="profil.html" class="nav-item" aria-label="Mon profil">
+      <span class="nav-icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             width="24" height="24"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+        </svg>
+      </span>
+      <span class="nav-label">Mon profil</span>
+    </a>
+
+  </nav>
+
+  <!-- Scripts — data.js TOUJOURS avant exercice.js -->
+  <script src="js/data.js"></script>
+  <script src="js/exercice.js"></script>
+
+</body>
+</html>
