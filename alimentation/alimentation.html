@@ -108,7 +108,69 @@
 
     <!-- PANNEAU 1 : AUJOURD'HUI -->
     <section class="tab-panel" id="alim-panel-aujourdhui" role="tabpanel">
-      <p class="panel-placeholder">Contenu aujourd'hui</p>
+
+      <!-- ── Résumé calories + macros ── -->
+      <div class="aj-summary">
+        <!-- Anneau calories -->
+        <div class="aj-ring-wrap">
+          <svg class="aj-ring" viewBox="0 0 120 120" aria-hidden="true">
+            <circle class="aj-ring__bg"   cx="60" cy="60" r="52"/>
+            <circle class="aj-ring__fill" cx="60" cy="60" r="52" id="aj-ring-fill"/>
+          </svg>
+          <div class="aj-ring__center">
+            <span class="aj-ring__kcal" id="aj-kcal-in">0</span>
+            <span class="aj-ring__unit">kcal</span>
+            <span class="aj-ring__rest" id="aj-kcal-rest">— restantes</span>
+          </div>
+        </div>
+
+        <!-- Barres macros -->
+        <div class="aj-macros">
+          <div class="aj-macro">
+            <div class="aj-macro__head">
+              <span class="aj-macro__name">Protéines</span>
+              <span class="aj-macro__val"><span id="aj-p-in">0</span>/<span id="aj-p-goal">180</span>g</span>
+            </div>
+            <div class="aj-macro__bar"><div class="aj-macro__fill aj-macro__fill--p" id="aj-bar-p"></div></div>
+          </div>
+          <div class="aj-macro">
+            <div class="aj-macro__head">
+              <span class="aj-macro__name">Glucides</span>
+              <span class="aj-macro__val"><span id="aj-g-in">0</span>/<span id="aj-g-goal">280</span>g</span>
+            </div>
+            <div class="aj-macro__bar"><div class="aj-macro__fill aj-macro__fill--g" id="aj-bar-g"></div></div>
+          </div>
+          <div class="aj-macro">
+            <div class="aj-macro__head">
+              <span class="aj-macro__name">Lipides</span>
+              <span class="aj-macro__val"><span id="aj-l-in">0</span>/<span id="aj-l-goal">80</span>g</span>
+            </div>
+            <div class="aj-macro__bar"><div class="aj-macro__fill aj-macro__fill--l" id="aj-bar-l"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Eau ── -->
+      <div class="aj-water" id="aj-water">
+        <div class="aj-water__icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2C6 9 4 13 4 16a8 8 0 0 0 16 0c0-3-2-7-8-14z"/>
+          </svg>
+        </div>
+        <div class="aj-water__body">
+          <div class="aj-water__label">Hydratation</div>
+          <div class="aj-water__bar-wrap">
+            <div class="aj-water__bar"><div class="aj-water__fill" id="aj-water-fill"></div></div>
+            <span class="aj-water__val"><span id="aj-water-ml">0</span> / <span id="aj-water-goal">2500</span> ml</span>
+          </div>
+        </div>
+        <button class="aj-water__btn" id="btn-add-water" aria-label="Ajouter 250 ml">+250ml</button>
+      </div>
+
+      <!-- ── Repas ── -->
+      <div class="aj-meals" id="aj-meals"></div>
+
     </section>
 
     <!-- PANNEAU 2 : PLANNING -->
@@ -118,15 +180,123 @@
 
     <!-- PANNEAU 3 : RECETTES -->
     <section class="tab-panel" id="alim-panel-recettes" role="tabpanel">
-      <p class="panel-placeholder">Recettes / repas</p>
+
+      <!-- Vue liste -->
+      <div id="rc-list-view">
+        <div class="rc-empty" id="rc-empty">
+          <div class="rc-empty__icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                 width="44" height="44">
+              <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
+              <path d="M7 2v20"/>
+              <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3"/>
+              <line x1="21" y1="15" x2="21" y2="22"/>
+            </svg>
+          </div>
+          <p class="rc-empty__title">Aucune recette</p>
+          <p class="rc-empty__hint">Appuyez sur <strong>+</strong> pour créer votre première recette</p>
+        </div>
+        <div class="rc-list" id="rc-list"></div>
+      </div>
+
+      <!-- Vue édition -->
+      <div id="rc-edit-view" hidden>
+
+        <div class="rc-edit__topbar">
+          <button class="rc-edit__back" id="rc-back" aria-label="Retour aux recettes">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                 width="18" height="18" aria-hidden="true">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
+          <input class="rc-edit__name" id="rc-edit-name" type="text"
+                 placeholder="Nom de la recette…" aria-label="Nom de la recette">
+          <button class="rc-edit__delete" id="rc-edit-delete" aria-label="Supprimer la recette">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                 width="17" height="17" aria-hidden="true">
+              <polyline points="3 6 5 6 21 6"/>
+              <path d="M19 6l-1 14H6L5 6"/>
+              <path d="M10 11v6M14 11v6"/>
+              <path d="M9 6V4h6v2"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="rc-edit__totals" id="rc-edit-totals"></div>
+
+        <div class="rc-edit__section-title">Ingrédients</div>
+        <div class="rc-edit__items" id="rc-edit-items">
+          <p class="rc-edit__empty">Aucun ingrédient ajouté</p>
+        </div>
+
+        <button class="rc-edit__add-btn" id="rc-add-alim-btn" type="button">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+               width="13" height="13" aria-hidden="true">
+            <line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/>
+          </svg>
+          Ajouter un ingrédient
+        </button>
+
+      </div>
+
     </section>
 
     <!-- PANNEAU 4 : ALIMENTS -->
     <section class="tab-panel" id="alim-panel-aliments" role="tabpanel">
-      <p class="panel-placeholder">Base d'aliments</p>
+
+      <div class="search-bar" role="search">
+        <span class="search-bar__icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+        </span>
+        <input class="search-bar__input" type="search" id="aliment-search"
+               placeholder="Rechercher un aliment…" aria-label="Rechercher un aliment">
+      </div>
+
+      <div class="filter-chips" id="chips-categorie" role="group" aria-label="Filtrer par catégorie">
+        <span class="chip chip--active" data-alim-cat="">Tous</span>
+        <span class="chip" data-alim-cat="Viandes">Viandes</span>
+        <span class="chip" data-alim-cat="Poissons">Poissons</span>
+        <span class="chip" data-alim-cat="Fruits">Fruits</span>
+        <span class="chip" data-alim-cat="Légumes">Légumes</span>
+        <span class="chip" data-alim-cat="Féculents">Féculents</span>
+        <span class="chip" data-alim-cat="Produits laitiers">Produits laitiers</span>
+        <span class="chip" data-alim-cat="Boissons">Boissons</span>
+        <span class="chip" data-alim-cat="Autres">Autres</span>
+      </div>
+
+      <div class="aliments-list" id="aliments-list"></div>
+
     </section>
 
   </div>
+
+  <!-- FAB : visible sur l'onglet Recettes -->
+  <button class="fab-add-recette" id="fab-add-recette" aria-label="Créer une recette">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+         width="22" height="22" aria-hidden="true">
+      <line x1="12" y1="5" x2="12" y2="19"/>
+      <line x1="5"  y1="12" x2="19" y2="12"/>
+    </svg>
+  </button>
+
+  <!-- FAB : visible uniquement sur l'onglet Aliments (#alim-aliments:checked ~ .fab-add-aliment) -->
+  <button class="fab-add-aliment" id="fab-add-aliment" aria-label="Ajouter un aliment">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+         width="22" height="22" aria-hidden="true">
+      <line x1="12" y1="5" x2="12" y2="19"/>
+      <line x1="5"  y1="12" x2="19" y2="12"/>
+    </svg>
+  </button>
 
   <!-- ===== NAVBAR FIXE EN BAS ===== -->
   <nav class="bottom-nav" role="navigation" aria-label="Navigation principale">
@@ -186,6 +356,95 @@
 
   </nav>
   <!-- ===== FIN NAVBAR ===== -->
+
+  <!-- ── Modale ajout aliment (Aujourd'hui) ── -->
+  <div class="aj-modal" id="aj-modal" role="dialog" aria-modal="true" aria-label="Ajouter un aliment" hidden>
+    <div class="aj-modal__backdrop" id="aj-modal-backdrop"></div>
+    <div class="aj-modal__sheet">
+      <div class="aj-modal__header">
+        <span class="aj-modal__title" id="aj-modal-title">Ajouter un aliment</span>
+        <button class="aj-modal__close" id="aj-modal-close" aria-label="Fermer">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+               width="18" height="18">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <!-- Étape 1 : choisir un aliment -->
+      <div id="aj-modal-step-search">
+        <div class="search-bar" style="margin:0 0 0.75rem">
+          <span class="search-bar__icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </span>
+          <input class="search-bar__input" type="search" id="aj-modal-search" placeholder="Rechercher…">
+        </div>
+        <div class="aj-modal__list" id="aj-modal-list"></div>
+      </div>
+      <!-- Étape 2 : saisir la quantité -->
+      <div id="aj-modal-step-qty" hidden>
+        <div class="aj-modal__alim-preview" id="aj-modal-preview"></div>
+        <div class="aj-modal__qty-row">
+          <label class="aj-modal__qty-label" for="aj-modal-qty-input">Quantité (g)</label>
+          <input class="aj-modal__qty-input" type="number" id="aj-modal-qty-input"
+                 min="1" max="2000" value="100" inputmode="numeric">
+        </div>
+        <div class="aj-modal__qty-macros" id="aj-modal-qty-macros"></div>
+        <div class="aj-modal__actions">
+          <button class="aj-modal__btn-back" id="aj-modal-back">← Retour</button>
+          <button class="aj-modal__btn-confirm" id="aj-modal-confirm">Ajouter</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Modale ajout ingrédient (Recettes) ── -->
+  <div class="aj-modal" id="rc-modal" role="dialog" aria-modal="true" aria-label="Ajouter un ingrédient" hidden>
+    <div class="aj-modal__backdrop" id="rc-modal-backdrop"></div>
+    <div class="aj-modal__sheet">
+      <div class="aj-modal__header">
+        <span class="aj-modal__title">Ajouter un ingrédient</span>
+        <button class="aj-modal__close" id="rc-modal-close" aria-label="Fermer">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+               width="18" height="18">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <!-- Étape 1 : choisir un aliment -->
+      <div id="rc-modal-step-search">
+        <div class="search-bar" style="margin:0 0 0.75rem">
+          <span class="search-bar__icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </span>
+          <input class="search-bar__input" type="search" id="rc-modal-search" placeholder="Rechercher…">
+        </div>
+        <div class="aj-modal__list" id="rc-modal-list"></div>
+      </div>
+      <!-- Étape 2 : saisir la quantité -->
+      <div id="rc-modal-step-qty" hidden>
+        <div class="aj-modal__alim-preview" id="rc-modal-preview"></div>
+        <div class="aj-modal__qty-row">
+          <label class="aj-modal__qty-label" for="rc-modal-qty-input" id="rc-modal-qty-label">Quantité (g)</label>
+          <input class="aj-modal__qty-input" type="number" id="rc-modal-qty-input"
+                 min="1" max="2000" value="100" inputmode="numeric">
+          <span class="rc-modal__qty-unit" id="rc-modal-qty-unit">g</span>
+        </div>
+        <div class="aj-modal__qty-macros" id="rc-modal-qty-macros"></div>
+        <div class="aj-modal__actions">
+          <button class="aj-modal__btn-back" id="rc-modal-back">← Retour</button>
+          <button class="aj-modal__btn-confirm" id="rc-modal-confirm">Ajouter</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script src="../js/data.js"></script>
   <script src="../js/alimentation.js"></script>

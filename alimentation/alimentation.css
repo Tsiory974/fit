@@ -182,3 +182,1166 @@ input[name="alim-tabs"] {
   text-align: center;
   padding-top: 2rem;
 }
+
+/* ============================================================
+   BARRE DE RECHERCHE
+   ============================================================ */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  background: #141820;
+  border: 1px solid #1f2428;
+  border-radius: 12px;
+  padding: 0 0.875rem;
+  height: 44px;
+  margin-bottom: 1rem;
+}
+
+.search-bar__icon {
+  display: flex;
+  width: 18px;
+  height: 18px;
+  color: var(--text-idle);
+  flex-shrink: 0;
+}
+
+.search-bar__icon svg { width: 100%; height: 100%; }
+
+.search-bar__input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #f0f0f0;
+  font-size: 0.875rem;
+  font-family: inherit;
+}
+
+.search-bar__input::placeholder { color: var(--text-idle); }
+
+/* ============================================================
+   CHIPS DE FILTRES
+   ============================================================ */
+.filter-chips {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+  scrollbar-width: none;
+  touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
+}
+
+.filter-chips::-webkit-scrollbar { display: none; }
+
+.chip {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 5px 12px;
+  border-radius: 20px;
+  background: #1a1e23;
+  color: var(--text-idle);
+  border: 1px solid #2a3038;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  user-select: none;
+}
+
+.chip--active,
+.chip:hover {
+  background: var(--accent-glow);
+  color: var(--accent);
+  border-color: rgba(57, 224, 122, 0.4);
+}
+
+/* ============================================================
+   LISTE D'ALIMENTS
+   ============================================================ */
+.aliments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.aliment-card {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  background: #141820;
+  border: 1px solid #1f2428;
+  border-radius: 14px;
+  padding: 0.875rem 1rem;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.aliment-card:hover,
+.aliment-card:active {
+  background: #1a2028;
+  border-color: #2a3540;
+  transform: translateX(2px);
+}
+
+/* Badge catégorie */
+.aliment-card__cat-tag {
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 6px;
+  min-width: 72px;
+  text-align: center;
+}
+
+.aliment-card__cat-tag--viandes {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+.aliment-card__cat-tag--poissons {
+  color: #3b9eff;
+  background: rgba(59, 158, 255, 0.1);
+  border: 1px solid rgba(59, 158, 255, 0.25);
+}
+.aliment-card__cat-tag--fruits {
+  color: #39e07a;
+  background: rgba(57, 224, 122, 0.1);
+  border: 1px solid rgba(57, 224, 122, 0.25);
+}
+.aliment-card__cat-tag--legumes {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+.aliment-card__cat-tag--feculents {
+  color: #f97316;
+  background: rgba(249, 115, 22, 0.1);
+  border: 1px solid rgba(249, 115, 22, 0.25);
+}
+.aliment-card__cat-tag--laitiers {
+  color: #a78bfa;
+  background: rgba(167, 139, 250, 0.1);
+  border: 1px solid rgba(167, 139, 250, 0.25);
+}
+.aliment-card__cat-tag--boissons {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+}
+.aliment-card__cat-tag--autres {
+  color: #9ca3af;
+  background: rgba(156, 163, 175, 0.1);
+  border: 1px solid rgba(156, 163, 175, 0.25);
+}
+
+.aliment-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.aliment-card__name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #e5e7eb;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.aliment-card__info {
+  font-size: 0.72rem;
+  color: var(--text-idle);
+  margin-top: 2px;
+}
+
+.aliment-card__arrow {
+  font-size: 1.4rem;
+  color: #374151;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   FAB — AJOUTER UN ALIMENT
+   ============================================================ */
+.fab-add-aliment {
+  position: fixed;
+  bottom: calc(var(--nav-height) + 1rem);
+  right: 1.25rem;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #0a0e12;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(57, 224, 122, 0.4);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 50;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Visible seulement quand l'onglet Aliments est actif */
+#alim-aliments:checked ~ .fab-add-aliment {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.fab-add-aliment:hover,
+.fab-add-aliment:active {
+  transform: scale(1.08);
+  box-shadow: 0 6px 28px rgba(57, 224, 122, 0.55);
+}
+
+/* ============================================================
+   ONGLET AUJOURD'HUI
+   ============================================================ */
+
+/* ── Résumé calories ── */
+.aj-summary {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #141820;
+  border: 1px solid #1f2428;
+  border-radius: 16px;
+  padding: 1.125rem 1rem;
+  margin-bottom: 0.875rem;
+}
+
+/* Anneau SVG */
+.aj-ring-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 96px;
+  height: 96px;
+}
+
+.aj-ring {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.aj-ring__bg {
+  fill: none;
+  stroke: #1f2428;
+  stroke-width: 8;
+}
+
+.aj-ring__fill {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-dasharray: 326.73; /* 2π×52 */
+  stroke-dashoffset: 326.73;
+  transition: stroke-dashoffset 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.aj-ring__center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.15;
+}
+
+.aj-ring__kcal {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.aj-ring__unit {
+  font-size: 0.6rem;
+  color: var(--text-idle);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.aj-ring__rest {
+  font-size: 0.55rem;
+  color: var(--accent);
+  font-weight: 600;
+  margin-top: 2px;
+  white-space: nowrap;
+}
+
+/* Barres macros */
+.aj-macros {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.aj-macro__head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 3px;
+}
+
+.aj-macro__name {
+  font-size: 0.7rem;
+  color: var(--text-idle);
+  font-weight: 600;
+}
+
+.aj-macro__val {
+  font-size: 0.7rem;
+  color: #e5e7eb;
+  font-weight: 600;
+}
+
+.aj-macro__bar {
+  height: 5px;
+  background: #1f2428;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.aj-macro__fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+  width: 0%;
+}
+
+.aj-macro__fill--p { background: #39e07a; }
+.aj-macro__fill--g { background: #f97316; }
+.aj-macro__fill--l { background: #a78bfa; }
+
+/* ── Eau ── */
+.aj-water {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #141820;
+  border: 1px solid #1f2428;
+  border-radius: 14px;
+  padding: 0.875rem 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.aj-water__icon {
+  width: 20px;
+  height: 20px;
+  color: #38bdf8;
+  flex-shrink: 0;
+}
+
+.aj-water__icon svg { width: 100%; height: 100%; }
+
+.aj-water__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.aj-water__label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #38bdf8;
+  margin-bottom: 4px;
+}
+
+.aj-water__bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.aj-water__bar {
+  flex: 1;
+  height: 6px;
+  background: #1f2428;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.aj-water__fill {
+  height: 100%;
+  background: #38bdf8;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+  width: 0%;
+}
+
+.aj-water__val {
+  font-size: 0.68rem;
+  color: var(--text-idle);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.aj-water__btn {
+  flex-shrink: 0;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 8px;
+  color: #38bdf8;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.aj-water__btn:hover { background: rgba(56, 189, 248, 0.22); }
+
+/* ── Sections repas ── */
+.aj-meal {
+  background: #141820;
+  border: 1px solid #1f2428;
+  border-radius: 14px;
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+}
+
+.aj-meal--validated {
+  border-color: rgba(57, 224, 122, 0.35);
+}
+
+.aj-meal__header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.aj-meal__icon {
+  font-size: 1.25rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.aj-meal__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.aj-meal__name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #e5e7eb;
+}
+
+.aj-meal__kcal {
+  font-size: 0.7rem;
+  color: var(--text-idle);
+  margin-top: 1px;
+}
+
+.aj-meal__check {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid #2a3038;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.aj-meal__check svg {
+  width: 14px;
+  height: 14px;
+  stroke: transparent;
+  transition: stroke 0.2s;
+}
+
+.aj-meal--validated .aj-meal__check {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.aj-meal--validated .aj-meal__check svg {
+  stroke: #0a0e12;
+}
+
+/* Corps du repas (masqué/visible selon état collapse) */
+.aj-meal__body {
+  padding: 0 1rem 0.875rem;
+  display: none;
+}
+
+.aj-meal--open .aj-meal__body {
+  display: block;
+}
+
+/* Liste des aliments dans un repas */
+.aj-meal__items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin-bottom: 0.75rem;
+}
+
+.aj-meal__item {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.625rem;
+  background: #0e1114;
+  border-radius: 8px;
+}
+
+.aj-meal__item-name {
+  flex: 1;
+  font-size: 0.8rem;
+  color: #e5e7eb;
+  font-weight: 600;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.aj-meal__item-qty {
+  font-size: 0.7rem;
+  color: var(--text-idle);
+  flex-shrink: 0;
+}
+
+.aj-meal__item-kcal {
+  font-size: 0.72rem;
+  color: var(--accent);
+  font-weight: 700;
+  flex-shrink: 0;
+  min-width: 40px;
+  text-align: right;
+}
+
+.aj-meal__item-del {
+  background: none;
+  border: none;
+  color: #374151;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0 0 4px;
+  flex-shrink: 0;
+  transition: color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.aj-meal__item-del:hover { color: #ef4444; }
+
+.aj-meal__empty {
+  font-size: 0.78rem;
+  color: var(--text-idle);
+  text-align: center;
+  padding: 0.5rem 0 0.375rem;
+}
+
+/* Boutons d'action du repas */
+.aj-meal__actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.aj-meal__btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  background: #1a1e23;
+  border: 1px solid #2a3038;
+  border-radius: 8px;
+  color: var(--text-idle);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 7px 0;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.aj-meal__btn:hover {
+  color: var(--accent);
+  border-color: rgba(57, 224, 122, 0.35);
+  background: rgba(57, 224, 122, 0.06);
+}
+
+/* ============================================================
+   MODALE AJOUT ALIMENT
+   ============================================================ */
+.aj-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+}
+
+.aj-modal[hidden] { display: none; }
+
+.aj-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.aj-modal__sheet {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  background: #111417;
+  border-radius: 20px 20px 0 0;
+  border-top: 1px solid #1f242a;
+  padding: 1rem 1rem 1.5rem;
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.aj-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.875rem;
+  flex-shrink: 0;
+}
+
+.aj-modal__title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.aj-modal__close {
+  background: #1a1e23;
+  border: 1px solid #2a3038;
+  border-radius: 8px;
+  color: #9ca3af;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#aj-modal-step-search {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+}
+
+.aj-modal__list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  scrollbar-width: none;
+}
+
+.aj-modal__list::-webkit-scrollbar { display: none; }
+
+.aj-modal__alim-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #141820;
+  border: 1px solid #1f2428;
+  border-radius: 10px;
+  padding: 0.625rem 0.875rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.aj-modal__alim-row:hover { background: #1a2028; border-color: #2a3540; }
+
+.aj-modal__alim-name {
+  flex: 1;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.aj-modal__alim-info {
+  font-size: 0.7rem;
+  color: var(--text-idle);
+}
+
+/* Étape 2 : quantité */
+.aj-modal__alim-preview {
+  background: #141820;
+  border: 1px solid #1f2428;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #e5e7eb;
+}
+
+.aj-modal__qty-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.aj-modal__qty-label {
+  font-size: 0.82rem;
+  color: var(--text-idle);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.aj-modal__qty-input {
+  flex: 1;
+  background: #141820;
+  border: 1px solid #1f2428;
+  border-radius: 10px;
+  color: #f0f0f0;
+  font-size: 1rem;
+  font-weight: 700;
+  font-family: inherit;
+  padding: 0.5rem 0.875rem;
+  outline: none;
+  text-align: right;
+  transition: border-color 0.2s;
+}
+
+.aj-modal__qty-input:focus { border-color: rgba(57, 224, 122, 0.4); }
+
+.aj-modal__qty-macros {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.aj-modal__macro-chip {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: #1a1e23;
+  border: 1px solid #2a3038;
+  color: var(--text-idle);
+}
+
+.aj-modal__actions {
+  display: flex;
+  gap: 0.625rem;
+}
+
+.aj-modal__btn-back {
+  flex: 1;
+  background: #1a1e23;
+  border: 1px solid #2a3038;
+  border-radius: 10px;
+  color: var(--text-idle);
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 10px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.aj-modal__btn-confirm {
+  flex: 2;
+  background: var(--accent);
+  border: none;
+  border-radius: 10px;
+  color: #0a0e12;
+  font-size: 0.85rem;
+  font-weight: 800;
+  padding: 10px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.aj-modal__btn-confirm:hover { opacity: 0.88; }
+
+/* ============================================================
+   ONGLET RECETTES
+   ============================================================ */
+
+/* ── État vide ── */
+.rc-empty {
+  text-align: center;
+  padding: 3.5rem 1.5rem 2rem;
+}
+
+.rc-empty__icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+  opacity: 0.25;
+  color: var(--text-idle);
+}
+
+.rc-empty__title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e5e7eb;
+  margin-bottom: 0.375rem;
+}
+
+.rc-empty__hint {
+  font-size: 0.8rem;
+  color: var(--text-idle);
+  line-height: 1.5;
+}
+
+.rc-empty__hint strong { color: var(--accent); }
+
+/* ── Liste des recettes ── */
+.rc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.rc-card {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  background: #141820;
+  border: 1px solid #1f2428;
+  border-radius: 14px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rc-card:hover,
+.rc-card:active {
+  background: #1a2028;
+  border-color: rgba(57, 224, 122, 0.25);
+}
+
+.rc-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.rc-card__name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #e5e7eb;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rc-card__info {
+  font-size: 0.72rem;
+  color: var(--text-idle);
+}
+
+.rc-card__arrow {
+  font-size: 1.4rem;
+  color: #374151;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* ── Vue édition ── */
+.rc-edit__topbar {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 0.875rem;
+}
+
+.rc-edit__back {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  background: #1a1e23;
+  border: 1px solid #2a3038;
+  border-radius: 10px;
+  color: var(--text-idle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rc-edit__back:hover {
+  color: #fff;
+  border-color: #3a4048;
+}
+
+.rc-edit__name {
+  flex: 1;
+  min-width: 0;
+  background: #141820;
+  border: 1px solid #1f2428;
+  border-radius: 10px;
+  color: #f0f0f0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: inherit;
+  padding: 0.5rem 0.875rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.rc-edit__name:focus { border-color: rgba(57, 224, 122, 0.4); }
+
+.rc-edit__delete {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 10px;
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rc-edit__delete:hover { background: rgba(239, 68, 68, 0.18); }
+
+/* Totaux nutritionnels */
+.rc-edit__totals {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  background: #141820;
+  border: 1px solid #1f2428;
+  border-radius: 10px;
+  padding: 0.625rem 0.875rem;
+  margin-bottom: 1rem;
+  min-height: 38px;
+}
+
+.rc-total__kcal {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.rc-total__item {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #e5e7eb;
+}
+
+.rc-total__sep {
+  font-size: 0.7rem;
+  color: #374151;
+}
+
+/* Titre de section */
+.rc-edit__section-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-idle);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+/* Liste des ingrédients */
+.rc-edit__items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  margin-bottom: 0.75rem;
+}
+
+.rc-edit__empty {
+  font-size: 0.78rem;
+  color: var(--text-idle);
+  text-align: center;
+  padding: 0.875rem 0;
+}
+
+.rc-edit__item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #0e1114;
+  border-radius: 10px;
+  padding: 0.5rem 0.625rem 0.5rem 0.875rem;
+}
+
+.rc-edit__item-name {
+  flex: 1;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #e5e7eb;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rc-edit__item-qty {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.rc-edit__qty-input {
+  width: 54px;
+  background: #141820;
+  border: 1px solid #1f2428;
+  border-radius: 7px;
+  color: #f0f0f0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-family: inherit;
+  padding: 4px 6px;
+  text-align: right;
+  outline: none;
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+}
+
+.rc-edit__qty-input:focus { border-color: rgba(57, 224, 122, 0.4); }
+
+.rc-edit__qty-unit {
+  font-size: 0.7rem;
+  color: var(--text-idle);
+  flex-shrink: 0;
+  min-width: 42px;
+}
+
+.rc-edit__item-del {
+  background: none;
+  border: none;
+  color: #374151;
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 0 0 4px;
+  flex-shrink: 0;
+  transition: color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rc-edit__item-del:hover { color: #ef4444; }
+
+/* Bouton ajouter ingrédient */
+.rc-edit__add-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #1a1e23;
+  border: 1px dashed #2a3038;
+  border-radius: 10px;
+  color: var(--text-idle);
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-family: inherit;
+  padding: 0.75rem;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rc-edit__add-btn:hover {
+  color: var(--accent);
+  border-color: rgba(57, 224, 122, 0.4);
+  background: rgba(57, 224, 122, 0.05);
+}
+
+/* ── FAB Recettes ── */
+.fab-add-recette {
+  position: fixed;
+  bottom: calc(var(--nav-height) + 1rem);
+  right: 1.25rem;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #0a0e12;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(57, 224, 122, 0.4);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 50;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#alim-recettes:checked ~ .fab-add-recette {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.fab-add-recette.rc-fab--hidden {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.fab-add-recette:hover,
+.fab-add-recette:active {
+  transform: scale(1.08);
+  box-shadow: 0 6px 28px rgba(57, 224, 122, 0.55);
+}
+
+/* ── Modal recette — step search (même style que aj-modal) ── */
+#rc-modal-step-search {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+}
+
+/* Unité dans le modal quantité */
+.rc-modal__qty-unit {
+  font-size: 0.82rem;
+  color: var(--text-idle);
+  font-weight: 600;
+  flex-shrink: 0;
+  min-width: 52px;
+}
+

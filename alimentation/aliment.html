@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+  <!-- Titre mis à jour par aliment.js selon l'aliment chargé -->
+  <title>FitTrack — Aliment</title>
+  <link rel="stylesheet" href="../navbar.css">
+  <link rel="stylesheet" href="aliment.css">
+</head>
+<body>
+
+  <!-- ============================================================
+       PAGE ALIMENT — onglets Info + Historique
+       Les radio inputs sont enfants directs de .aliment-page :
+       sélecteurs CSS ~ (tabs-header, tabs-track) fonctionnent.
+       ============================================================ -->
+  <div class="aliment-page" id="aliment-page">
+
+    <input type="radio" id="tab-info"       name="aliment-tabs" checked>
+    <input type="radio" id="tab-historique" name="aliment-tabs">
+
+    <!-- ===== EN-TÊTE ===== -->
+    <header class="aliment-header">
+
+      <a href="alimentation.html" class="aliment-header__back" aria-label="Retour aux aliments">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </a>
+
+      <div class="aliment-header__info">
+        <!-- peuplés par aliment.js -->
+        <h1 class="aliment-header__name"  data-alim-name></h1>
+        <span class="aliment-header__cat" data-alim-cat></span>
+      </div>
+
+    </header>
+
+    <!-- ===== BARRE D'ONGLETS ===== -->
+    <nav class="tabs-header" role="tablist" aria-label="Sections de l'aliment">
+
+      <label for="tab-info" class="tab-btn" role="tab" aria-controls="panel-info">
+        <span class="tab-btn__icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8"  x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </span>
+        <span class="tab-btn__label">Info</span>
+      </label>
+
+      <label for="tab-historique" class="tab-btn" role="tab" aria-controls="panel-historique">
+        <span class="tab-btn__icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <polyline points="12 7 12 12 15 15"/>
+          </svg>
+        </span>
+        <span class="tab-btn__label">Historique</span>
+      </label>
+
+      <span class="tab-indicator" aria-hidden="true"></span>
+
+    </nav>
+
+    <!-- ===== ZONE DE CONTENU — TRACK HORIZONTAL ===== -->
+    <div class="tabs-track">
+
+      <!-- ── ONGLET 1 : INFO ── -->
+      <section class="tab-panel" id="panel-info" role="tabpanel" aria-labelledby="tab-info">
+
+        <!-- Bloc infos générales -->
+        <div class="alim-info-block">
+          <div class="alim-info-row">
+            <span class="alim-info-label">Catégorie</span>
+            <span class="alim-info-value" id="info-categorie"></span>
+          </div>
+          <div class="alim-info-row">
+            <span class="alim-info-label">Détail</span>
+            <span class="alim-info-value" id="info-detail"></span>
+          </div>
+        </div>
+
+        <!-- Valeurs nutritionnelles — structure prête, valeurs ajoutées plus tard -->
+        <p class="alim-section-title">
+          Valeurs nutritionnelles
+          <span class="alim-section-title__unit">/ 100g</span>
+        </p>
+        <div class="alim-macros">
+          <div class="alim-macro-card">
+            <span class="alim-macro-value" id="macro-proteines">—</span>
+            <span class="alim-macro-label">Protéines</span>
+          </div>
+          <div class="alim-macro-card">
+            <span class="alim-macro-value" id="macro-glucides">—</span>
+            <span class="alim-macro-label">Glucides</span>
+          </div>
+          <div class="alim-macro-card">
+            <span class="alim-macro-value" id="macro-lipides">—</span>
+            <span class="alim-macro-label">Lipides</span>
+          </div>
+          <div class="alim-macro-card alim-macro-card--calories">
+            <span class="alim-macro-value" id="macro-calories">—</span>
+            <span class="alim-macro-label">Calories</span>
+          </div>
+        </div>
+
+        <!-- Notes libres -->
+        <div class="alim-notes-section">
+          <p class="alim-section-title">Notes</p>
+          <textarea class="alim-notes" id="alim-notes" rows="5"
+                    placeholder="Conseils de préparation, associations, remarques…"></textarea>
+          <div class="alim-notes-footer">
+            <button class="alim-save-btn" id="btn-save-notes" type="button">Enregistrer</button>
+            <span class="alim-save-status" id="notes-save-status"></span>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ── ONGLET 2 : HISTORIQUE ── -->
+      <section class="tab-panel" id="panel-historique" role="tabpanel" aria-labelledby="tab-historique">
+
+        <div class="alim-history-header">
+          <h2 class="alim-history-header__title">Historique</h2>
+          <span class="alim-history-header__count" id="history-count">0 utilisation</span>
+        </div>
+
+        <div class="alim-history-empty">
+          Les prochaines utilisations de cet aliment apparaîtront ici.
+        </div>
+
+      </section>
+
+    </div>
+    <!-- ===== FIN TABS TRACK ===== -->
+
+  </div>
+  <!-- ===== FIN PAGE ALIMENT ===== -->
+
+
+  <!-- ===== NAVBAR FIXE EN BAS ===== -->
+  <nav class="bottom-nav" role="navigation" aria-label="Navigation principale">
+
+    <a href="../index.html" class="nav-item" aria-label="Accueil">
+      <span class="nav-icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             width="24" height="24"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5z"/>
+          <polyline points="9 21 9 12 15 12 15 21"/>
+        </svg>
+      </span>
+      <span class="nav-label">Accueil</span>
+    </a>
+
+    <a href="../musculation.html" class="nav-item" aria-label="Musculation">
+      <span class="nav-icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             width="24" height="24"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2"  y="10" width="3" height="4" rx="1"/>
+          <rect x="19" y="10" width="3" height="4" rx="1"/>
+          <rect x="5"  y="8"  width="3" height="8" rx="1"/>
+          <rect x="16" y="8"  width="3" height="8" rx="1"/>
+          <line x1="8" y1="12" x2="16" y2="12"/>
+        </svg>
+      </span>
+      <span class="nav-label">Musculation</span>
+    </a>
+
+    <a href="alimentation.html" class="nav-item active" aria-label="Alimentation" aria-current="page">
+      <span class="nav-icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             width="24" height="24"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
+          <path d="M7 2v20"/>
+          <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3"/>
+          <line x1="21" y1="15" x2="21" y2="22"/>
+        </svg>
+      </span>
+      <span class="nav-label">Alimentation</span>
+    </a>
+
+    <a href="../profil.html" class="nav-item" aria-label="Mon profil">
+      <span class="nav-icon" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             width="24" height="24"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+        </svg>
+      </span>
+      <span class="nav-label">Mon profil</span>
+    </a>
+
+  </nav>
+
+  <!-- Scripts — data.js TOUJOURS avant aliment.js -->
+  <script src="../js/data.js"></script>
+  <script src="../js/aliment.js"></script>
+
+</body>
+</html>

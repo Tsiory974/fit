@@ -1,0 +1,379 @@
+/* ============================================================
+   FITTRACK — PAGE ALIMENT
+   Structure miroir de exercice.css
+   Mobile First | HTML5 + CSS3 uniquement
+   ============================================================ */
+
+:root {
+  --alim-header-height: 68px;
+  --alim-tabs-height:   48px;
+}
+
+body {
+  overflow-x: hidden;
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ============================================================
+   PAGE WRAPPER
+   ============================================================ */
+.aliment-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Masquer les radio inputs */
+#tab-info,
+#tab-historique {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ============================================================
+   EN-TÊTE
+   ============================================================ */
+.aliment-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: var(--alim-header-height);
+  background: linear-gradient(135deg, #111417 0%, #1a2318 100%);
+  border-bottom: 1px solid #1f2a22;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 1rem;
+}
+
+/* Bouton retour */
+.aliment-header__back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: #1a1e23;
+  border: 1px solid #2a3038;
+  border-radius: 10px;
+  color: #9ca3af;
+  flex-shrink: 0;
+  text-decoration: none;
+  transition: color 0.2s, border-color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.aliment-header__back svg {
+  width: 18px;
+  height: 18px;
+}
+
+.aliment-header__back:hover { color: #fff; border-color: #3a4550; }
+
+/* Nom + badge catégorie */
+.aliment-header__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.aliment-header__name {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.aliment-header__cat {
+  display: inline-block;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-top: 3px;
+}
+
+/* Couleurs badge catégorie — miroir alimentation.css */
+.aliment-header__cat--viandes  { color: #ef4444; background: rgba(239,68,68,0.1);   border: 1px solid rgba(239,68,68,0.25);   }
+.aliment-header__cat--poissons { color: #3b9eff; background: rgba(59,158,255,0.1);  border: 1px solid rgba(59,158,255,0.25);  }
+.aliment-header__cat--fruits   { color: #39e07a; background: rgba(57,224,122,0.1);  border: 1px solid rgba(57,224,122,0.25);  }
+.aliment-header__cat--legumes  { color: #10b981; background: rgba(16,185,129,0.1);  border: 1px solid rgba(16,185,129,0.25);  }
+.aliment-header__cat--feculents{ color: #f97316; background: rgba(249,115,22,0.1);  border: 1px solid rgba(249,115,22,0.25);  }
+.aliment-header__cat--laitiers { color: #a78bfa; background: rgba(167,139,250,0.1); border: 1px solid rgba(167,139,250,0.25); }
+.aliment-header__cat--boissons { color: #38bdf8; background: rgba(56,189,248,0.1);  border: 1px solid rgba(56,189,248,0.25);  }
+.aliment-header__cat--autres   { color: #9ca3af; background: rgba(156,163,175,0.1); border: 1px solid rgba(156,163,175,0.25); }
+
+/* ============================================================
+   BARRE D'ONGLETS
+   Les inputs radio sont frères directs de .tabs-header
+   dans .aliment-page → ~ fonctionne
+   ============================================================ */
+.tabs-header {
+  position: sticky;
+  top: var(--alim-header-height);
+  z-index: 99;
+  height: var(--alim-tabs-height);
+  background: #111417;
+  border-bottom: 1px solid #1f242a;
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+}
+
+.tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--text-idle);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.25s ease;
+  padding: 0 0.5rem;
+  white-space: nowrap;
+}
+
+.tab-btn__icon {
+  display: flex;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.tab-btn__icon svg { width: 100%; height: 100%; }
+
+/* Indicateur glissant — 2 onglets = 50% */
+.tab-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 50%;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 3px 3px 0 0;
+  transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* ── État actif des onglets ── */
+#tab-info:checked ~ .tabs-header label[for="tab-info"] {
+  color: var(--accent);
+}
+#tab-historique:checked ~ .tabs-header label[for="tab-historique"] {
+  color: var(--accent);
+}
+#tab-historique:checked ~ .tabs-header .tab-indicator {
+  transform: translateX(100%);
+}
+
+/* ============================================================
+   TRACK HORIZONTAL — 2 panneaux
+   ============================================================ */
+.tabs-track {
+  display: flex;
+  width: 200%;
+  transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  min-height: calc(100vh - var(--alim-header-height) - var(--alim-tabs-height) - var(--nav-height));
+  touch-action: pan-y;
+}
+
+#tab-historique:checked ~ .tabs-track {
+  transform: translateX(-50%);
+}
+
+.tab-panel {
+  width: 50%;
+  min-width: 50%;
+  padding: 1.25rem 1rem 2rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  touch-action: pan-y;
+}
+
+/* ============================================================
+   ONGLET INFO — CONTENU
+   ============================================================ */
+
+/* Bloc infos générales */
+.alim-info-block {
+  background: #141820;
+  border: 1px solid #1f2428;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.alim-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid #1f2428;
+}
+
+.alim-info-row:last-child { border-bottom: none; }
+
+.alim-info-label {
+  font-size: 0.8rem;
+  color: var(--text-idle);
+  font-weight: 500;
+}
+
+.alim-info-value {
+  font-size: 0.85rem;
+  color: #e5e7eb;
+  font-weight: 600;
+  text-align: right;
+  max-width: 60%;
+}
+
+/* Titre de section */
+.alim-section-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-idle);
+  margin-bottom: 0.75rem;
+}
+
+.alim-section-title__unit {
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Grille macros */
+.alim-macros {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.625rem;
+  margin-bottom: 1.75rem;
+}
+
+.alim-macro-card {
+  background: #141820;
+  border: 1px solid #1f2428;
+  border-radius: 14px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.alim-macro-card--calories {
+  grid-column: span 2;
+  flex-direction: row;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.alim-macro-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.alim-macro-card--calories .alim-macro-value { font-size: 1.75rem; }
+
+.alim-macro-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-idle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Notes */
+.alim-notes-section { margin-top: 0.25rem; }
+
+.alim-notes {
+  width: 100%;
+  background: #141820;
+  border: 1px solid #1f2428;
+  border-radius: 12px;
+  color: #e5e7eb;
+  font-size: 0.875rem;
+  font-family: inherit;
+  padding: 0.875rem 1rem;
+  resize: none;
+  outline: none;
+  line-height: 1.6;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.alim-notes:focus { border-color: rgba(57, 224, 122, 0.4); }
+.alim-notes::placeholder { color: var(--text-idle); }
+
+.alim-notes-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.625rem;
+}
+
+.alim-save-btn {
+  background: var(--accent);
+  color: #0a0e12;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 7px 18px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.alim-save-btn:hover { opacity: 0.85; }
+
+.alim-save-status {
+  font-size: 0.75rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ============================================================
+   ONGLET HISTORIQUE — CONTENU
+   ============================================================ */
+.alim-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.alim-history-header__title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.alim-history-header__count {
+  font-size: 0.75rem;
+  color: var(--text-idle);
+  font-weight: 500;
+}
+
+.alim-history-empty {
+  font-size: 0.85rem;
+  color: var(--text-idle);
+  line-height: 1.6;
+  text-align: center;
+  padding: 2rem 1rem;
+}

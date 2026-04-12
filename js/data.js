@@ -377,3 +377,256 @@ const DB = {
 };
 
 window.DB = DB;
+
+/* ============================================================
+   ALIMENTATION — données statiques partagées
+   Utilisées par alimentation.js et aliment.js
+   ============================================================ */
+
+window.CAT_SLUG = {
+  'Viandes':          'viandes',
+  'Poissons':         'poissons',
+  'Fruits':           'fruits',
+  'Légumes':          'legumes',
+  'Féculents':        'feculents',
+  'Produits laitiers':'laitiers',
+  'Boissons':         'boissons',
+  'Autres':           'autres',
+};
+
+// m = macros pour 100g : { k:kcal, p:protéines, g:glucides, l:lipides }
+window.ALIMENTS_DATA = [
+  // Viandes
+  { id: 'poulet-blanc',    nom: 'Poulet (blanc)',     categorie: 'Viandes',          detail: '31g protéines · 165 kcal / 100g',  m: { k: 165, p: 31.0, g: 0.0, l: 3.6 } },
+  { id: 'boeuf-hache',     nom: 'Bœuf haché 5%',      categorie: 'Viandes',          detail: '20g protéines · 137 kcal / 100g',  m: { k: 137, p: 20.0, g: 0.0, l: 6.0 } },
+  { id: 'dinde-emincee',   nom: 'Dinde émincée',      categorie: 'Viandes',          detail: '29g protéines · 135 kcal / 100g',  m: { k: 135, p: 29.0, g: 0.0, l: 2.0 } },
+  { id: 'porc-filet',      nom: 'Porc filet',         categorie: 'Viandes',          detail: '22g protéines · 143 kcal / 100g',  m: { k: 143, p: 22.0, g: 0.0, l: 5.0 } },
+  // Poissons
+  { id: 'saumon',          nom: 'Saumon',             categorie: 'Poissons',         detail: '25g protéines · 208 kcal / 100g',  m: { k: 208, p: 25.0, g: 0.0, l: 12.0 } },
+  { id: 'thon-boite',      nom: 'Thon en boîte',      categorie: 'Poissons',         detail: '25g protéines · 116 kcal / 100g',  m: { k: 116, p: 25.0, g: 0.0, l: 1.0 } },
+  { id: 'cabillaud',       nom: 'Cabillaud',          categorie: 'Poissons',         detail: '18g protéines · 82 kcal / 100g',   m: { k: 82,  p: 18.0, g: 0.0, l: 0.7 } },
+  { id: 'sardines',        nom: 'Sardines',           categorie: 'Poissons',         detail: '21g protéines · 208 kcal / 100g',  m: { k: 208, p: 21.0, g: 0.0, l: 11.0 } },
+  // Fruits
+  { id: 'pomme',           nom: 'Pomme',              categorie: 'Fruits',           detail: '14g glucides · 52 kcal / 100g',    m: { k: 52,  p: 0.3,  g: 14.0, l: 0.2 }, type: 'unite', unitWeight: 150 },
+  { id: 'banane',          nom: 'Banane',             categorie: 'Fruits',           detail: '23g glucides · 89 kcal / 100g',    m: { k: 89,  p: 1.1,  g: 23.0, l: 0.3 }, type: 'unite', unitWeight: 120 },
+  { id: 'myrtilles',       nom: 'Myrtilles',          categorie: 'Fruits',           detail: '14g glucides · 57 kcal / 100g',    m: { k: 57,  p: 0.7,  g: 14.0, l: 0.3 } },
+  { id: 'orange',          nom: 'Orange',             categorie: 'Fruits',           detail: '12g glucides · 47 kcal / 100g',    m: { k: 47,  p: 0.9,  g: 12.0, l: 0.1 }, type: 'unite', unitWeight: 130 },
+  // Légumes
+  { id: 'brocoli',         nom: 'Brocoli',            categorie: 'Légumes',          detail: '4g glucides · 35 kcal / 100g',     m: { k: 35,  p: 2.4,  g: 4.0,  l: 0.4 } },
+  { id: 'epinards',        nom: 'Épinards',           categorie: 'Légumes',          detail: '1g glucides · 23 kcal / 100g',     m: { k: 23,  p: 2.9,  g: 1.0,  l: 0.4 } },
+  { id: 'courgette',       nom: 'Courgette',          categorie: 'Légumes',          detail: '3g glucides · 17 kcal / 100g',     m: { k: 17,  p: 1.2,  g: 3.0,  l: 0.2 } },
+  { id: 'tomate',          nom: 'Tomate',             categorie: 'Légumes',          detail: '4g glucides · 18 kcal / 100g',     m: { k: 18,  p: 0.9,  g: 4.0,  l: 0.2 } },
+  // Féculents
+  { id: 'riz-blanc',       nom: 'Riz blanc cuit',     categorie: 'Féculents',        detail: '28g glucides · 130 kcal / 100g',   m: { k: 130, p: 2.7,  g: 28.0, l: 0.3 } },
+  { id: 'pates-completes', nom: 'Pâtes complètes',    categorie: 'Féculents',        detail: '31g glucides · 158 kcal / 100g',   m: { k: 158, p: 5.5,  g: 31.0, l: 1.1 } },
+  { id: 'patate-douce',    nom: 'Patate douce',       categorie: 'Féculents',        detail: '20g glucides · 86 kcal / 100g',    m: { k: 86,  p: 1.6,  g: 20.0, l: 0.1 } },
+  { id: 'pain-complet',    nom: 'Pain complet',       categorie: 'Féculents',        detail: '41g glucides · 247 kcal / 100g',   m: { k: 247, p: 8.5,  g: 41.0, l: 3.4 } },
+  // Produits laitiers
+  { id: 'fromage-blanc',   nom: 'Fromage blanc 0%',   categorie: 'Produits laitiers',detail: '8g protéines · 45 kcal / 100g',    m: { k: 45,  p: 8.0,  g: 4.0,  l: 0.2 } },
+  { id: 'yaourt-nature',   nom: 'Yaourt nature',      categorie: 'Produits laitiers',detail: '5g protéines · 61 kcal / 100g',    m: { k: 61,  p: 5.0,  g: 5.0,  l: 2.0 } },
+  { id: 'lait',            nom: 'Lait demi-écrémé',   categorie: 'Produits laitiers',detail: '3g protéines · 46 kcal / 100g',    m: { k: 46,  p: 3.2,  g: 5.0,  l: 1.5 } },
+  { id: 'oeufs',           nom: 'Œufs entiers',       categorie: 'Produits laitiers',detail: '13g protéines · 155 kcal / 100g',  m: { k: 155, p: 13.0, g: 1.1,  l: 11.0 }, type: 'unite', unitWeight: 60 },
+  // Boissons
+  { id: 'eau',             nom: 'Eau plate',          categorie: 'Boissons',         detail: '0 kcal / 100ml',                   m: { k: 0,   p: 0.0,  g: 0.0,  l: 0.0 } },
+  { id: 'cafe',            nom: 'Café noir',          categorie: 'Boissons',         detail: '2 kcal / 100ml',                   m: { k: 2,   p: 0.3,  g: 0.0,  l: 0.0 } },
+  { id: 'jus-orange',      nom: "Jus d'orange",       categorie: 'Boissons',         detail: '10g glucides · 45 kcal / 100ml',   m: { k: 45,  p: 0.7,  g: 10.0, l: 0.2 } },
+  // Autres
+  { id: 'avocat',          nom: 'Avocat',             categorie: 'Autres',           detail: '15g lipides · 160 kcal / 100g',    m: { k: 160, p: 2.0,  g: 9.0,  l: 15.0 } },
+  { id: 'amandes',         nom: 'Amandes',            categorie: 'Autres',           detail: '50g lipides · 579 kcal / 100g',    m: { k: 579, p: 21.0, g: 20.0, l: 50.0 } },
+  { id: 'huile-olive',     nom: "Huile d'olive",      categorie: 'Autres',           detail: '100g lipides · 884 kcal / 100g',   m: { k: 884, p: 0.0,  g: 0.0,  l: 100.0 } },
+];
+
+/* ============================================================
+   ALIMENTATION — objectifs journaliers par défaut
+   (peut être écrasé par le profil utilisateur)
+   ============================================================ */
+window.DAILY_GOALS = {
+  kcal:  2500,
+  p:      180,   // protéines g
+  g:      280,   // glucides g
+  l:       80,   // lipides g
+  water: 2500,   // ml
+};
+
+/* ============================================================
+   ALIM_DB — lecture/écriture du journal alimentaire
+   Clé localStorage : ft_alim_day_YYYY-MM-DD
+   Structure jour :
+     { date, water, meals: { [mealKey]: { validated, items[] } } }
+   Item :
+     { alimId, nom, qty, k, p, g, l }   ← macros déjà calculées pour qty
+   ============================================================ */
+const MEAL_KEYS = ['petit-dejeuner', 'dejeuner', 'diner', 'collations', 'supplements'];
+
+function emptyDay(date) {
+  const meals = {};
+  MEAL_KEYS.forEach(k => { meals[k] = { validated: false, items: [] }; });
+  return { date, water: 0, meals };
+}
+
+window.ALIM_DB = {
+  _key(date) { return 'ft_alim_day_' + date; },
+
+  getDay(date) {
+    const raw = localStorage.getItem(this._key(date));
+    return raw ? JSON.parse(raw) : emptyDay(date);
+  },
+
+  saveDay(day) {
+    localStorage.setItem(this._key(day.date), JSON.stringify(day));
+  },
+
+  /** Ajoute un aliment à un repas et recalcule ses macros pour qty. */
+  addItem(date, mealKey, alimId, qty) {
+    const day  = this.getDay(date);
+    const alim = (window.ALIMENTS_DATA || []).find(a => a.id === alimId);
+    if (!alim) return;
+    const r = qty / 100;
+    day.meals[mealKey].items.push({
+      alimId,
+      nom:  alim.nom,
+      qty:  qty,
+      k:    Math.round(alim.m.k * r * 10) / 10,
+      p:    Math.round(alim.m.p * r * 10) / 10,
+      g:    Math.round(alim.m.g * r * 10) / 10,
+      l:    Math.round(alim.m.l * r * 10) / 10,
+    });
+    this.saveDay(day);
+    return day;
+  },
+
+  /** Supprime un aliment (par index) d'un repas. */
+  removeItem(date, mealKey, index) {
+    const day = this.getDay(date);
+    day.meals[mealKey].items.splice(index, 1);
+    this.saveDay(day);
+    return day;
+  },
+
+  toggleValidated(date, mealKey) {
+    const day = this.getDay(date);
+    day.meals[mealKey].validated = !day.meals[mealKey].validated;
+    this.saveDay(day);
+    return day;
+  },
+
+  setWater(date, ml) {
+    const day = this.getDay(date);
+    day.water = Math.max(0, ml);
+    this.saveDay(day);
+    return day;
+  },
+
+  /** Totaux kcal/macros de la journée (tous repas). */
+  calcTotals(day) {
+    let k = 0, p = 0, g = 0, l = 0;
+    MEAL_KEYS.forEach(mk => {
+      (day.meals[mk].items || []).forEach(it => { k += it.k; p += it.p; g += it.g; l += it.l; });
+    });
+    return { k: Math.round(k), p: Math.round(p * 10) / 10, g: Math.round(g * 10) / 10, l: Math.round(l * 10) / 10 };
+  },
+
+  /** Totaux d'un seul repas. */
+  calcMealTotals(day, mealKey) {
+    let k = 0, p = 0, g = 0, l = 0;
+    (day.meals[mealKey].items || []).forEach(it => { k += it.k; p += it.p; g += it.g; l += it.l; });
+    return { k: Math.round(k), p: Math.round(p * 10) / 10, g: Math.round(g * 10) / 10, l: Math.round(l * 10) / 10 };
+  },
+};
+window.MEAL_KEYS = MEAL_KEYS;
+
+/* ============================================================
+   RECETTES_DB — gestion des recettes enregistrées
+   Clés localStorage :
+     ft_recettes      → string[] — IDs des recettes
+     ft_recette_<id>  → Recette
+   Structure recette :
+     { id, nom, aliments: [{ alimId, nom, type, quantite }] }
+   ============================================================ */
+window.RECETTES_DB = {
+  _listKey: 'ft_recettes',
+  _prefix:  'ft_recette_',
+
+  getIds()  { return JSON.parse(localStorage.getItem(this._listKey) || '[]'); },
+  get(id)   { const r = localStorage.getItem(this._prefix + id); return r ? JSON.parse(r) : null; },
+  getAll()  { return this.getIds().map(id => this.get(id)).filter(Boolean); },
+  save(rec) { localStorage.setItem(this._prefix + rec.id, JSON.stringify(rec)); },
+
+  add(nom) {
+    const id  = 'rec-' + Date.now();
+    const ids = this.getIds();
+    ids.push(id);
+    localStorage.setItem(this._listKey, JSON.stringify(ids));
+    const rec = { id, nom: nom || 'Nouvelle recette', aliments: [] };
+    this.save(rec);
+    return rec;
+  },
+
+  delete(id) {
+    const ids = this.getIds().filter(i => i !== id);
+    localStorage.setItem(this._listKey, JSON.stringify(ids));
+    localStorage.removeItem(this._prefix + id);
+  },
+
+  addAliment(recId, alimId, quantite) {
+    const rec  = this.get(recId);
+    if (!rec) return null;
+    const alim = (window.ALIMENTS_DATA || []).find(a => a.id === alimId);
+    if (!alim) return null;
+    rec.aliments.push({
+      alimId,
+      nom:      alim.nom,
+      type:     alim.type || 'gramme',
+      quantite: Math.max(1, Math.round(quantite)),
+    });
+    this.save(rec);
+    return rec;
+  },
+
+  removeAliment(recId, idx) {
+    const rec = this.get(recId);
+    if (!rec) return null;
+    rec.aliments.splice(idx, 1);
+    this.save(rec);
+    return rec;
+  },
+
+  updateQty(recId, idx, quantite) {
+    const rec = this.get(recId);
+    if (!rec || !rec.aliments[idx]) return null;
+    rec.aliments[idx].quantite = Math.max(1, Math.round(quantite));
+    this.save(rec);
+    return rec;
+  },
+
+  updateNom(recId, nom) {
+    const rec = this.get(recId);
+    if (!rec) return null;
+    rec.nom = (nom || '').trim() || 'Nouvelle recette';
+    this.save(rec);
+    return rec;
+  },
+
+  /** Totaux nutritionnels de la recette entière. */
+  calcTotals(rec) {
+    let k = 0, p = 0, g = 0, l = 0;
+    (rec.aliments || []).forEach(item => {
+      const alim = (window.ALIMENTS_DATA || []).find(a => a.id === item.alimId);
+      if (!alim) return;
+      const grams = (item.type === 'unite')
+        ? item.quantite * (alim.unitWeight || 100)
+        : item.quantite;
+      const r = grams / 100;
+      k += alim.m.k * r;
+      p += alim.m.p * r;
+      g += alim.m.g * r;
+      l += alim.m.l * r;
+    });
+    return {
+      k: Math.round(k),
+      p: Math.round(p * 10) / 10,
+      g: Math.round(g * 10) / 10,
+      l: Math.round(l * 10) / 10,
+    };
+  },
+};
