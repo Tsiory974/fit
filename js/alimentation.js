@@ -1038,6 +1038,9 @@ function _applyAlimKind(kind) {
 
   if (marqueField) marqueField.hidden = !isProduit;
 
+  const scanZone = document.getElementById('alim-scan-zone');
+  if (scanZone) scanZone.hidden = !isProduit;
+
   if (isProduit) {
     // Macros toujours visibles pour un produit
     if (macrosBtn)     macrosBtn.hidden     = true;
@@ -1075,6 +1078,14 @@ function openAlimNewModal() {
 
   const saveBtn = document.getElementById('alim-new-save');
   if (saveBtn) saveBtn.disabled = true;
+
+  // Reset champ barcode
+  const barcodeInput = document.getElementById('alim-barcode-input');
+  if (barcodeInput) barcodeInput.value = '';
+  const barcodeSearch = document.getElementById('alim-barcode-search');
+  if (barcodeSearch) barcodeSearch.disabled = true;
+  const barcodeError = document.getElementById('alim-barcode-error');
+  if (barcodeError) barcodeError.hidden = true;
 
   document.getElementById('alim-new-modal')?.classList.add('alim-new-modal--open');
   setTimeout(() => nomEl?.focus(), 80);

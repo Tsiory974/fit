@@ -266,6 +266,25 @@ input[name="alim-tabs"] {
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
+  max-height: calc(6 * 4.25rem + 5 * 0.625rem);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-right: 2px; /* évite que la scrollbar masque le bord des cartes */
+  margin-bottom: calc(var(--nav-height, 68px) + 1rem);
+}
+
+.aliments-list::-webkit-scrollbar {
+  width: 3px;
+}
+
+.aliments-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.aliments-list::-webkit-scrollbar-thumb {
+  background: #2a3038;
+  border-radius: 99px;
 }
 
 .aliment-card {
@@ -2071,6 +2090,79 @@ input[name="alim-tabs"] {
 .alim-new__scan-btn:hover {
   background: rgba(57, 224, 122, 0.13);
   border-color: rgba(57, 224, 122, 0.7);
+}
+
+/* ── Séparateur "ou" ── */
+.alim-scan-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin: 0.125rem 0 0.75rem;
+  color: rgba(255, 255, 255, 0.25);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.alim-scan-divider::before,
+.alim-scan-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #2a3038;
+}
+
+/* ── Ligne code-barres manuel ── */
+.alim-barcode-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.alim-barcode-row .form-field__input {
+  flex: 1;
+  min-width: 0;
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+}
+
+.alim-barcode-search-btn {
+  flex-shrink: 0;
+  padding: 0 1rem;
+  height: 44px;
+  background: var(--accent, #39e07a);
+  border: none;
+  border-radius: 10px;
+  color: #0a0e12;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s;
+}
+
+.alim-barcode-search-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.alim-barcode-search-btn:not(:disabled):active {
+  opacity: 0.75;
+}
+
+.alim-barcode-search-btn--loading {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* ── Message d'erreur barcode ── */
+.alim-barcode-error {
+  margin: 0.4rem 0 0;
+  font-size: 0.8rem;
+  color: #f87171;
+  line-height: 1.4;
 }
 
 /* ============================================================

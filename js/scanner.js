@@ -203,7 +203,19 @@
   }
 
   /* ════════════════════════════════════════════════
-     TRAITEMENT CODE-BARRES
+     REQUÊTE OPENFOODFACTS
+  ════════════════════════════════════════════════ */
+
+  async function _fetchProduct(barcode) {
+    const resp = await fetch(`${OFF_BASE}${encodeURIComponent(barcode)}.json`);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    if (data.status !== 1 || !data.product) return null;
+    return data.product;
+  }
+
+  /* ════════════════════════════════════════════════
+     TRAITEMENT CODE-BARRES (scan caméra)
   ════════════════════════════════════════════════ */
 
   async function _onBarcode(barcode) {
@@ -215,18 +227,10 @@
     _setHint('Recherche dans la base OpenFoodFacts…');
 
     try {
-      const resp = await fetch(`${OFF_BASE}${encodeURIComponent(barcode)}.json`);
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const data = await resp.json();
-
-      if (data.status !== 1 || !data.product) {
-        _showError(barcode);
-        return;
-      }
-
-      _fillForm(data.product);
+      const product = await _fetchProduct(barcode);
+      if (!product) { _showError(barcode); return; }
+      _fillForm(product);
       closeScanner();
-
     } catch (e) {
       console.error('[Scanner] OFF API error:', e);
       _showError(barcode);
@@ -356,6 +360,68 @@
   }
 
   /* ════════════════════════════════════════════════
+     SAISIE MANUELLE CODE-BARRES
+  ════════════════════════════════════════════════ */
+
+  function bindManualBarcodeEvents() {
+    const input     = document.getElementById('alim-barcode-input');
+    const searchBtn = document.getElementById('alim-barcode-search');
+    const errorEl   = document.getElementById('alim-barcode-error');
+
+    if (!input || !searchBtn) return;
+
+    // Activer / désactiver le bouton selon la saisie
+    input.addEventListener('input', () => {
+      searchBtn.disabled = !input.value.trim();
+      if (errorEl) errorEl.hidden = true;
+    });
+
+    // Recherche au clic
+    searchBtn.addEventListener('click', async () => {
+      const barcode = input.value.trim();
+      if (!barcode) return;
+
+      // État chargement
+      searchBtn.disabled = true;
+      searchBtn.classList.add('alim-barcode-search-btn--loading');
+      const originalText = searchBtn.textContent;
+      searchBtn.textContent = '…';
+      if (errorEl) errorEl.hidden = true;
+
+      let product = null;
+      try {
+        product = await _fetchProduct(barcode);
+      } catch (e) {
+        console.error('[Scanner] Saisie manuelle OFF error:', e);
+      }
+
+      // Réinitialiser le bouton
+      searchBtn.textContent = originalText;
+      searchBtn.classList.remove('alim-barcode-search-btn--loading');
+      searchBtn.disabled = false;
+
+      if (!product) {
+        if (errorEl) {
+          errorEl.textContent = 'Produit introuvable. Vérifiez le code ou remplissez manuellement.';
+          errorEl.hidden = false;
+        }
+        return;
+      }
+
+      // Succès — vider le champ et remplir le formulaire
+      input.value = '';
+      searchBtn.disabled = true;
+      if (errorEl) errorEl.hidden = true;
+      _fillForm(product);
+    });
+
+    // Recherche à la touche Entrée
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !searchBtn.disabled) searchBtn.click();
+    });
+  }
+
+  /* ════════════════════════════════════════════════
      BIND EVENTS
   ════════════════════════════════════════════════ */
 
@@ -363,6 +429,7 @@
     document.getElementById('alim-scan-btn')?.addEventListener('click', openScanner);
     document.getElementById('scan-cancel-btn')?.addEventListener('click', closeScanner);
     document.getElementById('scan-flash-btn')?.addEventListener('click', _toggleFlash);
+    bindManualBarcodeEvents();
   }
 
   if (document.readyState === 'loading') {

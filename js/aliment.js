@@ -10,7 +10,20 @@
 
 const NOTES_PREFIX = 'ft_alim_notes_';
 
+function _loadCustomAliments() {
+  try {
+    const stored = JSON.parse(localStorage.getItem('ft_custom_aliments') || '[]');
+    stored.forEach(a => {
+      if (!(window.ALIMENTS_DATA || []).find(x => x.id === a.id)) {
+        (window.ALIMENTS_DATA = window.ALIMENTS_DATA || []).push(a);
+      }
+    });
+  } catch (e) {}
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  _loadCustomAliments();
+
   const params = new URLSearchParams(location.search);
   const alimId = params.get('id');
 
@@ -53,8 +66,38 @@ function populatePage(aliment) {
   const infoDetail = document.getElementById('info-detail');
   if (infoDetail) infoDetail.textContent = aliment.detail;
 
-  // Macros — valeurs ajoutées plus tard, on laisse "—" par défaut
-  // (structure prête : #macro-proteines, #macro-glucides, #macro-lipides, #macro-calories)
+  // Macros
+  const m = aliment.m || {};
+  const fmt = v => (v !== undefined && v !== null && !isNaN(v)) ? v + (Number.isInteger(v) ? '' : '') + 'g' : '—';
+
+  const macroP = document.getElementById('macro-proteines');
+  const macroG = document.getElementById('macro-glucides');
+  const macroL = document.getElementById('macro-lipides');
+  const macroK = document.getElementById('macro-calories');
+
+  if (macroP) macroP.textContent = m.p !== undefined ? m.p + 'g' : '—';
+  if (macroG) macroG.textContent = m.g !== undefined ? m.g + 'g' : '—';
+  if (macroL) macroL.textContent = m.l !== undefined ? m.l + 'g' : '—';
+  if (macroK) macroK.textContent = m.k !== undefined ? m.k + ' kcal' : '—';
+
+  // Unité de la section valeurs nutritionnelles
+  const unitEl = document.querySelector('.alim-section-title__unit');
+  if (unitEl) {
+    const unitLabel = { gramme: '/ 100g', ml: '/ 100ml', unite: '/ unité' };
+    unitEl.textContent = unitLabel[aliment.type] || '/ 100g';
+  }
+
+  // Marque (produits emballés)
+  if (aliment.marque) {
+    const infoBlock = document.querySelector('.alim-info-block');
+    if (infoBlock && !document.getElementById('info-marque')) {
+      const row = document.createElement('div');
+      row.className = 'alim-info-row';
+      row.innerHTML = `<span class="alim-info-label">Marque</span>
+                       <span class="alim-info-value" id="info-marque">${aliment.marque}</span>`;
+      infoBlock.insertBefore(row, infoBlock.firstChild);
+    }
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────
