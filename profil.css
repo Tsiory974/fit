@@ -1,0 +1,354 @@
+/* ============================================================
+   FITTRACK — PAGE PROFIL
+   Mobile First | Vanilla CSS
+   ============================================================ */
+
+:root {
+  --header-height: 72px;
+}
+
+body {
+  max-width: 480px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* ============================================================
+   EN-TÊTE
+   ============================================================ */
+.page-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  height: var(--header-height);
+  background: linear-gradient(135deg, #111417 0%, #1a2318 100%);
+  border-bottom: 1px solid #1f2a22;
+  display: flex;
+  align-items: center;
+  padding: 0 1.25rem;
+}
+
+.page-header__inner {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.page-header__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  background: rgba(57, 224, 122, 0.12);
+  border: 1px solid rgba(57, 224, 122, 0.3);
+  border-radius: 12px;
+  color: #39e07a;
+  flex-shrink: 0;
+}
+
+.page-header__icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.page-header__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.page-header__subtitle {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+/* ============================================================
+   CONTENU PRINCIPAL
+   ============================================================ */
+.profil-main {
+  padding: 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ============================================================
+   SECTION
+   ============================================================ */
+.profil-section {
+  background: #13171b;
+  border: 1px solid #1f2a22;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.profil-section__header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.125rem 0.875rem;
+  border-bottom: 1px solid #1f2a22;
+}
+
+.profil-section__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: rgba(57, 224, 122, 0.1);
+  border-radius: 10px;
+  color: #39e07a;
+  flex-shrink: 0;
+}
+
+.profil-section__icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.profil-section__title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.profil-section__desc {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 2px;
+}
+
+/* ============================================================
+   CARTE
+   ============================================================ */
+.profil-card {
+  padding: 1rem 1.125rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.profil-card__label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+}
+
+.profil-card__label-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+.profil-card__title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #e5e7eb;
+  line-height: 1.3;
+}
+
+.profil-card__hint {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+.profil-card__hint code {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  background: #1f2a22;
+  color: #39e07a;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+}
+
+/* ============================================================
+   SÉPARATEUR
+   ============================================================ */
+.profil-divider {
+  height: 1px;
+  background: #1f2a22;
+  margin: 0 1.125rem;
+}
+
+/* ============================================================
+   BOUTONS
+   ============================================================ */
+.profil-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+  font-family: inherit;
+}
+
+.profil-btn:active {
+  transform: scale(0.97);
+}
+
+.profil-btn--primary {
+  background: #39e07a;
+  color: #0e1114;
+}
+
+.profil-btn--primary:hover {
+  opacity: 0.88;
+}
+
+.profil-btn--secondary {
+  background: #1f2a22;
+  color: #39e07a;
+  border: 1px solid rgba(57, 224, 122, 0.3);
+}
+
+.profil-btn--secondary:hover {
+  background: rgba(57, 224, 122, 0.1);
+}
+
+.profil-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ============================================================
+   SÉLECTEUR DE FICHIER
+   ============================================================ */
+.profil-file-label {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.75rem 1rem;
+  background: #1a1e23;
+  border: 1px dashed #2d3748;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #9ca3af;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: border-color 0.2s ease, background 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.profil-file-label:hover {
+  border-color: rgba(57, 224, 122, 0.4);
+  background: rgba(57, 224, 122, 0.04);
+}
+
+.profil-file-label.has-file {
+  border-color: rgba(57, 224, 122, 0.5);
+  color: #39e07a;
+}
+
+.profil-file-label svg {
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.profil-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ============================================================
+   MESSAGES
+   ============================================================ */
+.profil-msg {
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 0.625rem 0.875rem;
+  border-radius: 8px;
+  line-height: 1.4;
+}
+
+.profil-msg--error {
+  background: rgba(248, 113, 113, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.25);
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.profil-toast {
+  position: fixed;
+  bottom: calc(var(--nav-height, 68px) + 1.25rem);
+  left: 50%;
+  transform: translateX(-50%) translateY(12px);
+  background: #39e07a;
+  color: #0e1114;
+  font-size: 0.875rem;
+  font-weight: 700;
+  padding: 0.75rem 1.5rem;
+  border-radius: 99px;
+  white-space: nowrap;
+  z-index: 500;
+  box-shadow: 0 4px 20px rgba(57, 224, 122, 0.35);
+  opacity: 0;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+}
+
+.profil-toast--show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.profil-toast--error {
+  background: #f87171;
+  box-shadow: 0 4px 20px rgba(248, 113, 113, 0.35);
+  color: #fff;
+}
+
+/* ============================================================
+   SECTION INFO APP
+   ============================================================ */
+.profil-section--info {
+  background: transparent;
+  border-color: transparent;
+  text-align: center;
+  padding: 0.25rem 0 0.5rem;
+}
+
+.profil-app-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #374151;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.profil-app-version {
+  font-size: 0.7rem;
+  color: #374151;
+  margin-top: 3px;
+}
+
+/* ============================================================
+   RESPONSIVE — Desktop
+   ============================================================ */
+@media (min-width: 768px) {
+  .profil-main {
+    padding: 1.5rem 1.25rem;
+  }
+}
