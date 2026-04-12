@@ -20,6 +20,7 @@ let currentAlimCategorie = '';
 
 document.addEventListener('DOMContentLoaded', () => {
   updateHeaderDate();
+  loadCustomAliments();
 
   renderAujourdhuiPanel();
   renderPlanningPanel();
@@ -30,7 +31,10 @@ document.addEventListener('DOMContentLoaded', () => {
   bindWaterButton();
   bindModalEvents();
   bindRecettesEvents();
-  bindRcModalEvents();
+  bindRcPickerEvents();
+  bindRcNewModalEvents();
+  bindRcAlimConfigModalEvents();
+  bindAlimNewModalEvents();
 });
 
 /* ═══════════════════════════════════════════════════════════════
@@ -344,8 +348,6 @@ function renderPlanningPanel() {
 
 // Recette en cours d'édition
 let _rcCurrentId  = null;
-// Aliment sélectionné dans le modal recette
-let _rcModalAlim  = null;
 
 function renderRecettesPanel() {
   renderRcList();
@@ -378,7 +380,13 @@ function renderRcList() {
             ${count} ingrédient${count > 1 ? 's' : ''} · ${totals.k} kcal
           </div>
         </div>
-        <span class="rc-card__arrow" aria-hidden="true">›</span>
+        <button class="rc-card__del" data-rc-del="${rec.id}" aria-label="Supprimer ${rec.nom}">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+               width="12" height="12" aria-hidden="true">
+            <line x1="2" y1="2" x2="14" y2="14"/><line x1="14" y1="2" x2="2" y2="14"/>
+          </svg>
+        </button>
       </div>`;
   }).join('');
 }
@@ -476,13 +484,10 @@ function renderRcEdit() {
 
 /* ── Événements panel recettes ── */
 function bindRecettesEvents() {
-  // FAB → nouvelle recette
+  // FAB → modale nouvelle recette
   const fab = document.getElementById('fab-add-recette');
   if (fab) {
-    fab.addEventListener('click', () => {
-      const rec = window.RECETTES_DB.add('Nouvelle recette');
-      showRcEdit(rec.id);
-    });
+    fab.addEventListener('click', openRcNewModal);
   }
 
   // Retour à la liste
@@ -517,10 +522,12 @@ function bindRecettesEvents() {
     });
   }
 
-  // Ajouter un ingrédient
+  // Ajouter un ingrédient (depuis la vue édition d'une recette existante)
   const addAlimBtn = document.getElementById('rc-add-alim-btn');
   if (addAlimBtn) {
-    addAlimBtn.addEventListener('click', openRcModal);
+    addAlimBtn.addEventListener('click', () => {
+      openRcAlimConfigModal('edit');
+    });
   }
 
   // Délégation sur la liste des ingrédients
@@ -548,121 +555,327 @@ function bindRecettesEvents() {
     });
   }
 
-  // Clic sur une carte → édition
+  // Clic sur une carte → édition / clic sur croix → suppression
   const listEl = document.getElementById('rc-list');
   if (listEl) {
     listEl.addEventListener('click', e => {
+      const delBtn = e.target.closest('[data-rc-del]');
+      if (delBtn) {
+        if (window.confirm('Supprimer cette recette ?')) {
+          window.RECETTES_DB.delete(delBtn.dataset.rcDel);
+          renderRcList();
+        }
+        return;
+      }
       const card = e.target.closest('[data-rc-id]');
       if (card) showRcEdit(card.dataset.rcId);
     });
   }
 }
 
-/* ── Modal ajout ingrédient (recettes) ── */
-function openRcModal() {
-  const modal = document.getElementById('rc-modal');
-  if (!modal) return;
-  _rcModalAlim = null;
-  document.getElementById('rc-modal-step-search').hidden = false;
-  document.getElementById('rc-modal-step-qty').hidden    = true;
-  document.getElementById('rc-modal-search').value       = '';
-  renderRcModalList('');
-  modal.hidden = false;
-  document.getElementById('rc-modal-search').focus();
+/* ── Picker plein écran — sélection aliment pour une recette ── */
+
+let _rcPickerSearch = '';
+let _rcPickerCat    = '';
+let _rcPickerMode   = 'config'; // 'config' : sélection pour la modale config aliment
+let _rcDraftAliments = [];     // ingrédients de la nouvelle recette avant sauvegarde
+let _rcAlimConfigSelectedAlim = null;
+let _rcAlimConfigMode = 'draft'; // 'draft' | 'edit'
+
+function openRcPicker() {
+  const picker = document.getElementById('rc-picker');
+  if (!picker) return;
+  _rcPickerSearch = '';
+  _rcPickerCat    = '';
+  const searchInput = document.getElementById('rc-picker-search');
+  if (searchInput) searchInput.value = '';
+  // Réinitialiser les chips
+  document.querySelectorAll('#rc-picker-chips [data-rc-cat]').forEach(c => {
+    c.classList.toggle('chip--active', c.dataset.rcCat === '');
+  });
+  renderRcPickerList();
+  picker.classList.add('rc-picker--open');
+  if (searchInput) setTimeout(() => searchInput.focus(), 80);
 }
 
-function closeRcModal() {
-  const modal = document.getElementById('rc-modal');
-  if (modal) modal.hidden = true;
-  _rcModalAlim = null;
+function closeRcPicker() {
+  const picker = document.getElementById('rc-picker');
+  if (picker) picker.classList.remove('rc-picker--open');
 }
 
-function renderRcModalList(q) {
-  const list = document.getElementById('rc-modal-list');
+function renderRcPickerList() {
+  const list = document.getElementById('rc-picker-list');
   if (!list) return;
-  const data   = window.ALIMENTS_DATA || [];
-  const term   = q.trim().toLowerCase();
-  const items  = term ? data.filter(a => a.nom.toLowerCase().includes(term)) : data;
+  const data  = window.ALIMENTS_DATA || [];
+  const q     = _rcPickerSearch.trim().toLowerCase();
+  const cat   = _rcPickerCat;
+
+  const items = data.filter(a => {
+    const matchQ   = !q   || a.nom.toLowerCase().includes(q) || a.categorie.toLowerCase().includes(q);
+    const matchCat = !cat || a.categorie === cat;
+    return matchQ && matchCat;
+  });
 
   if (items.length === 0) {
     list.innerHTML = '<p class="panel-placeholder">Aucun aliment trouvé</p>';
     return;
   }
 
+  const isUniteLabel = a => (a.type || 'gramme') === 'unite' ? 'par unité' : '/100g';
+
   list.innerHTML = items.map(a => `
-    <div class="aj-modal__alim-row" data-rc-pick="${a.id}">
-      <span class="aj-modal__alim-name">${a.nom}</span>
-      <span class="aj-modal__alim-info">${a.m.k} kcal/100g</span>
+    <div class="rc-picker__item" data-rc-pick="${a.id}">
+      <div class="rc-picker__item-body">
+        <div class="rc-picker__item-name">${a.nom}</div>
+        <div class="rc-picker__item-cat">${a.categorie}</div>
+      </div>
+      <div class="rc-picker__item-right">
+        <span class="rc-picker__item-kcal">${a.m.k} kcal</span>
+        <span class="rc-picker__item-unit">${isUniteLabel(a)}</span>
+      </div>
+      <div class="rc-picker__item-add" aria-hidden="true">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none"
+             stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+             width="12" height="12">
+          <line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/>
+        </svg>
+      </div>
     </div>`).join('');
 }
 
-function updateRcQtyMacros() {
-  if (!_rcModalAlim) return;
-  const qty    = parseFloat(document.getElementById('rc-modal-qty-input').value) || 0;
-  const type   = _rcModalAlim.type || 'gramme';
-  const grams  = type === 'unite' ? qty * (_rcModalAlim.unitWeight || 100) : qty;
-  const r      = grams / 100;
-  const m      = _rcModalAlim.m;
-  const macros = document.getElementById('rc-modal-qty-macros');
-  if (!macros) return;
-  macros.innerHTML = `
-    <span class="aj-modal__macro-chip">${Math.round(m.k * r)} kcal</span>
-    <span class="aj-modal__macro-chip">P ${(m.p * r).toFixed(1)}g</span>
-    <span class="aj-modal__macro-chip">G ${(m.g * r).toFixed(1)}g</span>
-    <span class="aj-modal__macro-chip">L ${(m.l * r).toFixed(1)}g</span>`;
+function bindRcPickerEvents() {
+  const picker = document.getElementById('rc-picker');
+  if (!picker) return;
+
+  // Bouton retour
+  document.getElementById('rc-picker-back')?.addEventListener('click', closeRcPicker);
+
+  // Recherche
+  document.getElementById('rc-picker-search')?.addEventListener('input', e => {
+    _rcPickerSearch = e.target.value;
+    renderRcPickerList();
+  });
+
+  // Filtres catégorie
+  document.getElementById('rc-picker-chips')?.addEventListener('click', e => {
+    const chip = e.target.closest('[data-rc-cat]');
+    if (!chip) return;
+    _rcPickerCat = chip.dataset.rcCat;
+    document.querySelectorAll('#rc-picker-chips [data-rc-cat]').forEach(c => {
+      c.classList.toggle('chip--active', c.dataset.rcCat === _rcPickerCat);
+    });
+    renderRcPickerList();
+  });
+
+  // Clic aliment → renvoie vers la modale config aliment
+  document.getElementById('rc-picker-list')?.addEventListener('click', e => {
+    const item = e.target.closest('[data-rc-pick]');
+    if (!item) return;
+    const alim = (window.ALIMENTS_DATA || []).find(a => a.id === item.dataset.rcPick);
+    if (!alim) return;
+
+    // Remplir la modale config aliment
+    _rcAlimConfigSelectedAlim = alim;
+    const nameEl = document.getElementById('rc-alim-config-name');
+    if (nameEl) { nameEl.textContent = alim.nom; nameEl.classList.add('rc-alim-config__pick-name--selected'); }
+    const isUnite = (alim.type || 'gramme') === 'unite';
+    const unitEl  = document.getElementById('rc-alim-config-unit');
+    const qtyEl   = document.getElementById('rc-alim-config-qty');
+    if (unitEl) unitEl.textContent = isUnite ? 'unité(s)' : 'g';
+    if (qtyEl)  { qtyEl.value = isUnite ? '1' : '100'; qtyEl.max = isUnite ? '99' : '2000'; }
+    const confirmBtn = document.getElementById('rc-alim-config-confirm');
+    if (confirmBtn) confirmBtn.disabled = false;
+    closeRcPicker();
+    setTimeout(() => document.getElementById('rc-alim-config-qty')?.focus(), 80);
+  });
 }
 
-function bindRcModalEvents() {
-  const modal = document.getElementById('rc-modal');
-  if (!modal) return;
+/* ── Modale config aliment ── */
 
-  document.getElementById('rc-modal-backdrop').addEventListener('click', closeRcModal);
-  document.getElementById('rc-modal-close').addEventListener('click', closeRcModal);
+function openRcAlimConfigModal(mode) {
+  _rcAlimConfigMode = mode;
+  _rcAlimConfigSelectedAlim = null;
+  const searchEl = document.getElementById('rc-alim-config-search');
+  if (searchEl) searchEl.value = '';
+  const listEl = document.getElementById('rc-alim-config-list');
+  if (listEl) { listEl.innerHTML = ''; listEl.classList.remove('rc-alim-search-list--visible'); }
+  const wrapEl = document.getElementById('rc-alim-search-wrap');
+  if (wrapEl) wrapEl.classList.remove('rc-alim-search-wrap--open');
+  const qtyEl = document.getElementById('rc-alim-config-qty');
+  if (qtyEl) { qtyEl.value = '100'; qtyEl.max = '2000'; }
+  const unitEl = document.getElementById('rc-alim-config-unit');
+  if (unitEl) unitEl.textContent = 'g';
+  const confirmBtn = document.getElementById('rc-alim-config-confirm');
+  if (confirmBtn) confirmBtn.disabled = true;
+  document.getElementById('rc-alim-config-modal')?.classList.add('rc-alim-config-modal--open');
+  setTimeout(() => searchEl?.focus(), 80);
+}
 
-  document.getElementById('rc-modal-search').addEventListener('input', e => {
-    renderRcModalList(e.target.value);
+function closeRcAlimConfigModal() {
+  document.getElementById('rc-alim-config-modal')?.classList.remove('rc-alim-config-modal--open');
+  _rcAlimConfigSelectedAlim = null;
+}
+
+function selectAlimForConfig(alim) {
+  _rcAlimConfigSelectedAlim = alim;
+  const searchEl = document.getElementById('rc-alim-config-search');
+  if (searchEl) searchEl.value = alim.nom;
+  const listEl = document.getElementById('rc-alim-config-list');
+  if (listEl) { listEl.innerHTML = ''; listEl.classList.remove('rc-alim-search-list--visible'); }
+  const wrapEl = document.getElementById('rc-alim-search-wrap');
+  if (wrapEl) wrapEl.classList.remove('rc-alim-search-wrap--open');
+  const isUnite = (alim.type || 'gramme') === 'unite';
+  const unitEl = document.getElementById('rc-alim-config-unit');
+  const qtyEl  = document.getElementById('rc-alim-config-qty');
+  if (unitEl) unitEl.textContent = isUnite ? 'unité(s)' : 'g';
+  if (qtyEl)  { qtyEl.value = isUnite ? '1' : '100'; qtyEl.max = isUnite ? '99' : '2000'; }
+  const confirmBtn = document.getElementById('rc-alim-config-confirm');
+  if (confirmBtn) confirmBtn.disabled = false;
+  setTimeout(() => qtyEl?.focus(), 80);
+}
+
+function bindRcAlimConfigModalEvents() {
+  document.getElementById('rc-alim-config-backdrop')?.addEventListener('click', closeRcAlimConfigModal);
+  document.getElementById('rc-alim-config-cancel')?.addEventListener('click', closeRcAlimConfigModal);
+
+  const searchEl = document.getElementById('rc-alim-config-search');
+  const listEl   = document.getElementById('rc-alim-config-list');
+  const wrapEl   = document.getElementById('rc-alim-search-wrap');
+
+  function showAlimDropdown(q) {
+    const term = q.trim().toLowerCase();
+    if (!term) {
+      listEl.innerHTML = '';
+      listEl.classList.remove('rc-alim-search-list--visible');
+      wrapEl.classList.remove('rc-alim-search-wrap--open');
+      return;
+    }
+    const data     = window.ALIMENTS_DATA || [];
+    const filtered = data
+      .filter(a => a.nom.toLowerCase().includes(term) || (a.categorie || '').toLowerCase().includes(term))
+      .slice(0, 15);
+    if (filtered.length === 0) {
+      listEl.innerHTML = '<div class="rc-alim-search-empty">Aucun résultat</div>';
+    } else {
+      listEl.innerHTML = filtered.map(a => `
+        <div class="rc-alim-search-item" data-alim-pick="${a.id}">
+          <span class="rc-alim-search-item__name">${a.nom}</span>
+          <span class="rc-alim-search-item__kcal">${a.m.k} kcal/100g</span>
+        </div>`).join('');
+    }
+    listEl.classList.add('rc-alim-search-list--visible');
+    wrapEl.classList.add('rc-alim-search-wrap--open');
+  }
+
+  searchEl?.addEventListener('input', e => {
+    _rcAlimConfigSelectedAlim = null;
+    const confirmBtn = document.getElementById('rc-alim-config-confirm');
+    if (confirmBtn) confirmBtn.disabled = true;
+    showAlimDropdown(e.target.value);
   });
 
-  document.getElementById('rc-modal-list').addEventListener('click', e => {
-    const row = e.target.closest('[data-rc-pick]');
-    if (!row) return;
-    const alim = (window.ALIMENTS_DATA || []).find(a => a.id === row.dataset.rcPick);
-    if (!alim) return;
-    _rcModalAlim = alim;
-
-    document.getElementById('rc-modal-preview').textContent = alim.nom;
-
-    const type      = alim.type || 'gramme';
-    const isUnite   = type === 'unite';
-    const qtyInput  = document.getElementById('rc-modal-qty-input');
-    const qtyLabel  = document.getElementById('rc-modal-qty-label');
-    const qtyUnit   = document.getElementById('rc-modal-qty-unit');
-
-    qtyInput.value = isUnite ? '1' : '100';
-    qtyInput.max   = isUnite ? '99' : '2000';
-    if (qtyLabel) qtyLabel.textContent = isUnite ? 'Quantité (unités)' : 'Quantité (g)';
-    if (qtyUnit)  qtyUnit.textContent  = isUnite ? 'unité(s)' : 'g';
-
-    document.getElementById('rc-modal-step-search').hidden = true;
-    document.getElementById('rc-modal-step-qty').hidden    = false;
-    updateRcQtyMacros();
+  searchEl?.addEventListener('focus', e => {
+    if (e.target.value && !_rcAlimConfigSelectedAlim) showAlimDropdown(e.target.value);
   });
 
-  document.getElementById('rc-modal-qty-input').addEventListener('input', updateRcQtyMacros);
-
-  document.getElementById('rc-modal-back').addEventListener('click', () => {
-    document.getElementById('rc-modal-step-search').hidden = false;
-    document.getElementById('rc-modal-step-qty').hidden    = true;
-    _rcModalAlim = null;
+  searchEl?.addEventListener('blur', () => {
+    setTimeout(() => {
+      listEl.innerHTML = '';
+      listEl.classList.remove('rc-alim-search-list--visible');
+      wrapEl.classList.remove('rc-alim-search-wrap--open');
+    }, 200);
   });
 
-  document.getElementById('rc-modal-confirm').addEventListener('click', () => {
-    if (!_rcModalAlim || !_rcCurrentId) return;
-    const qty = parseFloat(document.getElementById('rc-modal-qty-input').value);
+  // mousedown + touchstart pour éviter que le blur masque la liste avant la sélection
+  function pickAlimFromList(e) {
+    e.preventDefault();
+    const item = e.target.closest('[data-alim-pick]');
+    if (!item) return;
+    const alim = (window.ALIMENTS_DATA || []).find(a => a.id === item.dataset.alimPick);
+    if (alim) selectAlimForConfig(alim);
+  }
+  listEl?.addEventListener('mousedown', pickAlimFromList);
+  listEl?.addEventListener('touchstart', pickAlimFromList, { passive: false });
+
+  document.getElementById('rc-alim-config-confirm')?.addEventListener('click', () => {
+    if (!_rcAlimConfigSelectedAlim) return;
+    const qty = parseFloat(document.getElementById('rc-alim-config-qty')?.value);
     if (!qty || qty <= 0) return;
-    window.RECETTES_DB.addAliment(_rcCurrentId, _rcModalAlim.id, qty);
-    closeRcModal();
-    renderRcEdit();
+
+    if (_rcAlimConfigMode === 'draft') {
+      _rcDraftAliments.push({
+        alimId:   _rcAlimConfigSelectedAlim.id,
+        nom:      _rcAlimConfigSelectedAlim.nom,
+        type:     _rcAlimConfigSelectedAlim.type || 'gramme',
+        quantite: qty,
+      });
+      closeRcAlimConfigModal();
+      renderRcNewDraftList();
+    } else {
+      if (!_rcCurrentId) return;
+      window.RECETTES_DB.addAliment(_rcCurrentId, _rcAlimConfigSelectedAlim.id, qty);
+      closeRcAlimConfigModal();
+      renderRcEdit();
+    }
+  });
+}
+
+/* ── Modale nouvelle recette ── */
+
+function openRcNewModal() {
+  _rcDraftAliments = [];
+  const nomInput = document.getElementById('rc-new-nom');
+  if (nomInput) nomInput.value = '';
+  renderRcNewDraftList();
+  const modal = document.getElementById('rc-new-modal');
+  if (modal) modal.classList.add('rc-new-modal--open');
+  setTimeout(() => nomInput?.focus(), 80);
+}
+
+function closeRcNewModal() {
+  document.getElementById('rc-new-modal')?.classList.remove('rc-new-modal--open');
+  _rcDraftAliments = [];
+}
+
+function renderRcNewDraftList() {
+  const list = document.getElementById('rc-new-draft-list');
+  if (!list) return;
+  if (!_rcDraftAliments.length) {
+    list.innerHTML = '';
+    return;
+  }
+  list.innerHTML = _rcDraftAliments.map((item, idx) => `
+    <div class="rc-new-draft-item">
+      <div>
+        <div class="rc-new-draft-item__name">${item.nom}</div>
+        <div class="rc-new-draft-item__qty">${item.quantite} ${item.type === 'unite' ? 'unité(s)' : 'g'}</div>
+      </div>
+      <button class="rc-new-draft-item__del" data-draft-del="${idx}" aria-label="Supprimer">✕</button>
+    </div>`).join('');
+  list.querySelectorAll('[data-draft-del]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      _rcDraftAliments.splice(parseInt(btn.dataset.draftDel, 10), 1);
+      renderRcNewDraftList();
+    });
+  });
+}
+
+function bindRcNewModalEvents() {
+  document.getElementById('rc-new-backdrop')?.addEventListener('click', closeRcNewModal);
+  document.getElementById('rc-new-cancel')?.addEventListener('click', closeRcNewModal);
+
+  document.getElementById('rc-new-add-alim')?.addEventListener('click', () => {
+    openRcAlimConfigModal('draft');
+  });
+
+  document.getElementById('rc-new-save')?.addEventListener('click', () => {
+    const nom = (document.getElementById('rc-new-nom')?.value || '').trim() || 'Nouvelle recette';
+    const rec = window.RECETTES_DB.add(nom);
+    _rcDraftAliments.forEach(item => {
+      window.RECETTES_DB.addAliment(rec.id, item.alimId, item.quantite);
+    });
+    closeRcNewModal();
+    renderRcList();
   });
 }
 
@@ -730,11 +943,241 @@ function bindAlimentsEvents() {
   // FAB — ajouter un aliment
   const fab = document.getElementById('fab-add-aliment');
   if (fab) {
-    fab.addEventListener('click', () => {
-      // TODO : ouvrir le formulaire d'ajout
-      console.log('Ajouter un aliment');
-    });
+    fab.addEventListener('click', openAlimNewModal);
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ONGLET 4 — ALIMENTS — CRÉATION
+═══════════════════════════════════════════════════════════════ */
+
+const CUSTOM_ALIM_KEY = 'ft_custom_aliments';
+
+function loadCustomAliments() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(CUSTOM_ALIM_KEY) || '[]');
+    stored.forEach(a => {
+      if (!(window.ALIMENTS_DATA || []).find(x => x.id === a.id)) {
+        (window.ALIMENTS_DATA = window.ALIMENTS_DATA || []).push(a);
+      }
+    });
+  } catch (e) {}
+}
+
+function _saveCustomAliment(alim) {
+  const stored = JSON.parse(localStorage.getItem(CUSTOM_ALIM_KEY) || '[]');
+  stored.push(alim);
+  localStorage.setItem(CUSTOM_ALIM_KEY, JSON.stringify(stored));
+  (window.ALIMENTS_DATA = window.ALIMENTS_DATA || []).push(alim);
+}
+
+// Type par défaut selon la catégorie
+const CATEGORY_TYPE_MAP = {
+  'Viandes':          'gramme',
+  'Poissons':         'gramme',
+  'Féculents':        'gramme',
+  'Légumes':          'gramme',
+  'Produits laitiers':'gramme',
+  'Fruits':           'unite',
+  'Boissons':         'ml',
+  'Autres':           'gramme',
+};
+
+// Libellé de l'unité selon le type
+const TYPE_UNIT_LABEL = {
+  gramme: 'g',
+  ml:     'ml',
+  unite:  'unité(s)',
+};
+
+// Portion de référence par défaut selon le type
+const TYPE_DEFAULT_PORTION = {
+  gramme: 100,
+  ml:     100,
+  unite:  1,
+};
+
+let _alimNewType    = 'gramme';
+let _alimNewCat     = 'Autres';
+let _alimNewKind    = 'simple'; // 'simple' | 'produit'
+
+// Applique un type de portion : toggle + portion + unité
+function _applyAlimType(type) {
+  _alimNewType = type;
+  document.querySelectorAll('[data-alim-type]').forEach(b => {
+    b.classList.toggle('alim-new__toggle--active', b.dataset.alimType === type);
+  });
+  const portionEl   = document.getElementById('alim-new-portion');
+  const portionUnit = document.getElementById('alim-new-portion-unit');
+  if (portionEl)   portionEl.value        = TYPE_DEFAULT_PORTION[type] ?? 100;
+  if (portionUnit) portionUnit.textContent = TYPE_UNIT_LABEL[type]     ?? 'g';
+}
+
+// Applique le mode simple / produit
+function _applyAlimKind(kind) {
+  _alimNewKind = kind;
+
+  // Boutons kind
+  document.querySelectorAll('[data-alim-kind]').forEach(b => {
+    b.classList.toggle('alim-new__kind--active', b.dataset.alimKind === kind);
+  });
+
+  const isProduit      = kind === 'produit';
+  const titleEl        = document.getElementById('alim-new-title');
+  const nomLabelEl     = document.getElementById('alim-new-nom-label');
+  const nomEl          = document.getElementById('alim-new-nom');
+  const marqueField    = document.getElementById('alim-new-marque-field');
+  const macrosBtn      = document.getElementById('alim-new-macros-btn');
+  const macrosSection  = document.getElementById('alim-new-macros-section');
+  const portionLabelEl = document.getElementById('alim-new-portion-label');
+
+  if (titleEl)        titleEl.textContent      = isProduit ? 'Nouveau produit' : 'Nouvel aliment';
+  if (nomLabelEl)     nomLabelEl.textContent   = isProduit ? 'Nom du produit'  : 'Nom de l\'aliment';
+  if (nomEl)          nomEl.placeholder        = isProduit ? 'Ex : Yaourt nature, Soupe tomate…' : 'Ex : Poulet, Riz, Banane…';
+  if (portionLabelEl) portionLabelEl.textContent = isProduit ? 'Portion du produit' : 'Portion de référence';
+
+  if (marqueField) marqueField.hidden = !isProduit;
+
+  if (isProduit) {
+    // Macros toujours visibles pour un produit
+    if (macrosBtn)     macrosBtn.hidden     = true;
+    if (macrosSection) macrosSection.hidden = false;
+  } else {
+    // Macros optionnelles pour un aliment simple
+    if (macrosBtn)     macrosBtn.hidden     = false;
+    if (macrosSection) macrosSection.hidden = true;
+    if (macrosBtn)     macrosBtn.textContent = '+ Ajouter infos nutritionnelles';
+  }
+}
+
+function openAlimNewModal() {
+  _alimNewType = 'gramme';
+  _alimNewCat  = 'Autres';
+  _alimNewKind = 'simple';
+
+  const nomEl = document.getElementById('alim-new-nom');
+  if (nomEl) nomEl.value = '';
+
+  const marqueEl = document.getElementById('alim-new-marque');
+  if (marqueEl) marqueEl.value = '';
+
+  _applyAlimType('gramme');
+  _applyAlimKind('simple');
+
+  document.querySelectorAll('#alim-new-cat-chips [data-alim-cat]').forEach(chip => {
+    chip.classList.toggle('alim-new__cat-chip--active', chip.dataset.alimCat === 'Autres');
+  });
+
+  ['alim-new-kcal', 'alim-new-prot', 'alim-new-gluc', 'alim-new-lip'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+
+  const saveBtn = document.getElementById('alim-new-save');
+  if (saveBtn) saveBtn.disabled = true;
+
+  document.getElementById('alim-new-modal')?.classList.add('alim-new-modal--open');
+  setTimeout(() => nomEl?.focus(), 80);
+}
+
+function closeAlimNewModal() {
+  document.getElementById('alim-new-modal')?.classList.remove('alim-new-modal--open');
+}
+
+function bindAlimNewModalEvents() {
+  document.getElementById('alim-new-backdrop')?.addEventListener('click', closeAlimNewModal);
+  document.getElementById('alim-new-cancel')?.addEventListener('click', closeAlimNewModal);
+
+  // Toggle kind (simple / produit)
+  document.querySelectorAll('[data-alim-kind]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      _applyAlimKind(btn.dataset.alimKind);
+      // Vérifier si le nom est déjà rempli pour activer le bouton
+      const nom = document.getElementById('alim-new-nom')?.value.trim();
+      const saveBtn = document.getElementById('alim-new-save');
+      if (saveBtn) saveBtn.disabled = !nom;
+    });
+  });
+
+  // Activer le bouton Créer dès qu'un nom est saisi
+  const nomEl = document.getElementById('alim-new-nom');
+  nomEl?.addEventListener('input', () => {
+    const saveBtn = document.getElementById('alim-new-save');
+    if (saveBtn) saveBtn.disabled = !nomEl.value.trim();
+  });
+
+  // Toggle manuel du type (gramme / ml / unité)
+  document.querySelectorAll('[data-alim-type]').forEach(btn => {
+    btn.addEventListener('click', () => _applyAlimType(btn.dataset.alimType));
+  });
+
+  // Chips catégorie → type automatique
+  const catChips = document.getElementById('alim-new-cat-chips');
+  catChips?.addEventListener('click', e => {
+    const chip = e.target.closest('[data-alim-cat]');
+    if (!chip) return;
+    _alimNewCat = chip.dataset.alimCat;
+    catChips.querySelectorAll('[data-alim-cat]').forEach(c => {
+      c.classList.toggle('alim-new__cat-chip--active', c.dataset.alimCat === _alimNewCat);
+    });
+    _applyAlimType(CATEGORY_TYPE_MAP[_alimNewCat] || 'gramme');
+  });
+
+  // Toggle infos nutritionnelles (aliment simple uniquement)
+  const macrosBtn     = document.getElementById('alim-new-macros-btn');
+  const macrosSection = document.getElementById('alim-new-macros-section');
+  macrosBtn?.addEventListener('click', () => {
+    if (!macrosSection) return;
+    macrosSection.hidden = !macrosSection.hidden;
+    macrosBtn.textContent = macrosSection.hidden
+      ? '+ Ajouter infos nutritionnelles'
+      : '— Masquer infos nutritionnelles';
+  });
+
+  // Enregistrer
+  document.getElementById('alim-new-save')?.addEventListener('click', () => {
+    const nom = document.getElementById('alim-new-nom')?.value.trim();
+    if (!nom) return;
+
+    const portion = parseFloat(document.getElementById('alim-new-portion')?.value)
+      || (TYPE_DEFAULT_PORTION[_alimNewType] ?? 100);
+    const kcal = parseFloat(document.getElementById('alim-new-kcal')?.value) || 0;
+    const prot = parseFloat(document.getElementById('alim-new-prot')?.value) || 0;
+    const gluc = parseFloat(document.getElementById('alim-new-gluc')?.value) || 0;
+    const lip  = parseFloat(document.getElementById('alim-new-lip')?.value)  || 0;
+
+    const unitSuffix = { gramme: ' / 100g', ml: ' / 100ml', unite: ' / unité' }[_alimNewType] || ' / 100g';
+    let detail = '';
+    if (kcal > 0) {
+      detail = `${kcal} kcal`;
+      if (prot > 0) detail += ` · ${prot}g protéines`;
+      detail += unitSuffix;
+    } else {
+      detail = _alimNewType === 'unite' ? '1 unité' : `pour ${portion}${TYPE_UNIT_LABEL[_alimNewType] || 'g'}`;
+    }
+
+    const alim = {
+      id:               'custom-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+      nom,
+      typeAliment:      _alimNewKind,
+      categorie:        _alimNewCat,
+      detail,
+      type:             _alimNewType,
+      portionReference: portion,
+      m:                { k: kcal, p: prot, g: gluc, l: lip },
+      custom:           true,
+    };
+
+    if (_alimNewKind === 'produit') {
+      const marque = document.getElementById('alim-new-marque')?.value.trim();
+      if (marque) alim.marque = marque;
+    }
+    if (_alimNewType === 'unite') alim.unitWeight = portion;
+
+    _saveCustomAliment(alim);
+    closeAlimNewModal();
+    renderAlimentsPanel();
+  });
 }
 
 /* ═══════════════════════════════════════════════════════════════

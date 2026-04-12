@@ -6,6 +6,7 @@
   <title>FitTrack — Alimentation</title>
   <link rel="stylesheet" href="../navbar.css">
   <link rel="stylesheet" href="alimentation.css">
+  <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
 </head>
 <body>
 
@@ -401,53 +402,300 @@
     </div>
   </div>
 
-  <!-- ── Modale ajout ingrédient (Recettes) ── -->
-  <div class="aj-modal" id="rc-modal" role="dialog" aria-modal="true" aria-label="Ajouter un ingrédient" hidden>
-    <div class="aj-modal__backdrop" id="rc-modal-backdrop"></div>
-    <div class="aj-modal__sheet">
-      <div class="aj-modal__header">
-        <span class="aj-modal__title">Ajouter un ingrédient</span>
-        <button class="aj-modal__close" id="rc-modal-close" aria-label="Fermer">
+  <!-- ── Picker plein écran sélection aliment (Recettes) ── -->
+  <div class="rc-picker" id="rc-picker" role="dialog" aria-modal="true" aria-label="Ajouter un aliment">
+
+    <div class="rc-picker__header">
+      <button class="rc-picker__back" id="rc-picker-back" type="button" aria-label="Retour à la recette">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+             width="18" height="18" aria-hidden="true">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </button>
+      <span class="rc-picker__title">Ajouter un aliment</span>
+    </div>
+
+    <div class="rc-picker__search">
+      <div class="search-bar">
+        <span class="search-bar__icon" aria-hidden="true">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-               width="18" height="18">
-            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
+        </span>
+        <input class="search-bar__input" type="search" id="rc-picker-search"
+               placeholder="Rechercher un aliment…" aria-label="Rechercher">
+      </div>
+      <div class="filter-chips" id="rc-picker-chips" role="group" aria-label="Filtrer par catégorie">
+        <span class="chip chip--active" data-rc-cat="">Tous</span>
+        <span class="chip" data-rc-cat="Viandes">Viandes</span>
+        <span class="chip" data-rc-cat="Poissons">Poissons</span>
+        <span class="chip" data-rc-cat="Fruits">Fruits</span>
+        <span class="chip" data-rc-cat="Légumes">Légumes</span>
+        <span class="chip" data-rc-cat="Féculents">Féculents</span>
+        <span class="chip" data-rc-cat="Produits laitiers">Produits laitiers</span>
+        <span class="chip" data-rc-cat="Boissons">Boissons</span>
+        <span class="chip" data-rc-cat="Autres">Autres</span>
+      </div>
+    </div>
+
+    <div class="rc-picker__list" id="rc-picker-list"></div>
+
+  </div>
+
+  <!-- ── Modale nouvelle recette ── -->
+  <div class="aj-modal" id="rc-new-modal" role="dialog" aria-modal="true" aria-label="Nouvelle recette">
+    <div class="aj-modal__backdrop" id="rc-new-backdrop"></div>
+    <div class="aj-modal__sheet rc-new-modal__sheet">
+      <div class="rc-new-modal__handle" aria-hidden="true"></div>
+      <h2 class="rc-new-modal__title">Nouvelle recette</h2>
+      <p  class="rc-new-modal__subtitle">Crée une recette enregistrée</p>
+
+      <div class="form-field">
+        <label class="form-field__label" for="rc-new-nom">Nom de la recette</label>
+        <input type="text" id="rc-new-nom" class="form-field__input"
+               placeholder="Ex : Bol protéiné, Salade niçoise…" autocomplete="off">
+      </div>
+
+      <div class="form-field">
+        <span class="form-field__label">Ingrédients</span>
+        <div id="rc-new-draft-list"></div>
+        <button type="button" id="rc-new-add-alim" class="rc-new__add-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+               width="13" height="13" aria-hidden="true">
+            <line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/>
+          </svg>
+          Ajouter un aliment
         </button>
       </div>
-      <!-- Étape 1 : choisir un aliment -->
-      <div id="rc-modal-step-search">
-        <div class="search-bar" style="margin:0 0 0.75rem">
-          <span class="search-bar__icon" aria-hidden="true">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-          </span>
-          <input class="search-bar__input" type="search" id="rc-modal-search" placeholder="Rechercher…">
+
+      <button type="button" id="rc-new-save" class="rc-new__save-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+             width="16" height="16" aria-hidden="true">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        Enregistrer la recette
+      </button>
+
+      <button type="button" id="rc-new-cancel" class="rc-new__cancel">Annuler</button>
+    </div>
+  </div>
+
+  <!-- ── Modale config aliment (Recettes) ── -->
+  <div class="aj-modal" id="rc-alim-config-modal" role="dialog" aria-modal="true" aria-label="Ajouter un aliment">
+    <div class="aj-modal__backdrop" id="rc-alim-config-backdrop"></div>
+    <div class="aj-modal__sheet">
+      <div class="rc-new-modal__handle" aria-hidden="true"></div>
+      <h2 class="rc-new-modal__title">Ajouter un aliment</h2>
+
+      <div class="form-field">
+        <span class="form-field__label">Aliment</span>
+        <div class="rc-alim-search-wrap" id="rc-alim-search-wrap">
+          <input type="search" id="rc-alim-config-search" class="form-field__input"
+                 placeholder="Rechercher un aliment…" autocomplete="off" autocorrect="off" autocapitalize="off">
+          <div class="rc-alim-search-list" id="rc-alim-config-list"></div>
         </div>
-        <div class="aj-modal__list" id="rc-modal-list"></div>
       </div>
-      <!-- Étape 2 : saisir la quantité -->
-      <div id="rc-modal-step-qty" hidden>
-        <div class="aj-modal__alim-preview" id="rc-modal-preview"></div>
-        <div class="aj-modal__qty-row">
-          <label class="aj-modal__qty-label" for="rc-modal-qty-input" id="rc-modal-qty-label">Quantité (g)</label>
-          <input class="aj-modal__qty-input" type="number" id="rc-modal-qty-input"
-                 min="1" max="2000" value="100" inputmode="numeric">
-          <span class="rc-modal__qty-unit" id="rc-modal-qty-unit">g</span>
+
+      <div class="form-field">
+        <label class="form-field__label" for="rc-alim-config-qty">Quantité</label>
+        <div class="rc-alim-config__qty-row">
+          <input type="number" id="rc-alim-config-qty" class="form-field__input"
+                 value="100" min="1" max="2000" inputmode="numeric">
+          <span id="rc-alim-config-unit" class="rc-alim-config__unit">g</span>
         </div>
-        <div class="aj-modal__qty-macros" id="rc-modal-qty-macros"></div>
-        <div class="aj-modal__actions">
-          <button class="aj-modal__btn-back" id="rc-modal-back">← Retour</button>
-          <button class="aj-modal__btn-confirm" id="rc-modal-confirm">Ajouter</button>
+      </div>
+
+      <button type="button" id="rc-alim-config-confirm" class="rc-new__save-btn" disabled>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+             width="16" height="16" aria-hidden="true">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        Ajouter
+      </button>
+      <button type="button" id="rc-alim-config-cancel" class="rc-new__cancel">Annuler</button>
+    </div>
+  </div>
+
+  <!-- ── Modale création aliment ── -->
+  <div class="aj-modal" id="alim-new-modal" role="dialog" aria-modal="true" aria-label="Nouvel aliment">
+    <div class="aj-modal__backdrop" id="alim-new-backdrop"></div>
+    <div class="aj-modal__sheet">
+      <div class="rc-new-modal__handle" aria-hidden="true"></div>
+      <h2 class="rc-new-modal__title" id="alim-new-title">Nouvel aliment</h2>
+
+      <!-- ── Type d'aliment ── -->
+      <div class="form-field">
+        <span class="form-field__label">Type d'aliment</span>
+        <div class="alim-new__kind-row">
+          <button type="button" class="alim-new__kind alim-new__kind--active" data-alim-kind="simple">
+            <span class="alim-new__kind-icon">🥦</span>
+            <span class="alim-new__kind-label">Aliment simple</span>
+          </button>
+          <button type="button" class="alim-new__kind" data-alim-kind="produit">
+            <span class="alim-new__kind-icon">📦</span>
+            <span class="alim-new__kind-label">Produit emballé</span>
+          </button>
         </div>
+      </div>
+
+      <!-- ── Bouton scanner ── -->
+      <button type="button" id="alim-scan-btn" class="alim-new__scan-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             width="18" height="18" aria-hidden="true">
+          <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+          <circle cx="12" cy="13" r="4"/>
+        </svg>
+        Scanner un produit
+      </button>
+
+      <!-- ── Nom ── -->
+      <div class="form-field">
+        <label class="form-field__label" for="alim-new-nom" id="alim-new-nom-label">Nom de l'aliment</label>
+        <input type="text" id="alim-new-nom" class="form-field__input"
+               placeholder="Ex : Poulet, Riz, Banane…" autocomplete="off" autocorrect="off" autocapitalize="sentences">
+      </div>
+
+      <!-- ── Marque (produit seulement) ── -->
+      <div class="form-field alim-new__produit-only" id="alim-new-marque-field" hidden>
+        <label class="form-field__label" for="alim-new-marque">Marque</label>
+        <input type="text" id="alim-new-marque" class="form-field__input"
+               placeholder="Ex : Danone, Bonduelle, Nestlé…" autocomplete="off" autocorrect="off" autocapitalize="sentences">
+      </div>
+
+      <!-- ── Catégorie ── -->
+      <div class="form-field">
+        <span class="form-field__label">Catégorie</span>
+        <div class="alim-new__cat-chips" id="alim-new-cat-chips">
+          <span class="alim-new__cat-chip alim-new__cat-chip--active" data-alim-cat="Autres">Autres</span>
+          <span class="alim-new__cat-chip" data-alim-cat="Viandes">Viandes</span>
+          <span class="alim-new__cat-chip" data-alim-cat="Poissons">Poissons</span>
+          <span class="alim-new__cat-chip" data-alim-cat="Fruits">Fruits</span>
+          <span class="alim-new__cat-chip" data-alim-cat="Légumes">Légumes</span>
+          <span class="alim-new__cat-chip" data-alim-cat="Féculents">Féculents</span>
+          <span class="alim-new__cat-chip" data-alim-cat="Produits laitiers">Produits laitiers</span>
+          <span class="alim-new__cat-chip" data-alim-cat="Boissons">Boissons</span>
+        </div>
+      </div>
+
+      <!-- ── Type de portion ── -->
+      <div class="form-field">
+        <span class="form-field__label">Type de portion</span>
+        <div class="alim-new__toggle-row">
+          <button type="button" class="alim-new__toggle alim-new__toggle--active" data-alim-type="gramme">Grammes</button>
+          <button type="button" class="alim-new__toggle" data-alim-type="ml">ml</button>
+          <button type="button" class="alim-new__toggle" data-alim-type="unite">Unité</button>
+        </div>
+      </div>
+
+      <!-- ── Portion de référence ── -->
+      <div class="form-field">
+        <label class="form-field__label" for="alim-new-portion" id="alim-new-portion-label">Portion de référence</label>
+        <div class="rc-alim-config__qty-row">
+          <input type="number" id="alim-new-portion" class="form-field__input"
+                 value="100" min="1" max="5000" inputmode="numeric">
+          <span id="alim-new-portion-unit" class="rc-alim-config__unit">g</span>
+        </div>
+      </div>
+
+      <!-- ── Macros (toggle pour simple, toujours visible pour produit) ── -->
+      <button type="button" id="alim-new-macros-btn" class="alim-new__macros-btn">
+        + Ajouter infos nutritionnelles
+      </button>
+
+      <div id="alim-new-macros-section" hidden>
+        <div class="alim-new__macros-grid">
+          <div class="form-field">
+            <label class="form-field__label" for="alim-new-kcal">Calories</label>
+            <div class="rc-alim-config__qty-row">
+              <input type="number" id="alim-new-kcal" class="form-field__input"
+                     placeholder="0" min="0" inputmode="numeric">
+              <span class="rc-alim-config__unit">kcal</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <label class="form-field__label" for="alim-new-prot">Protéines</label>
+            <div class="rc-alim-config__qty-row">
+              <input type="number" id="alim-new-prot" class="form-field__input"
+                     placeholder="0" min="0" step="0.1" inputmode="decimal">
+              <span class="rc-alim-config__unit">g</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <label class="form-field__label" for="alim-new-gluc">Glucides</label>
+            <div class="rc-alim-config__qty-row">
+              <input type="number" id="alim-new-gluc" class="form-field__input"
+                     placeholder="0" min="0" step="0.1" inputmode="decimal">
+              <span class="rc-alim-config__unit">g</span>
+            </div>
+          </div>
+          <div class="form-field">
+            <label class="form-field__label" for="alim-new-lip">Lipides</label>
+            <div class="rc-alim-config__qty-row">
+              <input type="number" id="alim-new-lip" class="form-field__input"
+                     placeholder="0" min="0" step="0.1" inputmode="decimal">
+              <span class="rc-alim-config__unit">g</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button type="button" id="alim-new-save" class="rc-new__save-btn" disabled>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+             width="16" height="16" aria-hidden="true">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+        Créer l'aliment
+      </button>
+      <button type="button" id="alim-new-cancel" class="rc-new__cancel">Annuler</button>
+    </div>
+  </div>
+
+  <!-- ══ Overlay scanner code-barres ══ -->
+  <div id="scan-overlay" role="dialog" aria-modal="true" aria-label="Scanner code-barres" hidden>
+    <div id="scan-container">
+      <div id="scan-header">
+        <button type="button" id="scan-cancel-btn" class="scan-header-btn" aria-label="Fermer le scanner">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+               width="20" height="20"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <span class="scan-header-title">Scanner un produit</span>
+        <button type="button" id="scan-flash-btn" class="scan-header-btn scan-flash-btn" aria-label="Activer le flash" hidden>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+               width="20" height="20"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </button>
+      </div>
+
+      <div id="scan-video-wrapper">
+        <video id="scan-video" playsinline autoplay muted></video>
+        <div id="scan-frame">
+          <div class="scan-corner scan-corner--tl"></div>
+          <div class="scan-corner scan-corner--tr"></div>
+          <div class="scan-corner scan-corner--bl"></div>
+          <div class="scan-corner scan-corner--br"></div>
+          <div id="scan-line"></div>
+        </div>
+      </div>
+
+      <div id="scan-info">
+        <p id="scan-status" class="scan-status">Pointez le code-barres du produit</p>
+        <p id="scan-hint" class="scan-hint">Compatible EAN-13 · EAN-8 · UPC</p>
+        <div id="scan-actions"></div>
       </div>
     </div>
   </div>
 
   <script src="../js/data.js"></script>
   <script src="../js/alimentation.js"></script>
+  <script src="../js/scanner.js"></script>
 
 </body>
 </html>
