@@ -82,7 +82,7 @@
           <line x1="21" y1="15" x2="21" y2="22"/>
         </svg>
       </span>
-      <span class="tab-btn__label">Menu</span>
+      <span class="tab-btn__label">Repas</span>
     </label>
 
     <!-- Onglet 4 : Aliments -->
@@ -206,20 +206,60 @@
 
       <!-- Vue liste -->
       <div id="rc-list-view">
-        <div class="rc-empty" id="rc-empty">
+
+        <!-- En-tête + bouton créer -->
+        <div class="rc-header">
+          <div class="rc-header__left">
+            <h2 class="rc-header__title">Mes repas <span class="rc-header__count" id="rc-header-count"></span></h2>
+            <p class="rc-header__subtitle">Composez vos modèles de repas, planifiez votre semaine</p>
+          </div>
+          <button type="button" class="rc-header__create" id="rc-header-create" aria-label="Créer un repas">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none"
+                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                 width="13" height="13" aria-hidden="true">
+              <line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/>
+            </svg>
+            Créer
+          </button>
+        </div>
+
+        <!-- Recherche -->
+        <div class="rc-search">
+          <span class="rc-search__icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </span>
+          <input class="rc-search__input" type="search" id="rc-search-input"
+                 placeholder="Rechercher un repas…" aria-label="Rechercher un repas"
+                 autocomplete="off" autocorrect="off" autocapitalize="off">
+        </div>
+
+        <!-- État vide -->
+        <div class="rc-empty" id="rc-empty" hidden>
           <div class="rc-empty__icon" aria-hidden="true">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
-                 width="44" height="44">
+                 width="48" height="48">
               <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
               <path d="M7 2v20"/>
               <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3"/>
               <line x1="21" y1="15" x2="21" y2="22"/>
             </svg>
           </div>
-          <p class="rc-empty__title">Aucun menu</p>
-          <p class="rc-empty__hint">Appuyez sur <strong>+</strong> pour créer votre premier menu</p>
+          <p class="rc-empty__title">Aucun repas créé</p>
+          <p class="rc-empty__hint">Composez vos modèles de repas en associant des aliments, puis planifiez-les facilement chaque semaine.</p>
+          <button type="button" class="rc-empty__cta" id="rc-empty-cta">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none"
+                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                 width="13" height="13" aria-hidden="true">
+              <line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/>
+            </svg>
+            Créer mon premier repas
+          </button>
         </div>
+
         <div class="rc-list" id="rc-list"></div>
       </div>
 
@@ -235,7 +275,7 @@
             </svg>
           </button>
           <input class="rc-edit__name" id="rc-edit-name" type="text"
-                 placeholder="Nom du menu…" aria-label="Nom du menu">
+                 placeholder="Nom du repas…" aria-label="Nom du repas">
           <button class="rc-edit__delete" id="rc-edit-delete" aria-label="Supprimer la recette">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -271,6 +311,22 @@
     <!-- PANNEAU 4 : ALIMENTS -->
     <section class="tab-panel" id="alim-panel-aliments" role="tabpanel">
 
+      <!-- En-tête + bouton ajouter -->
+      <div class="al-header">
+        <div class="al-header__left">
+          <h2 class="al-header__title">Mes aliments <span class="al-header__count" id="al-header-count"></span></h2>
+          <p class="al-header__subtitle">Explorez la base ou créez les vôtres</p>
+        </div>
+        <button type="button" class="al-header__create" id="al-header-create" aria-label="Ajouter un aliment">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+               width="13" height="13" aria-hidden="true">
+            <line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/>
+          </svg>
+          Ajouter
+        </button>
+      </div>
+
       <div class="search-bar" role="search">
         <span class="search-bar__icon" aria-hidden="true">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
@@ -292,6 +348,7 @@
         <span class="chip" data-alim-cat="Féculents">Féculents</span>
         <span class="chip" data-alim-cat="Produits laitiers">Produits laitiers</span>
         <span class="chip" data-alim-cat="Boissons">Boissons</span>
+        <span class="chip" data-alim-cat="Compléments">Compléments</span>
         <span class="chip" data-alim-cat="Autres">Autres</span>
       </div>
 
@@ -381,7 +438,7 @@
   <!-- ===== FIN NAVBAR ===== -->
 
   <!-- ── Bottom-sheet "Détail menu planifié" ── -->
-  <div id="pl-menu-detail-sheet" role="dialog" aria-modal="true" aria-label="Détail du menu" hidden>
+  <div id="pl-menu-detail-sheet" role="dialog" aria-modal="true" aria-label="Détail du repas" hidden>
     <div class="pl-detail__backdrop" id="pl-detail-backdrop"></div>
     <div class="pl-detail__panel">
       <div class="pl-detail__handle"></div>
@@ -458,8 +515,8 @@
         <button class="aj-content-opt" id="aj-content-opt-recette">
           <span class="aj-content-opt__icon">🥗</span>
           <div class="aj-content-opt__body">
-            <span class="aj-content-opt__title">Un menu</span>
-            <span class="aj-content-opt__hint">Ajouter tous les aliments d'un menu</span>
+            <span class="aj-content-opt__title">Un repas</span>
+            <span class="aj-content-opt__hint">Ajouter tous les aliments d'un repas type</span>
           </div>
           <span class="aj-content-opt__arrow">›</span>
         </button>
@@ -481,8 +538,8 @@
     </div>
   </div>
 
-  <!-- ── Bottom-sheet "Ajouter un repas" (Planning) ── -->
-  <div class="aj-add-sheet" id="pl-add-sheet" role="dialog" aria-modal="true" aria-label="Ajouter un repas planifié" hidden>
+  <!-- ── Bottom-sheet "Planifier un repas" (Planning) ── -->
+  <div class="aj-add-sheet" id="pl-add-sheet" role="dialog" aria-modal="true" aria-label="Planifier un repas" hidden>
     <div class="aj-add-sheet__backdrop" id="pl-add-backdrop"></div>
     <div class="aj-add-sheet__panel">
 
@@ -494,7 +551,7 @@
             <polyline points="15 18 9 12 15 6"/>
           </svg>
         </button>
-        <span class="aj-modal__title" id="pl-add-title">Ajouter un repas</span>
+        <span class="aj-modal__title" id="pl-add-title">Planifier un repas</span>
         <button class="aj-modal__close" id="pl-add-close" aria-label="Fermer">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
@@ -532,7 +589,7 @@
 
       <!-- Étape 2 : choisir une recette -->
       <div id="pl-add-step-recette" hidden>
-        <p class="aj-add-sheet__subtitle">Choisir un menu</p>
+        <p class="aj-add-sheet__subtitle">Choisir un repas type</p>
         <div class="aj-add-sheet__rc-list" id="pl-add-rc-list"></div>
       </div>
 
@@ -649,13 +706,13 @@
   </div>
 
   <!-- ── Modale nouvelle recette ── -->
-  <div class="aj-modal" id="rc-new-modal" role="dialog" aria-modal="true" aria-label="Nouveau menu">
+  <div class="aj-modal" id="rc-new-modal" role="dialog" aria-modal="true" aria-label="Nouveau repas">
     <div class="aj-modal__backdrop" id="rc-new-backdrop"></div>
     <div class="aj-modal__sheet rc-new-modal__sheet">
       <div class="rc-new-modal__handle" aria-hidden="true"></div>
 
       <div class="aj-modal__header">
-        <h2 class="rc-new-modal__title">Nouveau menu</h2>
+        <h2 class="rc-new-modal__title">Nouveau repas</h2>
         <button type="button" id="rc-new-cancel" class="aj-modal__close" aria-label="Fermer">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
                stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
@@ -666,7 +723,7 @@
       </div>
 
       <div class="form-field">
-        <label class="form-field__label" for="rc-new-nom">Nom du menu</label>
+        <label class="form-field__label" for="rc-new-nom">Nom du repas</label>
         <input type="text" id="rc-new-nom" class="form-field__input"
                placeholder="Ex : Bol protéiné, Salade niçoise…" autocomplete="off">
       </div>
@@ -756,7 +813,7 @@
              width="16" height="16" aria-hidden="true">
           <polyline points="20 6 9 17 4 12"/>
         </svg>
-        Enregistrer le menu
+        Enregistrer le repas
       </button>
     </div>
   </div>
@@ -877,6 +934,7 @@
           <span class="alim-new__cat-chip" data-alim-cat="Féculents">Féculents</span>
           <span class="alim-new__cat-chip" data-alim-cat="Produits laitiers">Produits laitiers</span>
           <span class="alim-new__cat-chip" data-alim-cat="Boissons">Boissons</span>
+          <span class="alim-new__cat-chip" data-alim-cat="Compléments">Compléments</span>
         </div>
       </div>
 

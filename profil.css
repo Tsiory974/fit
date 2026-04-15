@@ -125,6 +125,29 @@ body {
 }
 
 /* ============================================================
+   BANDEAU EXPLICATIF (DÉVELOPPEMENT)
+   ============================================================ */
+.profil-dev-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0.75rem 1.125rem;
+  padding: 0.625rem 0.875rem;
+  background: rgba(57, 224, 122, 0.06);
+  border: 1px solid rgba(57, 224, 122, 0.15);
+  border-radius: 8px;
+  font-size: 0.72rem;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.profil-dev-notice svg {
+  flex-shrink: 0;
+  color: var(--accent);
+  margin-top: 1px;
+}
+
+/* ============================================================
    CARTE
    ============================================================ */
 .profil-card {

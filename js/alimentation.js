@@ -112,10 +112,12 @@ function renderAujourdhuiPanel() {
   mealsEl.innerHTML = '';
 
   // ── Repas planifiés pour aujourd'hui (lecture seule depuis MEAL_PLAN_DB) ──
-  const planToday  = window.MEAL_PLAN_DB ? window.MEAL_PLAN_DB.getDay(today) : { entries: [] };
-  const planEntries = planToday.entries || [];
+  const planToday     = window.MEAL_PLAN_DB ? window.MEAL_PLAN_DB.getDay(today) : { entries: [] };
+  const planEntries   = planToday.entries || [];
+  // N'afficher dans la bannière que les repas encore en attente (non consommés, non sautés)
+  const pendingEntries = planEntries.filter(e => !e.status || e.status === 'planifie');
 
-  if (planEntries.length > 0) {
+  if (pendingEntries.length > 0) {
     const planSection = document.createElement('div');
     planSection.className = 'aj-planned-section';
 
@@ -135,7 +137,7 @@ function renderAujourdhuiPanel() {
 
     // Grouper les entrées dans l'ordre des MEAL_KEYS
     const planByMeal = {};
-    planEntries.forEach(e => {
+    pendingEntries.forEach(e => {
       if (!planByMeal[e.mealKey]) planByMeal[e.mealKey] = [];
       planByMeal[e.mealKey].push(e);
     });
@@ -170,9 +172,51 @@ function renderAujourdhuiPanel() {
   if (filledMeals.length === 0) {
     const emptyEl = document.createElement('div');
     emptyEl.className = 'aj-meals-empty';
-    emptyEl.innerHTML = `
-      <div class="aj-meals-empty__icon" aria-hidden="true">🍽️</div>
-      <p class="aj-meals-empty__text">Aucun repas ajouté aujourd'hui</p>`;
+
+    if (pendingEntries.length === 0) {
+      // Vide total : rien planifié + rien consommé → pédagogie complète
+      emptyEl.innerHTML = `
+        <div class="aj-meals-empty__icon" aria-hidden="true">🍽️</div>
+        <p class="aj-meals-empty__title">Rien de consommé aujourd'hui</p>
+        <p class="aj-meals-empty__hint">Les barres ci-dessus se remplissent au fur et à mesure que tu enregistres tes repas.</p>
+        <div class="aj-meals-empty__explainer">
+          <span class="aj-meals-empty__explainer-label">💡 Comment ça marche</span>
+          <span class="aj-meals-empty__explainer-row">
+            <strong>Planning</strong> → ce que tu prévois de manger
+          </span>
+          <span class="aj-meals-empty__explainer-row">
+            <strong>Aujourd'hui</strong> → ce que tu as vraiment mangé
+          </span>
+        </div>
+        <label for="alim-planning" class="aj-meals-empty__cta" role="button">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+               width="14" height="14" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="18" rx="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8"  y1="2" x2="8"  y2="6"/>
+            <line x1="3"  y1="10" x2="21" y2="10"/>
+          </svg>
+          Voir le planning
+        </label>
+        <button class="aj-meals-empty__secondary" data-open-add-meal>
+          Ou ajouter un repas manuellement
+        </button>`;
+    } else {
+      // Des repas sont planifiés mais pas encore saisies → encourager à les valider
+      emptyEl.innerHTML = `
+        <div class="aj-meals-empty__icon" aria-hidden="true">🍽️</div>
+        <p class="aj-meals-empty__title">Aucun repas enregistré</p>
+        <p class="aj-meals-empty__hint">Validez vos repas planifiés ou ajoutez-en un manuellement.</p>
+        <button class="aj-meals-empty__cta" data-add-to-meal="dejeuner">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+               width="13" height="13" aria-hidden="true">
+            <line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/>
+          </svg>
+          Ajouter manuellement
+        </button>`;
+    }
     mealsEl.appendChild(emptyEl);
   } else {
     filledMeals.forEach(mk => {
@@ -198,7 +242,12 @@ function renderAujourdhuiPanel() {
           <span class="aj-meal__icon">${meta.icon}</span>
           <div class="aj-meal__info">
             <div class="aj-meal__name">${meta.label}</div>
-            <div class="aj-meal__kcal">${mData.items.length} aliment${mData.items.length > 1 ? 's' : ''} · ${mTotals.k} kcal</div>
+            <div class="aj-meal__kcal">${mData.items.length} aliment${mData.items.length > 1 ? 's' : ''} · <strong>${mTotals.k} kcal</strong></div>
+            <div class="aj-meal__macros">
+              <span class="aj-meal__macro aj-meal__macro--p">P <strong>${mTotals.p}g</strong></span>
+              <span class="aj-meal__macro aj-meal__macro--g">G <strong>${mTotals.g}g</strong></span>
+              <span class="aj-meal__macro aj-meal__macro--l">L <strong>${mTotals.l}g</strong></span>
+            </div>
           </div>
           <button class="aj-meal__check" data-validate-meal="${mk}" aria-label="Valider le repas">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
@@ -288,8 +337,8 @@ function bindAujourdhuiMealEvents() {
       return;
     }
 
-    // Bouton "Ajouter un repas"
-    if (e.target.closest('#btn-add-meal')) {
+    // Bouton "Ajouter un repas" (principal et secondaire état vide)
+    if (e.target.closest('#btn-add-meal') || e.target.closest('[data-open-add-meal]')) {
       openAddMealSheet();
       return;
     }
@@ -355,7 +404,7 @@ function _showAddSheetStep(step) {
     titleEl.textContent = meta.label;
   } else if (step === 'recette') {
     backBtn.hidden = false;
-    titleEl.textContent = 'Choisir un menu';
+    titleEl.textContent = 'Choisir un repas type';
   }
 }
 
@@ -364,7 +413,7 @@ function _renderAddSheetRecetteList() {
   if (!listEl) return;
   const recettes = window.RECETTES_DB.getAll();
   if (recettes.length === 0) {
-    listEl.innerHTML = '<p class="panel-placeholder" style="padding-top:1rem">Aucun menu enregistré</p>';
+    listEl.innerHTML = '<p class="panel-placeholder" style="padding-top:1rem">Aucun repas enregistré</p>';
     return;
   }
   listEl.innerHTML = recettes.map(rec => {
@@ -613,12 +662,27 @@ function renderPlanningPanel() {
       .filter(mk => entriesByMeal[mk] && entriesByMeal[mk].length > 0)
       .flatMap(mk => {
         const meta = MEAL_META[mk] || { label: mk, icon: '🍽️' };
-        return entriesByMeal[mk].map(e => `
-          <div class="pl-entry" data-entry-id="${e.id}" data-entry-date="${dateStr}">
+        return entriesByMeal[mk].map(e => {
+          // Calcul macros à la volée depuis la recette
+          const rec = window.RECETTES_DB ? window.RECETTES_DB.get(e.recetteId) : null;
+          const mac = rec ? window.RECETTES_DB.calcTotals(rec) : null;
+          const macrosHTML = mac ? `
+            <div class="pl-entry__macros">
+              <span class="pl-entry__macro pl-entry__macro--p">P <strong>${mac.p}g</strong></span>
+              <span class="pl-entry__macro pl-entry__macro--g">G <strong>${mac.g}g</strong></span>
+              <span class="pl-entry__macro pl-entry__macro--l">L <strong>${mac.l}g</strong></span>
+            </div>` : '';
+          const status = e.status || 'planifie';
+          const statusLabels = { planifie: 'Planifié', consomme: '✓ Consommé', saute: 'Sauté' };
+          const badgeHTML = `<span class="pl-entry__badge pl-entry__badge--${status}">${statusLabels[status]}</span>`;
+          return `
+          <div class="pl-entry pl-entry--${status}" data-entry-id="${e.id}" data-entry-date="${dateStr}">
             <span class="pl-entry__icon">${meta.icon}</span>
             <div class="pl-entry__body">
               <span class="pl-entry__meal">${meta.label}</span>
               <span class="pl-entry__name">${e.recetteNom}</span>
+              ${macrosHTML}
+              ${badgeHTML}
             </div>
             <span class="pl-entry__kcal">${e.totalKcal} kcal</span>
             <div class="pl-entry__btns">
@@ -645,8 +709,10 @@ function renderPlanningPanel() {
                 </svg>
               </button>
             </div>
-          </div>`);
-      }).join('');
+          </div>`;
+        }); // .map — retourne un tableau de strings
+      })    // .flatMap — aplatit en un seul tableau
+      .join('');
 
     const hasEntries = plan.entries.length > 0;
 
@@ -668,7 +734,7 @@ function renderPlanningPanel() {
                width="13" height="13" aria-hidden="true">
             <line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/>
           </svg>
-          Ajouter un repas
+          Planifier un repas
         </button>
         ${hasEntries ? `<button class="pl-day-card__copy-btn" data-copy-day="${dateStr}">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
@@ -756,10 +822,10 @@ function _showPlAddSheetStep(step) {
   const titleEl = document.getElementById('pl-add-title');
   if (step === 'type') {
     backBtn.hidden     = true;
-    titleEl.textContent = 'Ajouter un repas';
+    titleEl.textContent = 'Planifier un repas';
   } else {
     backBtn.hidden     = false;
-    titleEl.textContent = 'Choisir un menu';
+    titleEl.textContent = 'Choisir un repas type';
   }
 }
 
@@ -770,8 +836,8 @@ function _renderPlRecetteList() {
   if (recettes.length === 0) {
     listEl.innerHTML = `
       <div class="pl-rc-empty">
-        <p class="pl-rc-empty__text">Aucun menu enregistré.</p>
-        <p class="pl-rc-empty__hint">Créez d'abord un menu dans l'onglet <strong>Menu</strong>.</p>
+        <p class="pl-rc-empty__text">Aucun repas enregistré.</p>
+        <p class="pl-rc-empty__hint">Créez d'abord un repas dans l'onglet <strong>Repas</strong>.</p>
       </div>`;
     return;
   }
@@ -882,7 +948,8 @@ function bindDayPickSheetEvents() {
 ═══════════════════════════════════════════════════════════════ */
 
 // Recette en cours d'édition
-let _rcCurrentId  = null;
+let _rcCurrentId    = null;
+let _rcSearchQuery  = '';
 
 function renderRecettesPanel() {
   renderRcList();
@@ -892,43 +959,75 @@ function renderRecettesPanel() {
 function renderRcList() {
   const listEl  = document.getElementById('rc-list');
   const emptyEl = document.getElementById('rc-empty');
+  const countEl = document.getElementById('rc-header-count');
   if (!listEl) return;
 
-  const recipes = window.RECETTES_DB.getAll();
+  const allRecipes = window.RECETTES_DB.getAll();
+  const q = _rcSearchQuery.trim().toLowerCase();
+  const recipes = q
+    ? allRecipes.filter(r => r.nom.toLowerCase().includes(q))
+    : allRecipes;
 
-  if (recipes.length === 0) {
+  // Mise à jour du compteur dans le header
+  if (countEl) {
+    countEl.textContent = allRecipes.length > 0
+      ? `${allRecipes.length} repas`
+      : '';
+  }
+
+  // État vide (aucun menu créé du tout)
+  if (allRecipes.length === 0) {
     if (emptyEl) emptyEl.hidden = false;
     listEl.innerHTML = '';
     return;
   }
-
   if (emptyEl) emptyEl.hidden = true;
+
+  // Aucun résultat de recherche
+  if (recipes.length === 0) {
+    listEl.innerHTML = '<p class="rc-no-result">Aucun repas ne correspond à votre recherche.</p>';
+    return;
+  }
 
   listEl.innerHTML = recipes.map(rec => {
     const totals = window.RECETTES_DB.calcTotals(rec);
     const count  = rec.aliments.length;
+    const hasNutrition = count > 0;
     return `
       <div class="rc-card" data-rc-id="${rec.id}">
-        <div class="rc-card__body">
-          <div class="rc-card__name">${rec.nom}</div>
-          <div class="rc-card__info">
-            ${count} ingrédient${count > 1 ? 's' : ''} · ${totals.k} kcal
-          </div>
+        <div class="rc-card__toprow">
+          <span class="rc-card__name">${rec.nom}</span>
+          <button class="rc-card__del" data-rc-del="${rec.id}" aria-label="Supprimer ${rec.nom}">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none"
+                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                 width="11" height="11" aria-hidden="true">
+              <line x1="2" y1="2" x2="14" y2="14"/><line x1="14" y1="2" x2="2" y2="14"/>
+            </svg>
+          </button>
         </div>
-        <button class="rc-card__del" data-rc-del="${rec.id}" aria-label="Supprimer ${rec.nom}">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none"
-               stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
-               width="12" height="12" aria-hidden="true">
-            <line x1="2" y1="2" x2="14" y2="14"/><line x1="14" y1="2" x2="2" y2="14"/>
-          </svg>
-        </button>
+        <span class="rc-card__count">${count} ingrédient${count > 1 ? 's' : ''}</span>
+        ${hasNutrition ? `
+        <div class="rc-card__nutrition">
+          <div class="rc-card__kcal">
+            ${totals.k}<span class="rc-card__kcal-unit"> kcal</span>
+          </div>
+          <div class="rc-card__macros">
+            <span class="rc-card__macro rc-card__macro--p">P <strong>${totals.p}g</strong></span>
+            <span class="rc-card__macro rc-card__macro--g">G <strong>${totals.g}g</strong></span>
+            <span class="rc-card__macro rc-card__macro--l">L <strong>${totals.l}g</strong></span>
+          </div>
+        </div>` : `<p class="rc-card__no-ingredients">Aucun ingrédient — appuyez pour modifier</p>`}
       </div>`;
   }).join('');
 }
 
 /* ── Vue édition ── */
 function showRcList() {
-  _rcCurrentId = null;
+  _rcCurrentId   = null;
+  _rcSearchQuery = '';
+  const searchInput = document.getElementById('rc-search-input');
+  if (searchInput) searchInput.value = '';
+
   const listView = document.getElementById('rc-list-view');
   const editView = document.getElementById('rc-edit-view');
   if (listView) listView.hidden = false;
@@ -1025,6 +1124,21 @@ function bindRecettesEvents() {
     fab.addEventListener('click', openRcNewModal);
   }
 
+  // Bouton header "Créer" → même action
+  document.getElementById('rc-header-create')?.addEventListener('click', openRcNewModal);
+
+  // Bouton CTA état vide → même action
+  document.getElementById('rc-empty-cta')?.addEventListener('click', openRcNewModal);
+
+  // Recherche live
+  const searchInput = document.getElementById('rc-search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      _rcSearchQuery = searchInput.value;
+      renderRcList();
+    });
+  }
+
   // Retour à la liste
   const backBtn = document.getElementById('rc-back');
   if (backBtn) {
@@ -1050,7 +1164,7 @@ function bindRecettesEvents() {
   if (delBtn) {
     delBtn.addEventListener('click', () => {
       if (!_rcCurrentId) return;
-      if (window.confirm('Supprimer ce menu ?')) {
+      if (window.confirm('Supprimer ce repas ?')) {
         window.RECETTES_DB.delete(_rcCurrentId);
         showRcList();
       }
@@ -1096,7 +1210,7 @@ function bindRecettesEvents() {
     listEl.addEventListener('click', e => {
       const delBtn = e.target.closest('[data-rc-del]');
       if (delBtn) {
-        if (window.confirm('Supprimer ce menu ?')) {
+        if (window.confirm('Supprimer ce repas ?')) {
           window.RECETTES_DB.delete(delBtn.dataset.rcDel);
           renderRcList();
         }
@@ -1584,7 +1698,7 @@ function bindRcNewModalEvents() {
 
   // ── Enregistrer le menu ──
   document.getElementById('rc-new-save')?.addEventListener('click', () => {
-    const nom = (document.getElementById('rc-new-nom')?.value || '').trim() || 'Nouveau menu';
+    const nom = (document.getElementById('rc-new-nom')?.value || '').trim() || 'Nouveau repas';
     const rec = window.RECETTES_DB.add(nom);
     _rcDraftAliments.forEach(item => {
       window.RECETTES_DB.addAliment(rec.id, item.alimId, item.quantite);
@@ -1600,10 +1714,11 @@ function bindRcNewModalEvents() {
 
 function renderAlimentsPanel() {
   const container = document.getElementById('aliments-list');
+  const countEl   = document.getElementById('al-header-count');
   if (!container) return;
 
-  const data = window.ALIMENTS_DATA || [];
-  const slugs = window.CAT_SLUG    || {};
+  const data  = window.ALIMENTS_DATA || [];
+  const slugs = window.CAT_SLUG || {};
   const q     = currentAlimSearch.trim().toLowerCase();
 
   const filtered = data.filter(a => {
@@ -1612,12 +1727,48 @@ function renderAlimentsPanel() {
     return matchSearch && matchCat;
   });
 
+  // Compteur dans le header (total, pas filtré)
+  if (countEl) {
+    countEl.textContent = data.length > 0 ? `${data.length}` : '';
+  }
+
+  // État vide
   if (filtered.length === 0) {
-    container.innerHTML = '<p class="panel-placeholder">Aucun aliment trouvé</p>';
+    const isFiltered = q || currentAlimCategorie;
+    container.innerHTML = isFiltered
+      ? `<div class="al-empty">
+           <p class="al-empty__title">Aucun aliment trouvé</p>
+           <p class="al-empty__hint">Essayez un autre mot-clé ou changez de catégorie.</p>
+         </div>`
+      : `<div class="al-empty">
+           <div class="al-empty__icon" aria-hidden="true">
+             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                  width="48" height="48">
+               <line x1="8" y1="6" x2="21" y2="6"/>
+               <line x1="8" y1="12" x2="21" y2="12"/>
+               <line x1="8" y1="18" x2="21" y2="18"/>
+               <circle cx="3.5" cy="6"  r="1.5" fill="currentColor" stroke="none"/>
+               <circle cx="3.5" cy="12" r="1.5" fill="currentColor" stroke="none"/>
+               <circle cx="3.5" cy="18" r="1.5" fill="currentColor" stroke="none"/>
+             </svg>
+           </div>
+           <p class="al-empty__title">Aucun aliment</p>
+           <p class="al-empty__hint">Créez votre premier aliment personnalisé pour le retrouver ici.</p>
+           <button type="button" class="al-empty__cta" id="al-empty-cta">
+             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none"
+                  stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                  width="13" height="13" aria-hidden="true">
+               <line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/>
+             </svg>
+             Ajouter un aliment
+           </button>
+         </div>`;
+    document.getElementById('al-empty-cta')?.addEventListener('click', openAlimNewModal);
     return;
   }
 
-  // Cartes = liens <a> vers aliment.html?id=... (même pattern que exercice.html)
+  // Cartes = liens <a> vers aliment.html?id=...
   container.innerHTML = filtered.map(a => `
     <a href="aliment.html?id=${a.id}" class="aliment-card">
       <div class="aliment-card__cat-tag aliment-card__cat-tag--${slugs[a.categorie] || ''}">
@@ -1633,6 +1784,9 @@ function renderAlimentsPanel() {
 }
 
 function bindAlimentsEvents() {
+  // Bouton header "Ajouter" → même action que le FAB
+  document.getElementById('al-header-create')?.addEventListener('click', openAlimNewModal);
+
   // Recherche en temps réel
   const searchInput = document.getElementById('aliment-search');
   if (searchInput) {
@@ -1695,6 +1849,7 @@ const CATEGORY_TYPE_MAP = {
   'Produits laitiers':'gramme',
   'Fruits':           'unite',
   'Boissons':         'ml',
+  'Compléments':      'gramme',
   'Autres':           'gramme',
 };
 
@@ -2047,17 +2202,32 @@ function _renderMenuDetailAliments() {
 
 function _consumeMenuDetail() {
   const today = localDateStr();
+  // Copier les aliments dans le journal du jour
   _mdDraft.forEach(item => {
     window.ALIM_DB.addItem(today, _mdEntry.mealKey, item.alimId, item.quantite);
   });
+  // Marquer l'entrée Planning comme consommée (sans modifier le modèle de repas)
+  if (_mdEntry && window.MEAL_PLAN_DB) {
+    window.MEAL_PLAN_DB.setStatus(today, _mdEntry.id, 'consomme');
+  }
   _closeMenuDetail();
   renderAujourdhuiPanel();
+  renderPlanningPanel();
 }
 
 function bindMenuDetailSheetEvents() {
   document.getElementById('pl-detail-backdrop')?.addEventListener('click', _closeMenuDetail);
   document.getElementById('pl-detail-close')?.addEventListener('click', _closeMenuDetail);
-  document.getElementById('pl-detail-ignore')?.addEventListener('click', _closeMenuDetail);
+
+  document.getElementById('pl-detail-ignore')?.addEventListener('click', () => {
+    // Marquer comme sauté dans le Planning, sans rien ajouter au journal
+    if (_mdEntry && window.MEAL_PLAN_DB) {
+      window.MEAL_PLAN_DB.setStatus(localDateStr(), _mdEntry.id, 'saute');
+    }
+    _closeMenuDetail();
+    renderAujourdhuiPanel();
+    renderPlanningPanel();
+  });
 
   document.getElementById('pl-detail-consume')?.addEventListener('click', _consumeMenuDetail);
 

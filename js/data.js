@@ -391,6 +391,7 @@ window.CAT_SLUG = {
   'Féculents':        'feculents',
   'Produits laitiers':'laitiers',
   'Boissons':         'boissons',
+  'Compléments':      'complements',
   'Autres':           'autres',
 };
 
@@ -667,6 +668,13 @@ window.MEAL_PLAN_DB = {
     const plan = this.getDay(date);
     plan.entries = plan.entries.filter(e => e.id !== entryId);
     this.saveDay(plan);
+  },
+
+  /** Met à jour le statut d'une entrée : 'planifie' | 'consomme' | 'saute' */
+  setStatus(date, entryId, status) {
+    const plan  = this.getDay(date);
+    const entry = plan.entries.find(e => e.id === entryId);
+    if (entry) { entry.status = status; this.saveDay(plan); }
   },
 
   /** Duplique une entrée vers d'autres jours. */

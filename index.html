@@ -3,21 +3,69 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-  <title>FitTrack — Suivi Fitness</title>
+  <title>FitTrack — Accueil</title>
   <link rel="stylesheet" href="navbar.css">
+  <link rel="stylesheet" href="index.css">
 </head>
 <body>
 
-  <!-- Contenu principal (placeholder) -->
-  <main class="main-content">
-    <h1>Accueil</h1>
-    <p>Bienvenue sur FitTrack.</p>
+  <!-- ===== EN-TÊTE SALUTATION ===== -->
+  <header class="home-header">
+    <p id="home-date" class="home-header__date"></p>
+    <p id="home-message" class="home-header__message">Chargement…</p>
+    <p id="home-hint" class="home-header__hint"></p>
+  </header>
+
+  <!-- ===== CONTENU PRINCIPAL ===== -->
+  <main class="home-main">
+
+    <!-- ─── Bloc Musculation ─── -->
+    <section class="home-card" id="home-muscu-card" aria-label="Musculation">
+      <div class="home-card__head">
+        <span class="home-card__head-icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2"  y="10" width="3" height="4" rx="1"/>
+            <rect x="19" y="10" width="3" height="4" rx="1"/>
+            <rect x="5"  y="8"  width="3" height="8" rx="1"/>
+            <rect x="16" y="8"  width="3" height="8" rx="1"/>
+            <line x1="8" y1="12" x2="16" y2="12"/>
+          </svg>
+        </span>
+        <h2 class="home-card__title">Musculation</h2>
+      </div>
+      <div id="home-muscu-block" class="home-card__body">
+        <!-- Rendu par accueil.js -->
+      </div>
+    </section>
+
+    <!-- ─── Bloc Alimentation ─── -->
+    <section class="home-card" id="home-alim-card" aria-label="Alimentation">
+      <div class="home-card__head">
+        <span class="home-card__head-icon" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/>
+            <path d="M7 2v20"/>
+            <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3"/>
+            <line x1="21" y1="15" x2="21" y2="22"/>
+          </svg>
+        </span>
+        <h2 class="home-card__title">Alimentation</h2>
+      </div>
+      <div id="home-alim-block" class="home-card__body">
+        <!-- Rendu par accueil.js -->
+      </div>
+    </section>
+
+    <!-- ─── Pied de page ─── -->
+    <p class="home-footer">FitTrack · données stockées localement</p>
+
   </main>
 
   <!-- ===== NAVBAR FIXE EN BAS ===== -->
   <nav class="bottom-nav" role="navigation" aria-label="Navigation principale">
 
-    <!-- Accueil -->
     <a href="index.html" class="nav-item active" aria-label="Accueil">
       <span class="nav-icon" aria-hidden="true">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
@@ -30,7 +78,6 @@
       <span class="nav-label">Accueil</span>
     </a>
 
-    <!-- Musculation -->
     <a href="musculation.html" class="nav-item" aria-label="Musculation">
       <span class="nav-icon" aria-hidden="true">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
@@ -46,7 +93,6 @@
       <span class="nav-label">Musculation</span>
     </a>
 
-    <!-- Alimentation -->
     <a href="alimentation/alimentation.html" class="nav-item" aria-label="Alimentation">
       <span class="nav-icon" aria-hidden="true">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
@@ -61,7 +107,6 @@
       <span class="nav-label">Alimentation</span>
     </a>
 
-    <!-- Mon profil -->
     <a href="profil.html" class="nav-item" aria-label="Mon profil">
       <span class="nav-icon" aria-hidden="true">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
@@ -75,7 +120,8 @@
     </a>
 
   </nav>
-  <!-- ===== FIN NAVBAR ===== -->
 
+  <script src="js/data.js"></script>
+  <script src="js/accueil.js"></script>
 </body>
 </html>

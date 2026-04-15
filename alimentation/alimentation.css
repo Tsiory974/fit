@@ -260,6 +260,116 @@ input[name="alim-tabs"] {
 }
 
 /* ============================================================
+   ONGLET ALIMENTS — EN-TÊTE
+   ============================================================ */
+.al-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0 0 0.75rem;
+}
+
+.al-header__left { min-width: 0; }
+
+.al-header__title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #f0f0f0;
+  margin: 0 0 2px;
+  line-height: 1.2;
+}
+
+.al-header__count {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-idle);
+  margin-left: 0.35em;
+}
+
+.al-header__subtitle {
+  font-size: 0.72rem;
+  color: var(--text-idle);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.al-header__create {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent);
+  color: #000;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+
+.al-header__create:hover,
+.al-header__create:active {
+  opacity: 0.88;
+  transform: scale(0.97);
+}
+
+/* ── État vide aliments ── */
+.al-empty {
+  text-align: center;
+  padding: 2rem 0.5rem;
+}
+
+.al-empty__icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+  opacity: 0.22;
+  color: var(--text-idle);
+}
+
+.al-empty__title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e5e7eb;
+  margin-bottom: 0.5rem;
+}
+
+.al-empty__hint {
+  font-size: 0.8rem;
+  color: var(--text-idle);
+  line-height: 1.55;
+  max-width: 280px;
+  margin: 0 auto 1.5rem;
+}
+
+.al-empty__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--accent);
+  color: #000;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 24px;
+  padding: 0.65rem 1.25rem;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.al-empty__cta:hover,
+.al-empty__cta:active {
+  opacity: 0.88;
+  transform: scale(0.97);
+}
+
+/* ============================================================
    LISTE D'ALIMENTS
    ============================================================ */
 .aliments-list {
@@ -673,6 +783,29 @@ input[name="alim-tabs"] {
   margin-top: 1px;
 }
 
+/* Pills macros dans l'en-tête de repas */
+.aj-meal__macros {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.aj-meal__macro {
+  font-size: 0.65rem;
+  color: var(--text-idle);
+  background: #1a1e23;
+  border: 1px solid #23282f;
+  border-radius: 5px;
+  padding: 1px 5px;
+  white-space: nowrap;
+}
+
+.aj-meal__macro strong { font-weight: 700; }
+.aj-meal__macro--p strong { color: #60a5fa; }
+.aj-meal__macro--g strong { color: #fbbf24; }
+.aj-meal__macro--l strong { color: #f87171; }
+
 .aj-meal__check {
   width: 26px;
   height: 26px;
@@ -839,19 +972,107 @@ input[name="alim-tabs"] {
 /* ── État vide repas ── */
 .aj-meals-empty {
   text-align: center;
-  padding: 2rem 1rem 1.25rem;
+  padding: 2rem 1rem 1.5rem;
 }
 
 .aj-meals-empty__icon {
   font-size: 2.25rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.625rem;
   opacity: 0.35;
   display: block;
 }
 
-.aj-meals-empty__text {
-  font-size: 0.82rem;
+.aj-meals-empty__title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #e5e7eb;
+  margin-bottom: 0.375rem;
+}
+
+.aj-meals-empty__hint {
+  font-size: 0.78rem;
   color: var(--text-idle);
+  line-height: 1.5;
+  max-width: 260px;
+  margin: 0 auto 1.25rem;
+}
+
+.aj-meals-empty__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent);
+  color: #000;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 20px;
+  padding: 0.55rem 1.1rem;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.aj-meals-empty__cta:hover,
+.aj-meals-empty__cta:active {
+  opacity: 0.88;
+  transform: scale(0.97);
+}
+
+/* Bloc pédagogique Planning vs Aujourd'hui */
+.aj-meals-empty__explainer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  background: #13171b;
+  border: 1px solid #1f242a;
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin: 0 auto 1.25rem;
+  max-width: 270px;
+  text-align: left;
+}
+
+.aj-meals-empty__explainer-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.2rem;
+  display: block;
+}
+
+.aj-meals-empty__explainer-row {
+  font-size: 0.75rem;
+  color: var(--text-idle);
+  line-height: 1.45;
+  display: block;
+}
+
+.aj-meals-empty__explainer-row strong {
+  color: #e5e7eb;
+  font-weight: 600;
+}
+
+/* Lien secondaire */
+.aj-meals-empty__secondary {
+  display: block;
+  margin: 0.75rem auto 0;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.75rem;
+  color: var(--text-idle);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.aj-meals-empty__secondary:hover,
+.aj-meals-empty__secondary:active {
+  color: #e5e7eb;
 }
 
 /* ============================================================
@@ -1231,17 +1452,119 @@ input[name="alim-tabs"] {
    ONGLET RECETTES
    ============================================================ */
 
+/* ── En-tête + bouton créer ── */
+.rc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0 0 0.75rem;
+}
+
+.rc-header__left {
+  min-width: 0;
+}
+
+.rc-header__title {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #f0f0f0;
+  margin: 0 0 2px;
+  line-height: 1.2;
+}
+
+.rc-header__subtitle {
+  font-size: 0.72rem;
+  color: var(--text-idle);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.rc-header__count {
+  font-size: 0.72rem;
+  color: var(--text-idle);
+  margin-left: 0.4em;
+  font-weight: 500;
+}
+
+.rc-header__create {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent);
+  color: #000;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 20px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+
+.rc-header__create:hover,
+.rc-header__create:active {
+  opacity: 0.88;
+  transform: scale(0.97);
+}
+
+/* ── Barre de recherche ── */
+.rc-search {
+  position: relative;
+  margin: 0 0 0.875rem;
+}
+
+.rc-search__icon {
+  position: absolute;
+  left: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-idle);
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+.rc-search__icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.rc-search__input {
+  width: 100%;
+  background: #141820;
+  border: 1px solid #1f2428;
+  border-radius: 12px;
+  padding: 0.65rem 0.875rem 0.65rem 2.5rem;
+  color: #e5e7eb;
+  font-size: 0.88rem;
+  outline: none;
+  transition: border-color 0.15s;
+  -webkit-appearance: none;
+}
+
+.rc-search__input::placeholder {
+  color: #4b5563;
+}
+
+.rc-search__input:focus {
+  border-color: rgba(57, 224, 122, 0.4);
+}
+
 /* ── État vide ── */
 .rc-empty {
   text-align: center;
-  padding: 3.5rem 1.5rem 2rem;
+  padding: 2rem 0.5rem 2rem;
 }
 
 .rc-empty__icon {
   display: flex;
   justify-content: center;
   margin-bottom: 1rem;
-  opacity: 0.25;
+  opacity: 0.22;
   color: var(--text-idle);
 }
 
@@ -1249,81 +1572,167 @@ input[name="alim-tabs"] {
   font-size: 1rem;
   font-weight: 700;
   color: #e5e7eb;
-  margin-bottom: 0.375rem;
+  margin-bottom: 0.5rem;
 }
 
 .rc-empty__hint {
   font-size: 0.8rem;
   color: var(--text-idle);
-  line-height: 1.5;
+  line-height: 1.55;
+  max-width: 280px;
+  margin: 0 auto 1.5rem;
 }
 
-.rc-empty__hint strong { color: var(--accent); }
+.rc-empty__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--accent);
+  color: #000;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 24px;
+  padding: 0.65rem 1.25rem;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rc-empty__cta:hover,
+.rc-empty__cta:active {
+  opacity: 0.88;
+  transform: scale(0.97);
+}
+
+/* ── Message aucun résultat de recherche ── */
+.rc-no-result {
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--text-idle);
+  padding: 2rem 1rem;
+}
 
 /* ── Liste des recettes ── */
 .rc-list {
   display: flex;
   flex-direction: column;
-  gap: 0.625rem;
+  gap: 0.75rem;
 }
 
+/* ── Carte menu ── */
 .rc-card {
   display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  background: #141820;
+  flex-direction: column;
+  gap: 0.375rem;
+  background: #13171b;
   border: 1px solid #1f2428;
-  border-radius: 14px;
-  padding: 1rem;
+  border-radius: 16px;
+  padding: 1rem 1rem 0.875rem;
   cursor: pointer;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition: background 0.18s ease, border-color 0.18s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
 .rc-card:hover,
 .rc-card:active {
-  background: #1a2028;
-  border-color: rgba(57, 224, 122, 0.25);
+  background: #181e25;
+  border-color: rgba(57, 224, 122, 0.22);
 }
 
-.rc-card__body {
+/* Ligne du haut : nom + bouton supprimer */
+.rc-card__toprow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.rc-card__name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #f0f0f0;
+  line-height: 1.25;
   flex: 1;
   min-width: 0;
 }
 
-.rc-card__name {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: #e5e7eb;
-  margin-bottom: 3px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.rc-card__count {
+  font-size: 0.72rem;
+  color: var(--text-idle);
+  line-height: 1;
 }
 
-.rc-card__info {
+/* Bloc nutritionnel */
+.rc-card__nutrition {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding-top: 0.625rem;
+  border-top: 1px solid #1f2428;
+}
+
+.rc-card__kcal {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.rc-card__kcal-unit {
   font-size: 0.72rem;
+  font-weight: 600;
   color: var(--text-idle);
 }
 
-.rc-card__arrow {
-  font-size: 1.4rem;
-  color: #374151;
-  line-height: 1;
-  flex-shrink: 0;
+.rc-card__macros {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
+.rc-card__macro {
+  font-size: 0.7rem;
+  color: var(--text-idle);
+  background: #1a1e23;
+  border: 1px solid #23282f;
+  border-radius: 6px;
+  padding: 2px 7px;
+  white-space: nowrap;
+}
+
+.rc-card__macro strong {
+  color: #e5e7eb;
+  font-weight: 700;
+}
+
+.rc-card__macro--p strong { color: #60a5fa; }
+.rc-card__macro--g strong { color: #fbbf24; }
+.rc-card__macro--l strong { color: #f87171; }
+
+.rc-card__no-ingredients {
+  font-size: 0.72rem;
+  color: #374151;
+  font-style: italic;
+  margin: 0.25rem 0 0;
+}
+
+/* Bouton supprimer */
 .rc-card__del {
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  width: 26px;
+  height: 26px;
+  background: rgba(239, 68, 68, 0.07);
+  border: 1px solid rgba(239, 68, 68, 0.18);
   border-radius: 8px;
-  color: #9ca3af;
+  color: #6b7280;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
   -webkit-tap-highlight-color: transparent;
@@ -3284,7 +3693,7 @@ input[name="alim-tabs"] {
   border-bottom: 1px solid #1f242a;
   background: #13171b;
   position: sticky;
-  top: calc(var(--header-height, 72px) + var(--tabs-height, 48px));
+  top: 0;
   z-index: 10;
 }
 
@@ -3477,6 +3886,65 @@ input[name="alim-tabs"] {
   font-weight: 600;
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+/* Pills macros dans les entrées Planning */
+.pl-entry__macros {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 3px;
+}
+
+.pl-entry__macro {
+  font-size: 0.63rem;
+  color: var(--text-idle);
+  background: #1a1e23;
+  border: 1px solid #23282f;
+  border-radius: 5px;
+  padding: 1px 5px;
+  white-space: nowrap;
+}
+
+.pl-entry__macro strong { font-weight: 700; }
+.pl-entry__macro--p strong { color: #60a5fa; }
+.pl-entry__macro--g strong { color: #fbbf24; }
+.pl-entry__macro--l strong { color: #f87171; }
+
+.pl-entry__badge {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.pl-entry__badge--planifie {
+  background: rgba(107, 114, 128, 0.15);
+  color: var(--text-idle);
+}
+
+.pl-entry__badge--consomme {
+  background: rgba(57, 224, 122, 0.15);
+  color: var(--accent);
+}
+
+.pl-entry__badge--saute {
+  background: rgba(107, 114, 128, 0.12);
+  color: #4b5563;
+}
+
+/* Entrées consommées/sautées légèrement atténuées */
+.pl-entry--consomme {
+  opacity: 0.6;
+}
+
+.pl-entry--saute {
+  opacity: 0.4;
 }
 
 .pl-entry__btns {
