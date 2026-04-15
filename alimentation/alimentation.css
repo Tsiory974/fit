@@ -808,6 +808,224 @@ input[name="alim-tabs"] {
   background: rgba(57, 224, 122, 0.06);
 }
 
+/* ── Bouton "Ajouter un repas" ── */
+.aj-add-meal-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem;
+  background: transparent;
+  border: 1.5px dashed #2a3038;
+  border-radius: 12px;
+  color: var(--text-idle);
+  font-size: 0.875rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  margin-top: 0.375rem;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.aj-add-meal-btn:hover,
+.aj-add-meal-btn:active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(57, 224, 122, 0.05);
+}
+
+/* ── État vide repas ── */
+.aj-meals-empty {
+  text-align: center;
+  padding: 2rem 1rem 1.25rem;
+}
+
+.aj-meals-empty__icon {
+  font-size: 2.25rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.35;
+  display: block;
+}
+
+.aj-meals-empty__text {
+  font-size: 0.82rem;
+  color: var(--text-idle);
+}
+
+/* ============================================================
+   BOTTOM-SHEET "AJOUTER UN REPAS"
+   ============================================================ */
+.aj-add-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+}
+
+.aj-add-sheet[hidden] { display: none; }
+
+.aj-add-sheet__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+}
+
+.aj-add-sheet__panel {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  background: #111417;
+  border-radius: 20px 20px 0 0;
+  border-top: 1px solid #1f242a;
+  padding: 1rem 1rem calc(1.5rem + var(--nav-height, 68px));
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.aj-add-sheet__panel::-webkit-scrollbar { display: none; }
+
+/* Bouton retour dans le header de la sheet */
+.aj-add-sheet__back {
+  background: #1a1e23;
+  border: 1px solid #2a3038;
+  border-radius: 8px;
+  color: #9ca3af;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.aj-add-sheet__back[hidden] { display: none; }
+
+/* Grille 2 colonnes pour les types de repas */
+.aj-meal-type-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.625rem;
+  margin-top: 0.5rem;
+}
+
+.aj-meal-type-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  background: #141820;
+  border: 1px solid #1f2428;
+  border-radius: 12px;
+  padding: 0.9rem 0.875rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.aj-meal-type-btn:hover,
+.aj-meal-type-btn:active {
+  background: rgba(57, 224, 122, 0.08);
+  border-color: rgba(57, 224, 122, 0.35);
+}
+
+.aj-meal-type-btn__icon {
+  font-size: 1.4rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.aj-meal-type-btn__label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #e5e7eb;
+  line-height: 1.25;
+}
+
+/* Sous-titre étape contenu */
+.aj-add-sheet__subtitle {
+  font-size: 0.78rem;
+  color: var(--text-idle);
+  font-weight: 600;
+  margin: 0.25rem 0 0.75rem;
+}
+
+/* Boutons de choix de contenu (Recette / Aliment) */
+.aj-content-opt {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  background: #141820;
+  border: 1px solid #1f2428;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 0.625rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.aj-content-opt:hover,
+.aj-content-opt:active {
+  background: rgba(57, 224, 122, 0.06);
+  border-color: rgba(57, 224, 122, 0.3);
+}
+
+.aj-content-opt__icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.aj-content-opt__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.aj-content-opt__title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #e5e7eb;
+}
+
+.aj-content-opt__hint {
+  font-size: 0.7rem;
+  color: var(--text-idle);
+  line-height: 1.3;
+}
+
+.aj-content-opt__arrow {
+  font-size: 1.5rem;
+  color: var(--text-idle);
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+/* Liste des recettes dans la sheet */
+.aj-add-sheet__rc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  overflow-y: auto;
+  scrollbar-width: none;
+  padding-top: 0.25rem;
+}
+
+.aj-add-sheet__rc-list::-webkit-scrollbar { display: none; }
+
 /* ============================================================
    MODALE AJOUT ALIMENT
    ============================================================ */
@@ -1877,7 +2095,297 @@ input[name="alim-tabs"] {
   padding: 0.25rem 0.375rem;
   line-height: 1;
   flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
 }
+
+/* Layout mise à jour : info à gauche, qty+del à droite */
+.rc-new-draft-item {
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.rc-new-draft-item__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.rc-new-draft-item__kcal {
+  font-size: 0.7rem;
+  color: var(--accent);
+  font-weight: 600;
+  margin-top: 1px;
+  display: block;
+}
+
+.rc-new-draft-item__right {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-shrink: 0;
+  margin-left: 0.5rem;
+}
+
+.rc-new-draft-item__qty-wrap {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.rc-new-draft-item__qty-input {
+  width: 52px;
+  background: #1a1e25;
+  border: 1px solid #2a3038;
+  border-radius: 7px;
+  color: #f0f0f0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: inherit;
+  padding: 3px 5px;
+  text-align: right;
+  outline: none;
+  transition: border-color 0.15s;
+  -webkit-appearance: none;
+}
+
+.rc-new-draft-item__qty-input:focus { border-color: rgba(57, 224, 122, 0.4); }
+
+.rc-new-draft-item__unit {
+  font-size: 0.68rem;
+  color: var(--text-idle);
+  min-width: 12px;
+}
+
+/* ── Résumé nutritionnel temps réel ── */
+.rc-new__totals {
+  background: #141820;
+  border: 1px solid #1f2428;
+  border-radius: 12px;
+  padding: 0.75rem 0.875rem;
+  margin-bottom: 0.625rem;
+}
+
+.rc-new__totals-values {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.625rem;
+}
+
+.rc-new__totals-kcal {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.rc-new__totals-kcal span:first-child {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--accent);
+  letter-spacing: -0.01em;
+}
+
+.rc-new__totals-kcal-unit {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--text-idle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.rc-new__totals-macros {
+  display: flex;
+  gap: 0.625rem;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.rc-new__totals-macro {
+  font-size: 0.72rem;
+  color: var(--text-idle);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.rc-new__totals-macro strong {
+  color: #e5e7eb;
+  font-weight: 700;
+}
+
+.rc-new__totals-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.rc-new__totals-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rc-new__totals-bar-name {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #4b5563;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  width: 28px;
+  flex-shrink: 0;
+}
+
+.rc-new__totals-bar-track {
+  flex: 1;
+  height: 4px;
+  background: #1f2428;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.rc-new__totals-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.35s ease;
+}
+
+.rc-new__totals-bar-fill--k { background: var(--accent); }
+.rc-new__totals-bar-fill--p { background: #60a5fa; }
+.rc-new__totals-bar-fill--g { background: #fbbf24; }
+.rc-new__totals-bar-fill--l { background: #f97316; }
+
+.rc-new__totals-bar-pct {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #4b5563;
+  width: 26px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── Titre de section ingrédients (création menu) ── */
+.rc-new__ingr-section {
+  margin-bottom: 0.625rem;
+}
+
+.rc-new__ingr-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #6b7280;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+/* ── Zone ajout aliment inline (création menu) ── */
+.rc-new__add-zone {
+  background: #141820;
+  border: 1px solid #252b33;
+  border-radius: 12px;
+  padding: 0.625rem;
+  margin-bottom: 0.75rem;
+}
+
+.rc-new__search-wrap {
+  position: relative;
+}
+
+/* Quand la liste est ouverte, arrondir seulement en haut */
+.rc-new__search-wrap--open .search-bar {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-color: transparent;
+  margin-bottom: 0;
+}
+
+.rc-new__search-bar {
+  margin-bottom: 0;
+}
+
+.rc-new__alim-list {
+  background: #141820;
+  border: 1px solid #252b33;
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  max-height: 200px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.rc-new__alim-list::-webkit-scrollbar { display: none; }
+
+.rc-new__alim-list[hidden] { display: none; }
+
+/* Réutilise les styles de rc-alim-search-item existants */
+.rc-new__alim-list .rc-alim-search-item:last-child { border-bottom: none; }
+
+/* ── Rangée quantité (visible après sélection d'un aliment) ── */
+.rc-new__qty-row {
+  margin-top: 0.625rem;
+  padding-top: 0.625rem;
+  border-top: 1px solid #252b33;
+}
+
+.rc-new__qty-row[hidden] { display: none; }
+
+.rc-new__qty-alim-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rc-new__qty-inputs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rc-new__qty-input {
+  width: 70px;
+  background: #1a1e25;
+  border: 1px solid #2a3038;
+  border-radius: 8px;
+  color: #f0f0f0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: inherit;
+  padding: 0.45rem 0.625rem;
+  text-align: right;
+  outline: none;
+  transition: border-color 0.15s;
+  -webkit-appearance: none;
+  flex-shrink: 0;
+}
+
+.rc-new__qty-input:focus { border-color: rgba(57, 224, 122, 0.4); }
+
+.rc-new__qty-unit {
+  font-size: 0.8rem;
+  color: var(--text-idle);
+  flex-shrink: 0;
+  min-width: 40px;
+}
+
+.rc-new__qty-confirm {
+  flex: 1;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  color: #0a0e11;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-family: inherit;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.rc-new__qty-confirm:hover { opacity: 0.88; }
 
 /* ============================================================
    MODALE CRÉATION ALIMENT
@@ -2371,5 +2879,737 @@ input[name="alim-tabs"] {
 
 .scan-action-btn:active {
   opacity: 0.8;
+}
+
+/* ============================================================
+   AUJOURD'HUI — repas planifiés (lecture seule depuis Planning)
+   ============================================================ */
+
+.aj-planned-section {
+  margin: 0 1rem 0.75rem;
+  background: #111417;
+  border: 1px solid rgba(57, 224, 122, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.aj-planned-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid rgba(57, 224, 122, 0.15);
+  background: rgba(57, 224, 122, 0.05);
+}
+
+.aj-planned-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid #1a1e23;
+  cursor: pointer;
+  transition: background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.aj-planned-entry:hover,
+.aj-planned-entry:active {
+  background: rgba(57, 224, 122, 0.06);
+}
+
+.aj-planned-entry:last-child {
+  border-bottom: none;
+}
+
+.aj-planned-entry__arrow {
+  font-size: 1.2rem;
+  color: #374151;
+  flex-shrink: 0;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.aj-planned-entry:hover .aj-planned-entry__arrow {
+  color: var(--accent);
+}
+
+.aj-planned-entry__icon {
+  font-size: 1rem;
+  line-height: 1;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.aj-planned-entry__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.aj-planned-entry__meal {
+  font-size: 0.63rem;
+  color: var(--text-idle);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.aj-planned-entry__name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #c8cdd4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.aj-planned-entry__kcal {
+  font-size: 0.7rem;
+  color: var(--text-idle);
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   BOTTOM-SHEET — DÉTAIL MENU PLANIFIÉ
+   ============================================================ */
+
+/* Overlay identique aux autres aj-add-sheet */
+#pl-menu-detail-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+#pl-menu-detail-sheet:not([hidden]) {
+  pointer-events: auto;
+}
+
+.pl-detail__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+#pl-menu-detail-sheet:not([hidden]) .pl-detail__backdrop {
+  opacity: 1;
+}
+
+.pl-detail__panel {
+  position: relative;
+  background: #13171b;
+  border-radius: 20px 20px 0 0;
+  border-top: 1px solid #1f242a;
+  max-height: 88dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 1rem calc(1.25rem + var(--nav-height, 68px));
+  transform: translateY(100%);
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+#pl-menu-detail-sheet:not([hidden]) .pl-detail__panel {
+  transform: translateY(0);
+}
+
+/* ── Handle ── */
+.pl-detail__handle {
+  width: 36px;
+  height: 4px;
+  background: #2d3540;
+  border-radius: 2px;
+  margin: 0.75rem auto 1rem;
+}
+
+/* ── Header ── */
+.pl-detail__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.pl-detail__header-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.pl-detail__meal-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
+}
+
+.pl-detail__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pl-detail__close {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #1a1e23;
+  border: 1px solid #2a3038;
+  color: #9ca3af;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s;
+}
+
+.pl-detail__close:hover { background: #22272e; }
+
+/* ── Résumé nutritionnel ── */
+.pl-detail__totals {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #141820;
+  border: 1px solid #1f2428;
+  border-radius: 10px;
+  padding: 0.625rem 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.pl-detail__total-kcal {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.pl-detail__total-kcal span {
+  font-size: 1.05rem;
+}
+
+.pl-detail__total-macros {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.pl-detail__total-macro {
+  font-size: 0.72rem;
+  color: var(--text-idle);
+  font-weight: 600;
+}
+
+.pl-detail__total-macro strong {
+  color: #e5e7eb;
+}
+
+.pl-detail__total-sep {
+  font-size: 0.7rem;
+  color: #374151;
+}
+
+/* ── Section label ── */
+.pl-detail__section-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #6b7280;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+/* ── Liste des aliments ── */
+.pl-detail__aliments {
+  display: flex;
+  flex-direction: column;
+  background: #141820;
+  border: 1px solid #1f2428;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.pl-detail__alim-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid #1a1e23;
+}
+
+.pl-detail__alim-row:last-child { border-bottom: none; }
+
+/* Mode lecture */
+.pl-detail__alim-name {
+  flex: 1;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #e5e7eb;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pl-detail__alim-qty {
+  font-size: 0.72rem;
+  color: var(--text-idle);
+  flex-shrink: 0;
+}
+
+.pl-detail__alim-kcal {
+  font-size: 0.72rem;
+  color: var(--accent);
+  font-weight: 700;
+  flex-shrink: 0;
+  min-width: 48px;
+  text-align: right;
+}
+
+/* Mode édition — input inline */
+.pl-detail__alim-edit {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.pl-detail__qty-input {
+  width: 58px;
+  background: #0e1114;
+  border: 1px solid #2a3038;
+  border-radius: 6px;
+  color: #f0f0f0;
+  font-size: 0.82rem;
+  font-family: inherit;
+  padding: 0.25rem 0.4rem;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+
+.pl-detail__qty-input::-webkit-inner-spin-button,
+.pl-detail__qty-input::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+.pl-detail__qty-unit {
+  font-size: 0.7rem;
+  color: var(--text-idle);
+  flex-shrink: 0;
+}
+
+/* ── Boutons d'action ── */
+.pl-detail__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.pl-detail__btn {
+  width: 100%;
+  border-radius: 14px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  font-family: inherit;
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pl-detail__btn--consume {
+  background: var(--accent);
+  color: #000;
+}
+
+.pl-detail__btn--consume:hover {
+  background: #2fcf6a;
+}
+
+.pl-detail__btn--edit {
+  background: #1a1e23;
+  border-color: #2a3038;
+  color: #e5e7eb;
+}
+
+.pl-detail__btn--edit:hover {
+  border-color: rgba(57, 224, 122, 0.35);
+  background: rgba(57, 224, 122, 0.06);
+  color: var(--accent);
+}
+
+.pl-detail__btn--ignore {
+  background: transparent;
+  border-color: transparent;
+  color: #6b7280;
+  font-size: 0.82rem;
+  padding: 0.6rem 1rem;
+}
+
+.pl-detail__btn--ignore:hover { color: #9ca3af; }
+
+/* ============================================================
+   ONGLET PLANNING — vue hebdomadaire
+   ============================================================ */
+
+/* ── Navigation semaine ── */
+.pl-week-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #1f242a;
+  background: #13171b;
+  position: sticky;
+  top: calc(var(--header-height, 72px) + var(--tabs-height, 48px));
+  z-index: 10;
+}
+
+.pl-week-nav__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: #1a1e23;
+  border: 1px solid #2a3038;
+  border-radius: 10px;
+  color: #e5e7eb;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.pl-week-nav__btn:hover,
+.pl-week-nav__btn:active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.pl-week-nav__label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #e5e7eb;
+  letter-spacing: 0.01em;
+}
+
+/* ── Carte jour ── */
+.pl-day-card {
+  margin: 0.75rem 1rem;
+  background: #13171b;
+  border: 1px solid #1f242a;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.pl-day-card--today {
+  border-color: rgba(57, 224, 122, 0.35);
+}
+
+.pl-day-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.625rem 0.875rem;
+  border-bottom: 1px solid #1f242a;
+  background: #111417;
+}
+
+.pl-day-card--today .pl-day-card__header {
+  background: rgba(57, 224, 122, 0.06);
+}
+
+.pl-day-card__day {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #e5e7eb;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pl-day-card__today-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: rgba(57, 224, 122, 0.15);
+  border-radius: 99px;
+  padding: 1px 7px;
+  letter-spacing: 0.02em;
+}
+
+.pl-day-card__date {
+  font-size: 0.75rem;
+  color: var(--text-idle);
+}
+
+.pl-day-card__body {
+  padding: 0;
+}
+
+.pl-day-card__empty {
+  font-size: 0.78rem;
+  color: var(--text-idle);
+  padding: 0.75rem 0.875rem;
+  margin: 0;
+}
+
+.pl-day-card__footer {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid #1a1e23;
+  flex-wrap: wrap;
+}
+
+/* ── Bouton "Ajouter un repas" dans la journée ── */
+.pl-day-card__add-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  background: transparent;
+  border: 1px dashed #2a3038;
+  border-radius: 8px;
+  color: var(--text-idle);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.pl-day-card__add-btn:hover,
+.pl-day-card__add-btn:active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ── Bouton "Copier la journée" ── */
+.pl-day-card__copy-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.65rem;
+  background: transparent;
+  border: 1px solid #2a3038;
+  border-radius: 8px;
+  color: var(--text-idle);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.pl-day-card__copy-btn:hover,
+.pl-day-card__copy-btn:active {
+  border-color: rgba(57, 224, 122, 0.4);
+  color: var(--accent);
+}
+
+/* ── Entrée planifiée ── */
+.pl-entry {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.6rem 0.875rem;
+  border-bottom: 1px solid #1a1e23;
+}
+
+.pl-entry:last-child {
+  border-bottom: none;
+}
+
+.pl-entry__icon {
+  font-size: 1.15rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.pl-entry__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pl-entry__meal {
+  font-size: 0.68rem;
+  color: var(--text-idle);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.pl-entry__name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #e5e7eb;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pl-entry__kcal {
+  font-size: 0.72rem;
+  color: var(--accent);
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.pl-entry__btns {
+  display: flex;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.pl-entry__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: 1px solid #2a3038;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.pl-entry__btn--dup {
+  color: var(--text-idle);
+}
+
+.pl-entry__btn--dup:hover,
+.pl-entry__btn--dup:active {
+  background: rgba(57, 224, 122, 0.08);
+  border-color: rgba(57, 224, 122, 0.35);
+  color: var(--accent);
+}
+
+.pl-entry__btn--del {
+  color: var(--text-idle);
+}
+
+.pl-entry__btn--del:hover,
+.pl-entry__btn--del:active {
+  background: rgba(248, 113, 113, 0.1);
+  border-color: rgba(248, 113, 113, 0.4);
+  color: #f87171;
+}
+
+/* ── État vide liste recettes dans la sheet Planning ── */
+.pl-rc-empty {
+  text-align: center;
+  padding: 1.5rem 1rem;
+}
+
+.pl-rc-empty__text {
+  font-size: 0.85rem;
+  color: #e5e7eb;
+  margin: 0 0 0.25rem;
+}
+
+.pl-rc-empty__hint {
+  font-size: 0.75rem;
+  color: var(--text-idle);
+  margin: 0;
+}
+
+/* ── Sélecteur de jours (copie / duplication) ── */
+.pl-day-pick-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding: 0.25rem 0 1rem;
+}
+
+.pl-day-pick-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid #1f242a;
+  background: #1a1e23;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.pl-day-pick-item:has(.pl-day-pick-cb:checked) {
+  border-color: rgba(57, 224, 122, 0.4);
+  background: rgba(57, 224, 122, 0.06);
+}
+
+.pl-day-pick-item--source {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.pl-day-pick-cb {
+  accent-color: var(--accent);
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.pl-day-pick-name {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #e5e7eb;
+  flex: 1;
+}
+
+.pl-day-pick-date {
+  font-size: 0.75rem;
+  color: var(--text-idle);
+}
+
+.pl-day-pick-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-idle);
+  background: #1f242a;
+  border-radius: 99px;
+  padding: 1px 7px;
+}
+
+.pl-day-pick-confirm {
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--accent);
+  color: #0a0e12;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.pl-day-pick-confirm:active {
+  opacity: 0.85;
 }
 

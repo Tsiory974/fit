@@ -630,3 +630,80 @@ window.RECETTES_DB = {
     };
   },
 };
+
+/* ============================================================
+   MEAL_PLAN_DB — planning alimentaire hebdomadaire
+   Clé localStorage : ft_meal_plan_<YYYY-MM-DD>
+   Structure :
+     { date, entries: [{ id, mealKey, recetteId, recetteNom, totalKcal }] }
+   ============================================================ */
+window.MEAL_PLAN_DB = {
+  _key(date) { return 'ft_meal_plan_' + date; },
+
+  getDay(date) {
+    const raw = localStorage.getItem(this._key(date));
+    return raw ? JSON.parse(raw) : { date, entries: [] };
+  },
+
+  saveDay(plan) {
+    localStorage.setItem(this._key(plan.date), JSON.stringify(plan));
+  },
+
+  addEntry(date, mealKey, recetteId, recetteNom, totalKcal) {
+    const plan  = this.getDay(date);
+    const entry = {
+      id:         'mpe-' + Date.now(),
+      mealKey,
+      recetteId,
+      recetteNom,
+      totalKcal:  totalKcal || 0,
+    };
+    plan.entries.push(entry);
+    this.saveDay(plan);
+    return entry;
+  },
+
+  removeEntry(date, entryId) {
+    const plan = this.getDay(date);
+    plan.entries = plan.entries.filter(e => e.id !== entryId);
+    this.saveDay(plan);
+  },
+
+  /** Duplique une entrée vers d'autres jours. */
+  duplicateEntry(fromDate, entryId, toDates) {
+    const from  = this.getDay(fromDate);
+    const entry = from.entries.find(e => e.id === entryId);
+    if (!entry) return;
+    toDates.forEach(d => {
+      const to = this.getDay(d);
+      to.entries.push({
+        id:         'mpe-' + Date.now() + '-' + Math.floor(Math.random() * 9999),
+        mealKey:    entry.mealKey,
+        recetteId:  entry.recetteId,
+        recetteNom: entry.recetteNom,
+        totalKcal:  entry.totalKcal,
+      });
+      this.saveDay(to);
+    });
+  },
+
+  /** Copie tous les repas d'un jour vers d'autres jours. */
+  copyDay(fromDate, toDates) {
+    const from = this.getDay(fromDate);
+    if (from.entries.length === 0) return;
+    toDates.forEach(d => {
+      if (d === fromDate) return;
+      const to = this.getDay(d);
+      from.entries.forEach(e => {
+        to.entries.push({
+          id:         'mpe-' + Date.now() + '-' + Math.floor(Math.random() * 9999),
+          mealKey:    e.mealKey,
+          recetteId:  e.recetteId,
+          recetteNom: e.recetteNom,
+          totalKcal:  e.totalKcal,
+        });
+      });
+      this.saveDay(to);
+    });
+  },
+};
