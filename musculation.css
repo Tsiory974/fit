@@ -25,13 +25,16 @@
 }
 
 /* ============================================================
-   ANTI-SWIPE HORIZONTAL + CENTRAGE
-   Empêche le défilement horizontal natif du navigateur sur le
-   track 300% — les onglets ne changent qu'au clic sur les labels.
+   ZÉRO SCROLL HORIZONTAL — nécessaire sur les deux niveaux :
+   - html : évite le scroll container créé par body overflow-x
+   - body : cadre le contenu à 480px et le centre
    ============================================================ */
+html {
+  overflow-x: hidden;
+}
 body {
-  overflow-x: hidden;   /* cache le débordement du track large  */
-  max-width: 480px;     /* centré dans la largeur de l'écran    */
+  overflow-x: hidden;
+  max-width: 480px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -199,49 +202,27 @@ body {
 }
 
 /* ============================================================
-   ZONE DE CONTENU — TRACK HORIZONTAL
+   ZONE DE CONTENU — ONGLETS (display switch)
+   Un seul panneau visible à la fois, zéro scroll horizontal.
    ============================================================ */
 .tabs-track {
-  display: flex;
-  /* 4 panneaux côte à côte */
-  width: 400%;
-  transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  min-height: calc(
-    100vh
-    - var(--header-height)
-    - var(--tabs-height)
-    - var(--nav-height)
-  );
-  touch-action: pan-y;
+  width: 100%;
 }
 
-/* Glisser vers le panneau 2 (Planning) */
-#tab-planning:checked ~ .tabs-track {
-  transform: translateX(-25%);
-}
-
-/* Glisser vers le panneau 3 (Séances) */
-#tab-modeles:checked ~ .tabs-track {
-  transform: translateX(-50%);
-}
-
-/* Glisser vers le panneau 4 (Exercices) */
-#tab-exercices:checked ~ .tabs-track {
-  transform: translateX(-75%);
-}
-
-/* --- Chaque panneau occupe 25% du track = 100% de l'écran --- */
+/* Par défaut tous les panneaux sont masqués */
 .tab-panel {
-  width: 25%;
-  min-width: 25%;
+  display: none;
+  width: 100%;
   padding: 1.25rem 1rem 2rem;
-  overflow-y: auto;
-  overflow-x: hidden;
-  touch-action: pan-y;
 }
 
-/* La zone de chips a son propre scroll horizontal —
-   on doit lui redonner les deux axes pour ne pas bloquer pan-x */
+/* Afficher uniquement le panneau actif */
+#tab-seance:checked    ~ .tabs-track #panel-seance    { display: block; }
+#tab-planning:checked  ~ .tabs-track #panel-planning  { display: block; }
+#tab-modeles:checked   ~ .tabs-track #panel-modeles   { display: block; }
+#tab-exercices:checked ~ .tabs-track #panel-exercices { display: block; }
+
+/* La zone de chips a son propre scroll horizontal */
 .tab-panel .filter-chips {
   touch-action: pan-x pan-y;
 }
@@ -1070,15 +1051,9 @@ body {
    ============================================================ */
 @media (min-width: 480px) {
 
-  /* Le track = 4 × 480px */
-  .tabs-track {
-    width: calc(480px * 4);
-  }
-
-  /* Chaque panneau = 480px */
+  /* Panneau actif prend toute la largeur disponible (max 480px via body) */
   .tab-panel {
-    width: 480px;
-    min-width: 480px;
+    width: 100%;
   }
 }
 

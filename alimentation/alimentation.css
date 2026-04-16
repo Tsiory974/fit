@@ -150,28 +150,25 @@ input[name="alim-tabs"] {
 #alim-aliments:checked ~ .tabs-header .tab-indicator { transform: translateX(300%); }
 
 /* ============================================================
-   TRACK HORIZONTAL
+   ZONE DE CONTENU — ONGLETS (display switch)
+   Un seul panneau visible à la fois, zéro scroll horizontal.
    ============================================================ */
 .tabs-track {
-  display: flex;
-  width: 400%;
-  transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  min-height: calc(100vh - var(--header-height) - var(--tabs-height) - var(--nav-height));
-  touch-action: pan-y;
+  width: 100%;
 }
 
-#alim-planning:checked ~ .tabs-track { transform: translateX(-25%); }
-#alim-recettes:checked ~ .tabs-track { transform: translateX(-50%); }
-#alim-aliments:checked ~ .tabs-track { transform: translateX(-75%); }
-
+/* Par défaut tous les panneaux sont masqués */
 .tab-panel {
-  width: 25%;
-  min-width: 25%;
+  display: none;
+  width: 100%;
   padding: 1.25rem 1rem 2rem;
-  overflow-y: auto;
-  overflow-x: hidden;
-  touch-action: pan-y;
 }
+
+/* Afficher uniquement le panneau actif */
+#alim-aujourdhui:checked ~ .tabs-track #alim-panel-aujourdhui { display: block; }
+#alim-planning:checked   ~ .tabs-track #alim-panel-planning   { display: block; }
+#alim-recettes:checked   ~ .tabs-track #alim-panel-recettes   { display: block; }
+#alim-aliments:checked   ~ .tabs-track #alim-panel-aliments   { display: block; }
 
 /* ============================================================
    PLACEHOLDER PANNEAU
