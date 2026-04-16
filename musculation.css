@@ -207,12 +207,14 @@ body {
    ============================================================ */
 .tabs-track {
   width: 100%;
+  overflow: hidden;
 }
 
 /* Par défaut tous les panneaux sont masqués */
 .tab-panel {
   display: none;
   width: 100%;
+  overflow-x: hidden;
   padding: 1.25rem 1rem 2rem;
 }
 
