@@ -284,13 +284,25 @@ const DB = {
     const ids = this.getPlannedIds();
     ids.push(id);
     localStorage.setItem(KEYS.PLANNED_LIST, JSON.stringify(ids));
+    // Copie défensive des exercices du modèle → le planning est indépendant
+    const tpl = this.getTemplate(templateId);
     const planned = {
       id, templateId, date,
+      exercices: tpl ? tpl.exercices.map(b => ({ ...b })) : [],
       completed: false, completedAt: null,
       createdAt: new Date().toISOString(),
     };
     this.savePlanned(planned);
     return planned;
+  },
+
+  /** Sauvegarde la liste d'exercices modifiée d'une séance planifiée. */
+  updatePlannedExercices(id, exercices) {
+    const p = this.getPlanned(id);
+    if (!p) return null;
+    p.exercices = exercices;
+    this.savePlanned(p);
+    return p;
   },
 
   deletePlanned(id) {
@@ -651,17 +663,72 @@ window.MEAL_PLAN_DB = {
   },
 
   addEntry(date, mealKey, recetteId, recetteNom, totalKcal) {
-    const plan  = this.getDay(date);
+    const plan = this.getDay(date);
+    // Copie défensive des aliments de la recette → le planning est indépendant
+    const rec  = window.RECETTES_DB ? window.RECETTES_DB.get(recetteId) : null;
     const entry = {
       id:         'mpe-' + Date.now(),
       mealKey,
       recetteId,
       recetteNom,
       totalKcal:  totalKcal || 0,
+      aliments:   rec ? rec.aliments.map(a => ({ ...a })) : [],
     };
     plan.entries.push(entry);
     this.saveDay(plan);
     return entry;
+  },
+
+  /** Ajoute un aliment à une entrée du planning (sans toucher à la recette). */
+  addAlimentToEntry(date, entryId, alimId, quantite) {
+    const plan  = this.getDay(date);
+    const entry = plan.entries.find(e => e.id === entryId);
+    if (!entry) return null;
+    const alim  = (window.ALIMENTS_DATA || []).find(a => a.id === alimId);
+    if (!alim) return null;
+    if (!entry.aliments) entry.aliments = [];
+    entry.aliments.push({
+      alimId,
+      nom:      alim.nom,
+      type:     alim.type || 'gramme',
+      quantite: Math.max(1, Math.round(quantite)),
+    });
+    entry.totalKcal = this._calcEntryKcal(entry);
+    this.saveDay(plan);
+    return entry;
+  },
+
+  /** Supprime un aliment (par index) d'une entrée du planning. */
+  removeAlimentFromEntry(date, entryId, idx) {
+    const plan  = this.getDay(date);
+    const entry = plan.entries.find(e => e.id === entryId);
+    if (!entry || !entry.aliments) return null;
+    entry.aliments.splice(idx, 1);
+    entry.totalKcal = this._calcEntryKcal(entry);
+    this.saveDay(plan);
+    return entry;
+  },
+
+  /** Met à jour les quantités d'une entrée du planning. */
+  updateEntryAliments(date, entryId, aliments) {
+    const plan  = this.getDay(date);
+    const entry = plan.entries.find(e => e.id === entryId);
+    if (!entry) return null;
+    entry.aliments  = aliments;
+    entry.totalKcal = this._calcEntryKcal(entry);
+    this.saveDay(plan);
+    return entry;
+  },
+
+  _calcEntryKcal(entry) {
+    let k = 0;
+    (entry.aliments || []).forEach(item => {
+      const alim = (window.ALIMENTS_DATA || []).find(a => a.id === item.alimId);
+      if (!alim) return;
+      const factor = (alim.type === 'unite') ? item.quantite : item.quantite / 100;
+      k += alim.m.k * factor;
+    });
+    return Math.round(k);
   },
 
   removeEntry(date, entryId) {
@@ -690,6 +757,7 @@ window.MEAL_PLAN_DB = {
         recetteId:  entry.recetteId,
         recetteNom: entry.recetteNom,
         totalKcal:  entry.totalKcal,
+        aliments:   (entry.aliments || []).map(a => ({ ...a })),
       });
       this.saveDay(to);
     });
@@ -709,6 +777,7 @@ window.MEAL_PLAN_DB = {
           recetteId:  e.recetteId,
           recetteNom: e.recetteNom,
           totalKcal:  e.totalKcal,
+          aliments:   (e.aliments || []).map(a => ({ ...a })),
         });
       });
       this.saveDay(to);

@@ -447,14 +447,56 @@
           <div class="pl-detail__meal-badge" id="pl-detail-meal-badge"></div>
           <div class="pl-detail__title" id="pl-detail-title"></div>
         </div>
+        <span class="pl-detail__modified-badge" id="pl-detail-modified-badge" hidden>Modifié</span>
         <button class="pl-detail__close" id="pl-detail-close" aria-label="Fermer">✕</button>
       </div>
       <div class="pl-detail__totals" id="pl-detail-totals"></div>
-      <div class="pl-detail__section-label">Ingrédients</div>
-      <div class="pl-detail__aliments" id="pl-detail-aliments"></div>
+
+      <!-- Zone scrollable : ingrédients + ajouter + picker -->
+      <div class="pl-detail__scroll-zone">
+        <div class="pl-detail__section-label">Ingrédients</div>
+        <div class="pl-detail__aliments" id="pl-detail-aliments"></div>
+
+        <!-- Bouton ajouter un aliment -->
+        <div class="pl-detail__add-zone" id="pl-detail-add-zone">
+          <button class="pl-detail__add-btn" id="pl-detail-add-alim" type="button">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none"
+                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                 width="12" height="12" aria-hidden="true">
+              <line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/>
+            </svg>
+            Ajouter un aliment
+          </button>
+        </div>
+
+        <!-- Picker aliments (masqué par défaut) -->
+        <div id="pl-detail-picker" hidden>
+          <div class="pl-detail__picker-search">
+            <input class="pl-detail__picker-input" type="search" id="pl-detail-picker-input"
+                   placeholder="Rechercher un aliment…" autocomplete="off"
+                   autocorrect="off" autocapitalize="off">
+          </div>
+          <!-- Étape 1 : liste aliments -->
+          <div class="pl-detail__picker-list" id="pl-detail-picker-list"></div>
+          <!-- Étape 2 : saisie quantité -->
+          <div id="pl-detail-qty-step" hidden>
+            <div class="pl-detail__qty-form">
+              <span class="pl-detail__qty-label" id="pl-detail-qty-label">Quantité</span>
+              <div class="pl-detail__qty-row">
+                <input class="pl-detail__qty-input" type="number" id="pl-detail-qty-input"
+                       min="1" value="100" aria-label="Quantité">
+                <span class="pl-detail__qty-unit" id="pl-detail-qty-unit">g</span>
+              </div>
+              <button class="pl-detail__qty-confirm" id="pl-detail-qty-confirm" type="button">Ajouter</button>
+              <button class="pl-detail__qty-back" id="pl-detail-qty-back" type="button">Retour</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="pl-detail__actions">
         <button class="pl-detail__btn pl-detail__btn--consume" id="pl-detail-consume">Marquer comme consommé</button>
-        <button class="pl-detail__btn pl-detail__btn--edit"    id="pl-detail-edit">Modifier pour aujourd'hui</button>
+        <button class="pl-detail__btn pl-detail__btn--edit"    id="pl-detail-edit">Modifier les quantités</button>
         <button class="pl-detail__btn pl-detail__btn--ignore"  id="pl-detail-ignore">Ignorer</button>
       </div>
     </div>

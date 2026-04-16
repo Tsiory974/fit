@@ -153,14 +153,30 @@
 
     <!-- ══════════════════════════════════════════════════════════
          PANNEAU 2 : PLANNING
-         Vue 14 jours — rendu par musculation.js
+         Vue semaine — rendu par musculation.js
          ══════════════════════════════════════════════════════════ -->
     <section class="tab-panel" id="panel-planning" role="tabpanel">
 
-      <div class="panel-header">
-        <h2 class="panel-header__title">Planning</h2>
+      <!-- Navigation semaine -->
+      <div class="musc-week-nav" id="musc-week-nav">
+        <button class="musc-week-nav__btn" id="musc-prev-week" aria-label="Semaine précédente">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+               width="18" height="18">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </button>
+        <span class="musc-week-nav__label" id="musc-week-label">Semaine du …</span>
+        <button class="musc-week-nav__btn" id="musc-next-week" aria-label="Semaine suivante">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+               width="18" height="18">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
       </div>
 
+      <!-- Conteneur des jours (rendu par JS) -->
       <div id="planning-list"></div>
 
     </section>
@@ -613,6 +629,59 @@
               style="width:100%;text-align:center;display:block;margin-top:0.25rem">
         Annuler
       </button>
+    </div>
+  </div>
+
+  <!-- ── Bottom-sheet : détail d'une séance planifiée ── -->
+  <div id="musc-session-detail" role="dialog" aria-modal="true"
+       aria-label="Détail de la séance" hidden>
+    <div class="sd-backdrop" id="sd-backdrop"></div>
+    <div class="sd-panel">
+      <div class="sd-handle" aria-hidden="true"></div>
+
+      <div class="sd-header">
+        <div class="sd-header__left">
+          <div class="sd-title" id="sd-title"></div>
+          <div class="sd-date"  id="sd-date"></div>
+        </div>
+        <span class="sd-modified-badge" id="sd-modified-badge" hidden>Modifié</span>
+        <button class="sd-close" id="sd-close" aria-label="Fermer">✕</button>
+      </div>
+
+      <div class="sd-summary" id="sd-summary"></div>
+
+      <!-- Zone scrollable : exercices + picker -->
+      <div class="sd-scroll-zone">
+        <div class="sd-section-label">Exercices</div>
+        <div class="sd-exercises" id="sd-exercises"></div>
+
+        <!-- Bouton ajouter -->
+        <div class="sd-add-zone" id="sd-add-zone">
+          <button class="sd-add-exo-btn" id="sd-add-exo-btn" type="button">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none"
+                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                 width="12" height="12" aria-hidden="true">
+              <line x1="8" y1="2" x2="8" y2="14"/><line x1="2" y1="8" x2="14" y2="8"/>
+            </svg>
+            Ajouter un exercice
+          </button>
+        </div>
+
+        <!-- Picker exercices (masqué par défaut) -->
+        <div id="sd-exo-picker" hidden>
+          <div class="sd-picker-search">
+            <input class="sd-picker-search__input" type="search" id="sd-picker-input"
+                   placeholder="Rechercher un exercice…" autocomplete="off"
+                   autocorrect="off" autocapitalize="off">
+          </div>
+          <div class="sd-picker-list" id="sd-picker-list"></div>
+        </div>
+      </div>
+
+      <div class="sd-actions" id="sd-actions">
+        <button class="sd-btn sd-btn--start"  id="sd-start">▶&nbsp; Démarrer la séance</button>
+        <button class="sd-btn sd-btn--delete" id="sd-delete">Supprimer du planning</button>
+      </div>
     </div>
   </div>
 

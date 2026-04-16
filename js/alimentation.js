@@ -356,13 +356,14 @@ function bindAujourdhuiMealEvents() {
       return;
     }
 
-    // Clic sur un repas planifié → ouvrir le détail
+    // Clic sur un repas planifié (aujourd'hui) → ouvrir le détail
     const planEntry = e.target.closest('[data-pl-entry-id]');
     if (planEntry) {
       const entryId = planEntry.dataset.plEntryId;
-      const planDay = window.MEAL_PLAN_DB ? window.MEAL_PLAN_DB.getDay(localDateStr()) : { entries: [] };
+      const today   = localDateStr();
+      const planDay = window.MEAL_PLAN_DB ? window.MEAL_PLAN_DB.getDay(today) : { entries: [] };
       const entry   = (planDay.entries || []).find(en => en.id === entryId);
-      if (entry) _openMenuDetail(entry);
+      if (entry) _openMenuDetail(today, entry);
       return;
     }
   });
@@ -941,6 +942,18 @@ function bindPlanningEvents() {
       _plDayPickFrom    = copyBtn.dataset.copyDay;
       _plDayPickEntryId = null;
       openDayPickSheet();
+      return;
+    }
+    // Clic sur le corps d'une entrée planifiée → ouvrir le détail
+    const entryEl = e.target.closest('.pl-entry');
+    if (entryEl && !e.target.closest('.pl-entry__btns')) {
+      const dateStr = entryEl.dataset.entryDate;
+      const entryId = entryEl.dataset.entryId;
+      if (dateStr && entryId) {
+        const planDay = window.MEAL_PLAN_DB.getDay(dateStr);
+        const entry   = (planDay.entries || []).find(en => en.id === entryId);
+        if (entry) _openMenuDetail(dateStr, entry);
+      }
       return;
     }
   });
@@ -2243,28 +2256,24 @@ function bindAlimNewModalEvents() {
 
 /* ═══════════════════════════════════════════════════════════════
    BOTTOM-SHEET — DÉTAIL MENU PLANIFIÉ
+   Le draft est initialisé depuis entry.aliments (copie dans le plan)
+   et non depuis la recette → modifier le plan ne touche pas la recette.
 ═══════════════════════════════════════════════════════════════ */
 
-let _mdEntry   = null;   // entrée du planning (read-only)
-let _mdRecette = null;   // recette résolue
-let _mdDraft   = [];     // [{ alimId, nom, type, quantite }] — copie modifiable
-let _mdEditMode = false; // true = mode "Modifier pour aujourd'hui"
+let _mdDate     = null;  // date de l'entrée planifiée ('YYYY-MM-DD')
+let _mdEntry    = null;  // entrée du planning
+let _mdRecette  = null;  // recette originale (pour le badge "Modifié")
+let _mdDraft    = [];    // copie de travail des aliments
+let _mdEditMode  = false;
+let _mdPickerOpen = false;
+let _mdPickSearch = '';
+let _mdPickAlimId = null; // aliment sélectionné dans le picker (étape 2)
 
-/**
- * Calcule kcal/p/g/l pour un item du draft.
- * La recette stocke les quantités "brutes" (g / ml / unités).
- * ALIM_DB.addItem divise ensuite par 100, donc on reproduit la même logique ici.
- */
 function _mdItemMacros(item) {
   const alim = (window.ALIMENTS_DATA || []).find(a => a.id === item.alimId);
   if (!alim || !alim.m) return { k: 0, p: 0, g: 0, l: 0 };
   const factor = (alim.type || 'gramme') === 'unite' ? item.quantite : item.quantite / 100;
-  return {
-    k: alim.m.k * factor,
-    p: alim.m.p * factor,
-    g: alim.m.g * factor,
-    l: alim.m.l * factor,
-  };
+  return { k: alim.m.k * factor, p: alim.m.p * factor, g: alim.m.g * factor, l: alim.m.l * factor };
 }
 
 function _mdTotals() {
@@ -2275,15 +2284,28 @@ function _mdTotals() {
   }, { k: 0, p: 0, g: 0, l: 0 });
 }
 
-function _openMenuDetail(entry) {
-  const recette = window.RECETTES_DB ? window.RECETTES_DB.get(entry.recetteId) : null;
-  if (!recette) return;
+/**
+ * Ouvre le détail d'une entrée planifiée.
+ * @param {string} date   — 'YYYY-MM-DD' (jour du plan)
+ * @param {object} entry  — entrée MEAL_PLAN_DB
+ */
+function _openMenuDetail(date, entry) {
+  _mdDate      = date;
+  _mdEntry     = entry;
+  _mdRecette   = window.RECETTES_DB ? window.RECETTES_DB.get(entry.recetteId) : null;
+  _mdEditMode  = false;
+  _mdPickerOpen = false;
+  _mdPickSearch = '';
+  _mdPickAlimId = null;
 
-  _mdEntry    = entry;
-  _mdRecette  = recette;
-  _mdEditMode = false;
-  // Copie défensive des aliments de la recette
-  _mdDraft = (recette.aliments || []).map(a => ({ ...a }));
+  // Priorité : entry.aliments (copie propre au plan) ; fallback : recette (migration)
+  _mdDraft = (entry.aliments && entry.aliments.length > 0)
+    ? entry.aliments.map(a => ({ ...a }))
+    : _mdRecette ? (_mdRecette.aliments || []).map(a => ({ ...a })) : [];
+
+  // Fermer picker
+  const pickerEl = document.getElementById('pl-detail-picker');
+  if (pickerEl) pickerEl.hidden = true;
 
   _renderMenuDetail();
 
@@ -2294,24 +2316,24 @@ function _openMenuDetail(entry) {
 function _closeMenuDetail() {
   const sheet = document.getElementById('pl-menu-detail-sheet');
   if (sheet) sheet.setAttribute('hidden', '');
-  _mdEntry = null; _mdRecette = null; _mdDraft = []; _mdEditMode = false;
+  _mdDate = null; _mdEntry = null; _mdRecette = null; _mdDraft = [];
+  _mdEditMode = false; _mdPickerOpen = false; _mdPickAlimId = null;
 }
 
 function _renderMenuDetail() {
   const meta = MEAL_META[_mdEntry.mealKey] || { label: _mdEntry.mealKey, icon: '🍽️' };
 
-  // Badge + titre
   const badgeEl = document.getElementById('pl-detail-meal-badge');
   const titleEl = document.getElementById('pl-detail-title');
   if (badgeEl) badgeEl.textContent = `${meta.icon} ${meta.label}`;
   if (titleEl) titleEl.textContent = _mdEntry.recetteNom;
 
-  // Boutons : libellé "Modifier" ↔ "Sauvegarder les quantités"
   const editBtn = document.getElementById('pl-detail-edit');
-  if (editBtn) editBtn.textContent = _mdEditMode ? 'Confirmer les quantités' : 'Modifier pour aujourd\'hui';
+  if (editBtn) editBtn.textContent = _mdEditMode ? 'Confirmer les quantités' : 'Modifier les quantités';
 
   _renderMenuDetailTotals();
   _renderMenuDetailAliments();
+  _renderMdModifiedBadge();
 }
 
 function _renderMenuDetailTotals() {
@@ -2332,15 +2354,19 @@ function _renderMenuDetailTotals() {
 function _renderMenuDetailAliments() {
   const listEl = document.getElementById('pl-detail-aliments');
   if (!listEl) return;
-
   listEl.innerHTML = '';
+
+  if (_mdDraft.length === 0) {
+    listEl.innerHTML = '<p class="pl-detail__alim-empty">Aucun ingrédient. Ajoutes-en un ci-dessous.</p>';
+    return;
+  }
+
   _mdDraft.forEach((item, idx) => {
-    const macros   = _mdItemMacros(item);
-    const kcal     = Math.round(macros.k);
-    const alim     = (window.ALIMENTS_DATA || []).find(a => a.id === item.alimId);
+    const macros    = _mdItemMacros(item);
+    const kcal      = Math.round(macros.k);
+    const alim      = (window.ALIMENTS_DATA || []).find(a => a.id === item.alimId);
     const unitLabel = alim
-      ? (alim.type === 'ml' ? 'ml' : alim.type === 'unite' ? 'u' : 'g')
-      : 'g';
+      ? (alim.type === 'ml' ? 'ml' : alim.type === 'unite' ? 'u' : 'g') : 'g';
 
     const row = document.createElement('div');
     row.className = 'pl-detail__alim-row';
@@ -2349,46 +2375,127 @@ function _renderMenuDetailAliments() {
       row.innerHTML = `
         <span class="pl-detail__alim-name">${item.nom}</span>
         <div class="pl-detail__alim-edit">
-          <input class="pl-detail__qty-input" type="number" min="1"
+          <input class="pl-detail__qty-input-inline" type="number" min="1"
                  value="${item.quantite}" data-md-idx="${idx}" aria-label="Quantité">
-          <span class="pl-detail__qty-unit">${unitLabel}</span>
+          <span class="pl-detail__qty-unit-inline">${unitLabel}</span>
         </div>
         <span class="pl-detail__alim-kcal" data-md-kcal="${idx}">${kcal} kcal</span>`;
     } else {
       row.innerHTML = `
         <span class="pl-detail__alim-name">${item.nom}</span>
         <span class="pl-detail__alim-qty">${item.quantite} ${unitLabel}</span>
-        <span class="pl-detail__alim-kcal">${kcal} kcal</span>`;
+        <span class="pl-detail__alim-kcal">${kcal} kcal</span>
+        <button class="pl-detail__alim-del" data-md-del="${idx}" aria-label="Supprimer ${item.nom}">✕</button>`;
     }
-
     listEl.appendChild(row);
   });
 
-  // En mode édition, écoute les changements de quantité
   if (_mdEditMode) {
-    listEl.querySelectorAll('.pl-detail__qty-input').forEach(input => {
+    listEl.querySelectorAll('.pl-detail__qty-input-inline').forEach(input => {
       input.addEventListener('input', () => {
         const idx = parseInt(input.dataset.mdIdx, 10);
-        const val = parseFloat(input.value) || 0;
-        _mdDraft[idx].quantite = val;
-        const kcal = Math.round(_mdItemMacros(_mdDraft[idx]).k);
+        _mdDraft[idx].quantite = parseFloat(input.value) || 0;
         const kcalEl = listEl.querySelector(`[data-md-kcal="${idx}"]`);
-        if (kcalEl) kcalEl.textContent = `${kcal} kcal`;
+        if (kcalEl) kcalEl.textContent = `${Math.round(_mdItemMacros(_mdDraft[idx]).k)} kcal`;
         _renderMenuDetailTotals();
+      });
+    });
+  } else {
+    listEl.querySelectorAll('[data-md-del]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.mdDel, 10);
+        window.MEAL_PLAN_DB.removeAlimentFromEntry(_mdDate, _mdEntry.id, idx);
+        // Actualiser l'entrée et le draft
+        const day = window.MEAL_PLAN_DB.getDay(_mdDate);
+        _mdEntry = day.entries.find(e => e.id === _mdEntry.id) || _mdEntry;
+        _mdDraft = (_mdEntry.aliments || []).map(a => ({ ...a }));
+        _renderMenuDetailTotals();
+        _renderMenuDetailAliments();
+        _renderMdModifiedBadge();
+        renderPlanningPanel();
       });
     });
   }
 }
 
+function _renderMdModifiedBadge() {
+  const el = document.getElementById('pl-detail-modified-badge');
+  if (!el) return;
+  if (!_mdRecette) { el.hidden = true; return; }
+  const recIds   = (_mdRecette.aliments  || []).map(a => a.alimId).join(',');
+  const planIds  = (_mdDraft             || []).map(a => a.alimId).join(',');
+  el.hidden = (recIds === planIds);
+}
+
+/* ── Picker aliments ── */
+function _openMdPicker() {
+  _mdPickerOpen = true;
+  _mdPickSearch = '';
+  _mdPickAlimId = null;
+  const pickerEl = document.getElementById('pl-detail-picker');
+  const stepList = document.getElementById('pl-detail-picker-list');
+  const stepQty  = document.getElementById('pl-detail-qty-step');
+  const inputEl  = document.getElementById('pl-detail-picker-input');
+  if (pickerEl) pickerEl.hidden = false;
+  if (stepList)  stepList.hidden = false;
+  if (stepQty)   stepQty.hidden = true;
+  if (inputEl) { inputEl.value = ''; setTimeout(() => inputEl.focus(), 50); }
+  _renderMdPickerList();
+}
+
+function _closeMdPicker() {
+  _mdPickerOpen = false;
+  _mdPickAlimId = null;
+  const pickerEl = document.getElementById('pl-detail-picker');
+  if (pickerEl) pickerEl.hidden = true;
+}
+
+function _renderMdPickerList() {
+  const listEl = document.getElementById('pl-detail-picker-list');
+  if (!listEl) return;
+  const q     = _mdPickSearch.toLowerCase().trim();
+  const alims = (window.ALIMENTS_DATA || []).filter(a =>
+    !q || a.nom.toLowerCase().includes(q) || (a.categorie || '').toLowerCase().includes(q)
+  );
+  if (alims.length === 0) {
+    listEl.innerHTML = '<p class="pl-detail__picker-empty">Aucun aliment trouvé.</p>';
+    return;
+  }
+  listEl.innerHTML = alims.slice(0, 40).map(a => `
+    <div class="pl-detail__picker-item" data-md-pick="${a.id}">
+      <span class="pl-detail__picker-item__name">${a.nom}</span>
+      <span class="pl-detail__picker-item__cat">${a.categorie}</span>
+    </div>`).join('');
+  listEl.querySelectorAll('[data-md-pick]').forEach(row => {
+    row.addEventListener('click', () => _mdPickSelectAlim(row.dataset.mdPick));
+  });
+}
+
+function _mdPickSelectAlim(alimId) {
+  _mdPickAlimId = alimId;
+  const alim    = (window.ALIMENTS_DATA || []).find(a => a.id === alimId);
+  if (!alim) return;
+
+  const listEl   = document.getElementById('pl-detail-picker-list');
+  const stepQty  = document.getElementById('pl-detail-qty-step');
+  const labelEl  = document.getElementById('pl-detail-qty-label');
+  const unitEl   = document.getElementById('pl-detail-qty-unit');
+  const inputEl  = document.getElementById('pl-detail-qty-input');
+
+  if (listEl)  listEl.hidden  = true;
+  if (stepQty) stepQty.hidden = false;
+  if (labelEl) labelEl.textContent = alim.nom;
+  if (unitEl)  unitEl.textContent  = alim.type === 'ml' ? 'ml' : alim.type === 'unite' ? 'unité(s)' : 'g';
+  if (inputEl) { inputEl.value = alim.type === 'unite' ? 1 : 100; inputEl.focus(); }
+}
+
 function _consumeMenuDetail() {
   const today = localDateStr();
-  // Copier les aliments dans le journal du jour
   _mdDraft.forEach(item => {
     window.ALIM_DB.addItem(today, _mdEntry.mealKey, item.alimId, item.quantite);
   });
-  // Marquer l'entrée Planning comme consommée (sans modifier le modèle de repas)
   if (_mdEntry && window.MEAL_PLAN_DB) {
-    window.MEAL_PLAN_DB.setStatus(today, _mdEntry.id, 'consomme');
+    window.MEAL_PLAN_DB.setStatus(_mdDate || today, _mdEntry.id, 'consomme');
   }
   _closeMenuDetail();
   renderAujourdhuiPanel();
@@ -2400,9 +2507,8 @@ function bindMenuDetailSheetEvents() {
   document.getElementById('pl-detail-close')?.addEventListener('click', _closeMenuDetail);
 
   document.getElementById('pl-detail-ignore')?.addEventListener('click', () => {
-    // Marquer comme sauté dans le Planning, sans rien ajouter au journal
     if (_mdEntry && window.MEAL_PLAN_DB) {
-      window.MEAL_PLAN_DB.setStatus(localDateStr(), _mdEntry.id, 'saute');
+      window.MEAL_PLAN_DB.setStatus(_mdDate || localDateStr(), _mdEntry.id, 'saute');
     }
     _closeMenuDetail();
     renderAujourdhuiPanel();
@@ -2413,13 +2519,53 @@ function bindMenuDetailSheetEvents() {
 
   document.getElementById('pl-detail-edit')?.addEventListener('click', () => {
     if (_mdEditMode) {
-      // Confirmer : passer en mode lecture avec les nouvelles quantités
+      // Confirmer : sauvegarder les quantités dans MEAL_PLAN_DB
+      window.MEAL_PLAN_DB.updateEntryAliments(_mdDate, _mdEntry.id, _mdDraft);
+      const day = window.MEAL_PLAN_DB.getDay(_mdDate);
+      _mdEntry = day.entries.find(e => e.id === _mdEntry.id) || _mdEntry;
       _mdEditMode = false;
       _renderMenuDetail();
+      renderPlanningPanel();
     } else {
+      _closeMdPicker();
       _mdEditMode = true;
       _renderMenuDetail();
     }
+  });
+
+  // Bouton "Ajouter un aliment"
+  document.getElementById('pl-detail-add-alim')?.addEventListener('click', () => {
+    if (_mdPickerOpen) _closeMdPicker();
+    else               _openMdPicker();
+  });
+
+  // Recherche dans le picker
+  document.getElementById('pl-detail-picker-input')?.addEventListener('input', e => {
+    _mdPickSearch = e.target.value;
+    _renderMdPickerList();
+  });
+
+  // Bouton "Retour" dans étape quantité
+  document.getElementById('pl-detail-qty-back')?.addEventListener('click', () => {
+    _mdPickAlimId = null;
+    document.getElementById('pl-detail-picker-list').hidden = false;
+    document.getElementById('pl-detail-qty-step').hidden   = true;
+  });
+
+  // Bouton "Ajouter" dans étape quantité
+  document.getElementById('pl-detail-qty-confirm')?.addEventListener('click', () => {
+    if (!_mdPickAlimId || !_mdDate) return;
+    const qty = parseFloat(document.getElementById('pl-detail-qty-input')?.value) || 100;
+    window.MEAL_PLAN_DB.addAlimentToEntry(_mdDate, _mdEntry.id, _mdPickAlimId, qty);
+    // Actualiser
+    const day = window.MEAL_PLAN_DB.getDay(_mdDate);
+    _mdEntry  = day.entries.find(e => e.id === _mdEntry.id) || _mdEntry;
+    _mdDraft  = (_mdEntry.aliments || []).map(a => ({ ...a }));
+    _closeMdPicker();
+    _renderMenuDetailTotals();
+    _renderMenuDetailAliments();
+    _renderMdModifiedBadge();
+    renderPlanningPanel();
   });
 }
 
