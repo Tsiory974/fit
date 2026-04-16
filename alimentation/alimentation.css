@@ -1274,8 +1274,8 @@ input[name="alim-tabs"] {
   background: #111417;
   border-radius: 20px 20px 0 0;
   border-top: 1px solid #1f242a;
-  padding: 1rem 1rem calc(1.5rem + var(--nav-height, 68px));
-  max-height: 82vh;
+  padding: 1rem 1rem 0;
+  max-height: 88vh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -1312,6 +1312,12 @@ input[name="alim-tabs"] {
 #aj-modal-step-search {
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  padding-bottom: 1.5rem;
+}
+
+#aj-modal-step-qty {
+  padding-bottom: calc(1.5rem + var(--nav-height, 68px));
 }
 
 .aj-modal__count {
@@ -1323,8 +1329,7 @@ input[name="alim-tabs"] {
 
 .aj-modal__list {
   overflow-y: auto;
-  max-height: 52vh;
-  min-height: 2.5rem;
+  max-height: 55vh;
   display: flex;
   flex-direction: column;
   gap: 0.375rem;
