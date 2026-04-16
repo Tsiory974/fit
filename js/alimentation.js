@@ -40,6 +40,19 @@ document.addEventListener('DOMContentLoaded', () => {
   bindRcAlimConfigModalEvents();
   bindAlimNewModalEvents();
   bindMenuDetailSheetEvents();
+
+  // ── Gestion clavier virtuel (iOS / Android) ──────────────────────────────
+  // visualViewport.height se réduit quand le clavier s'ouvre.
+  // On l'expose en CSS via --modal-avail-h pour que la modal s'adapte.
+  // Fallback : dvh (CSS natif, iOS 15.4+) gère déjà le cas sans JS.
+  if (window.visualViewport) {
+    const _updateModalHeight = () => {
+      const h = window.visualViewport.height;
+      document.documentElement.style.setProperty('--modal-avail-h', Math.round(h * 0.92) + 'px');
+    };
+    window.visualViewport.addEventListener('resize', _updateModalHeight);
+    _updateModalHeight();
+  }
 });
 
 /* ═══════════════════════════════════════════════════════════════
