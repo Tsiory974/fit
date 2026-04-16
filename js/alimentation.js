@@ -391,12 +391,14 @@ function openAddMealSheet() {
   if (!sheet) return;
   _addSheetMealKey = null;
   _showAddSheetStep('type');
+  _lockBodyScroll();
   sheet.hidden = false;
 }
 
 function closeAddMealSheet() {
   const sheet = document.getElementById('aj-add-sheet');
   if (sheet) sheet.hidden = true;
+  _unlockBodyScroll();
   _addSheetMealKey = null;
 }
 
@@ -495,6 +497,35 @@ function bindAddMealSheetEvents() {
    MODALE AJOUT ALIMENT
 ═══════════════════════════════════════════════════════════════ */
 
+/* ── Scroll lock iOS-safe ─────────────────────────────────────
+   Sur iOS Safari, bloquer le scroll du body nécessite de passer
+   body en position:fixed (overflow:hidden seul ne suffit pas).
+   Le flag _scrollLocked évite un double-lock lors des transitions
+   directes entre modals (closeX → openY dans le même handler).
+─────────────────────────────────────────────────────────────── */
+let _bodyScrollY   = 0;
+let _scrollLocked  = false;
+
+function _lockBodyScroll() {
+  if (_scrollLocked) return;
+  _scrollLocked    = true;
+  _bodyScrollY     = window.scrollY;
+  document.body.style.overflow = 'hidden';
+  document.body.style.position = 'fixed';
+  document.body.style.top      = `-${_bodyScrollY}px`;
+  document.body.style.width    = '100%';
+}
+
+function _unlockBodyScroll() {
+  if (!_scrollLocked) return;
+  _scrollLocked = false;
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.top      = '';
+  document.body.style.width    = '';
+  window.scrollTo(0, _bodyScrollY);
+}
+
 function openAlimModal(mealLabel) {
   const modal = document.getElementById('aj-modal');
   if (!modal) return;
@@ -502,13 +533,17 @@ function openAlimModal(mealLabel) {
   showModalStep('search');
   renderModalList('');
   document.getElementById('aj-modal-search').value = '';
+  _lockBodyScroll();
   modal.hidden = false;
-  document.getElementById('aj-modal-search').focus();
+  // Délai nécessaire sur iOS Safari : focus() immédiat déclenche
+  // un scroll du browser qui fait sortir la modal du viewport.
+  setTimeout(() => document.getElementById('aj-modal-search')?.focus(), 50);
 }
 
 function closeAlimModal() {
   const modal = document.getElementById('aj-modal');
   if (modal) modal.hidden = true;
+  _unlockBodyScroll();
   _modalMealKey = null;
   _modalAlim    = null;
 }
