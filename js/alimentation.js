@@ -506,7 +506,8 @@ function showModalStep(step) {
 }
 
 function renderModalList(q) {
-  const list = document.getElementById('aj-modal-list');
+  const list     = document.getElementById('aj-modal-list');
+  const countEl  = document.getElementById('aj-modal-count');
   if (!list) return;
   const data = window.ALIMENTS_DATA || [];
   const term = q.trim().toLowerCase();
@@ -515,8 +516,19 @@ function renderModalList(q) {
     : data;
 
   if (filtered.length === 0) {
-    list.innerHTML = '<p class="panel-placeholder">Aucun aliment trouvé</p>';
+    if (countEl) countEl.textContent = '';
+    list.innerHTML = `
+      <div class="aj-modal__empty">
+        <span class="aj-modal__empty-icon">🔍</span>
+        <span>Aucun résultat pour « ${term} »</span>
+      </div>`;
     return;
+  }
+
+  if (countEl) {
+    countEl.textContent = term
+      ? `${filtered.length} résultat${filtered.length > 1 ? 's' : ''}`
+      : '';
   }
 
   list.innerHTML = filtered.map(a => `
@@ -526,9 +538,78 @@ function renderModalList(q) {
     </div>`).join('');
 }
 
+// Déduit le mode depuis le type legacy stocké sur l'aliment
+function _modeFromType(type) {
+  if (type === 'ml')    return 'volume';
+  if (type === 'unite') return 'piece';
+  return 'poids';
+}
+
+// Mode effectif d'un aliment (champ moderne prioritaire, fallback legacy)
+function _alimMode(alim) {
+  return alim.modeConsommation || _modeFromType(alim.type);
+}
+
+// Configure l'étape 2 (quantité) selon le mode de l'aliment
+function _setupQtyStep(alim) {
+  const mode      = _alimMode(alim);
+  const counterEl = document.getElementById('aj-qty-counter');
+  const inputWrap = document.getElementById('aj-qty-input-wrap');
+  const countEl   = document.getElementById('aj-qty-count');
+  const unitEl    = document.getElementById('aj-qty-unit');
+  const hintEl    = document.getElementById('aj-qty-hint');
+  const qtyInput  = document.getElementById('aj-modal-qty-input');
+  const labelEl   = document.getElementById('aj-modal-qty-label');
+
+  if (mode === 'piece') {
+    if (counterEl) counterEl.hidden = false;
+    if (inputWrap) inputWrap.hidden = true;
+    if (countEl)   countEl.textContent = '1';
+    if (unitEl)    unitEl.textContent  = 'pièce';
+    const w = alim.unitWeight || alim.portionReference || 0;
+    if (hintEl)    hintEl.textContent  = w ? `≈ ${w} g par pièce` : '';
+
+  } else if (mode === 'portion') {
+    if (counterEl) counterEl.hidden = false;
+    if (inputWrap) inputWrap.hidden = true;
+    if (countEl)   countEl.textContent = '1';
+    if (unitEl)    unitEl.textContent  = 'portion';
+    const p = alim.portionReference || 100;
+    if (hintEl)    hintEl.textContent  = `1 portion = ${p} g`;
+
+  } else if (mode === 'volume') {
+    if (counterEl) counterEl.hidden = true;
+    if (inputWrap) inputWrap.hidden = false;
+    if (labelEl)   labelEl.textContent = 'Quantité (ml)';
+    if (qtyInput)  qtyInput.value = String(alim.portionReference || 200);
+    if (hintEl)    hintEl.textContent  = '';
+
+  } else { // poids
+    if (counterEl) counterEl.hidden = true;
+    if (inputWrap) inputWrap.hidden = false;
+    if (labelEl)   labelEl.textContent = 'Quantité (g)';
+    if (qtyInput)  qtyInput.value = '100';
+    if (hintEl)    hintEl.textContent  = '';
+  }
+}
+
+// Convertit la saisie UI en grammes (ou ml) pour ALIM_DB
+function _getQtyGrams(alim) {
+  const mode = _alimMode(alim);
+  if (mode === 'piece') {
+    const count = parseInt(document.getElementById('aj-qty-count')?.textContent) || 1;
+    return count * (alim.unitWeight || alim.portionReference || 100);
+  }
+  if (mode === 'portion') {
+    const count = parseInt(document.getElementById('aj-qty-count')?.textContent) || 1;
+    return count * (alim.portionReference || 100);
+  }
+  return parseFloat(document.getElementById('aj-modal-qty-input')?.value) || 0;
+}
+
 function updateQtyMacros() {
   if (!_modalAlim) return;
-  const qty    = parseFloat(document.getElementById('aj-modal-qty-input').value) || 0;
+  const qty    = _getQtyGrams(_modalAlim);
   const r      = qty / 100;
   const m      = _modalAlim.m;
   const macros = document.getElementById('aj-modal-qty-macros');
@@ -561,13 +642,27 @@ function bindModalEvents() {
     if (!alim) return;
     _modalAlim = alim;
     document.getElementById('aj-modal-preview').textContent = alim.nom;
-    document.getElementById('aj-modal-qty-input').value = '100';
+    _setupQtyStep(alim);
     updateQtyMacros();
     showModalStep('qty');
   });
 
-  // Mise à jour macros en live
+  // Mise à jour macros en live (mode poids / volume)
   document.getElementById('aj-modal-qty-input').addEventListener('input', updateQtyMacros);
+
+  // Compteur − / + (mode pièce / portion)
+  document.getElementById('aj-qty-minus')?.addEventListener('click', () => {
+    const el = document.getElementById('aj-qty-count');
+    if (!el) return;
+    el.textContent = String(Math.max(1, (parseInt(el.textContent) || 1) - 1));
+    updateQtyMacros();
+  });
+  document.getElementById('aj-qty-plus')?.addEventListener('click', () => {
+    const el = document.getElementById('aj-qty-count');
+    if (!el) return;
+    el.textContent = String((parseInt(el.textContent) || 1) + 1);
+    updateQtyMacros();
+  });
 
   // Retour
   document.getElementById('aj-modal-back').addEventListener('click', () => {
@@ -578,7 +673,7 @@ function bindModalEvents() {
   // Confirmer ajout
   document.getElementById('aj-modal-confirm').addEventListener('click', () => {
     if (!_modalAlim || !_modalMealKey) return;
-    const qty = parseFloat(document.getElementById('aj-modal-qty-input').value);
+    const qty = _getQtyGrams(_modalAlim);
     if (!qty || qty <= 0) return;
     const today = localDateStr();
     // Ouvrir le repas concerné si fermé
@@ -1840,47 +1935,64 @@ function _saveCustomAliment(alim) {
   (window.ALIMENTS_DATA = window.ALIMENTS_DATA || []).push(alim);
 }
 
-// Type par défaut selon la catégorie
-const CATEGORY_TYPE_MAP = {
-  'Viandes':          'gramme',
-  'Poissons':         'gramme',
-  'Féculents':        'gramme',
-  'Légumes':          'gramme',
-  'Produits laitiers':'gramme',
-  'Fruits':           'unite',
-  'Boissons':         'ml',
-  'Compléments':      'gramme',
-  'Autres':           'gramme',
+// Mode de consommation par défaut selon la catégorie
+const CATEGORY_MODE_MAP = {
+  'Viandes':           'poids',
+  'Poissons':          'poids',
+  'Féculents':         'poids',
+  'Légumes':           'poids',
+  'Produits laitiers': 'portion',
+  'Fruits':            'piece',
+  'Boissons':          'volume',
+  'Compléments':       'portion',
+  'Autres':            'poids',
 };
 
-// Libellé de l'unité selon le type
-const TYPE_UNIT_LABEL = {
-  gramme: 'g',
-  ml:     'ml',
-  unite:  'unité(s)',
+// Mode → type interne stocké dans l'aliment
+const MODE_TO_TYPE = {
+  piece:   'unite',
+  portion: 'gramme',
+  poids:   'gramme',
+  volume:  'ml',
 };
 
-// Portion de référence par défaut selon le type
-const TYPE_DEFAULT_PORTION = {
-  gramme: 100,
-  ml:     100,
-  unite:  1,
-};
+let _alimNewMode = 'poids'; // 'piece' | 'portion' | 'poids' | 'volume'
+let _alimNewCat  = 'Autres';
+let _alimNewKind = 'simple'; // 'simple' | 'produit'
 
-let _alimNewType    = 'gramme';
-let _alimNewCat     = 'Autres';
-let _alimNewKind    = 'simple'; // 'simple' | 'produit'
+// Applique un mode de consommation : toggle + champ portion contextuel
+function _applyAlimMode(mode) {
+  _alimNewMode = mode;
 
-// Applique un type de portion : toggle + portion + unité
-function _applyAlimType(type) {
-  _alimNewType = type;
-  document.querySelectorAll('[data-alim-type]').forEach(b => {
-    b.classList.toggle('alim-new__toggle--active', b.dataset.alimType === type);
+  document.querySelectorAll('[data-alim-mode]').forEach(b => {
+    b.classList.toggle('alim-new__mode-btn--active', b.dataset.alimMode === mode);
   });
-  const portionEl   = document.getElementById('alim-new-portion');
-  const portionUnit = document.getElementById('alim-new-portion-unit');
-  if (portionEl)   portionEl.value        = TYPE_DEFAULT_PORTION[type] ?? 100;
-  if (portionUnit) portionUnit.textContent = TYPE_UNIT_LABEL[type]     ?? 'g';
+
+  const portionRow   = document.getElementById('alim-new-portion-row');
+  const portionEl    = document.getElementById('alim-new-portion');
+  const portionUnit  = document.getElementById('alim-new-portion-unit');
+  const portionLabel = document.getElementById('alim-new-portion-label');
+  const macroRef     = document.getElementById('alim-new-macro-ref');
+
+  if (mode === 'piece') {
+    if (portionRow)   portionRow.hidden             = false;
+    if (portionLabel) portionLabel.textContent      = 'Poids d\'une pièce (g) — optionnel';
+    if (portionEl) { portionEl.value = ''; portionEl.placeholder = 'Ex : 120'; portionEl.min = '0'; }
+    if (portionUnit)  portionUnit.textContent       = 'g';
+    if (macroRef)     macroRef.textContent          = 'Valeurs pour 100g';
+  } else if (mode === 'portion') {
+    if (portionRow)   portionRow.hidden             = false;
+    if (portionLabel) portionLabel.textContent      = 'Poids d\'une portion (g)';
+    if (portionEl) { portionEl.value = '100'; portionEl.placeholder = ''; portionEl.min = '1'; }
+    if (portionUnit)  portionUnit.textContent       = 'g';
+    if (macroRef)     macroRef.textContent          = 'Valeurs pour 100g';
+  } else if (mode === 'poids') {
+    if (portionRow)   portionRow.hidden             = true;
+    if (macroRef)     macroRef.textContent          = 'Valeurs pour 100g';
+  } else if (mode === 'volume') {
+    if (portionRow)   portionRow.hidden             = true;
+    if (macroRef)     macroRef.textContent          = 'Valeurs pour 100ml';
+  }
 }
 
 // Applique le mode simple / produit
@@ -1915,6 +2027,8 @@ function _applyAlimKind(kind) {
     // Macros toujours visibles pour un produit
     if (macrosBtn)     macrosBtn.hidden     = true;
     if (macrosSection) macrosSection.hidden = false;
+    // Mode par défaut : "par portion" (le scanner peut ensuite passer à 'volume' si liquide)
+    _applyAlimMode('portion');
   } else {
     // Macros optionnelles pour un aliment simple
     if (macrosBtn)     macrosBtn.hidden     = false;
@@ -1924,7 +2038,7 @@ function _applyAlimKind(kind) {
 }
 
 function openAlimNewModal() {
-  _alimNewType = 'gramme';
+  _alimNewMode = 'poids';
   _alimNewCat  = 'Autres';
   _alimNewKind = 'simple';
 
@@ -1934,7 +2048,7 @@ function openAlimNewModal() {
   const marqueEl = document.getElementById('alim-new-marque');
   if (marqueEl) marqueEl.value = '';
 
-  _applyAlimType('gramme');
+  _applyAlimMode('poids');
   _applyAlimKind('simple');
 
   document.querySelectorAll('#alim-new-cat-chips [data-alim-cat]').forEach(chip => {
@@ -1987,12 +2101,12 @@ function bindAlimNewModalEvents() {
     if (saveBtn) saveBtn.disabled = !nomEl.value.trim();
   });
 
-  // Toggle manuel du type (gramme / ml / unité)
-  document.querySelectorAll('[data-alim-type]').forEach(btn => {
-    btn.addEventListener('click', () => _applyAlimType(btn.dataset.alimType));
+  // Toggle mode de consommation
+  document.querySelectorAll('[data-alim-mode]').forEach(btn => {
+    btn.addEventListener('click', () => _applyAlimMode(btn.dataset.alimMode));
   });
 
-  // Chips catégorie → type automatique
+  // Chips catégorie → mode automatique
   const catChips = document.getElementById('alim-new-cat-chips');
   catChips?.addEventListener('click', e => {
     const chip = e.target.closest('[data-alim-cat]');
@@ -2001,7 +2115,7 @@ function bindAlimNewModalEvents() {
     catChips.querySelectorAll('[data-alim-cat]').forEach(c => {
       c.classList.toggle('alim-new__cat-chip--active', c.dataset.alimCat === _alimNewCat);
     });
-    _applyAlimType(CATEGORY_TYPE_MAP[_alimNewCat] || 'gramme');
+    _applyAlimMode(CATEGORY_MODE_MAP[_alimNewCat] || 'poids');
   });
 
   // Toggle infos nutritionnelles (aliment simple uniquement)
@@ -2020,21 +2134,38 @@ function bindAlimNewModalEvents() {
     const nom = document.getElementById('alim-new-nom')?.value.trim();
     if (!nom) return;
 
-    const portion = parseFloat(document.getElementById('alim-new-portion')?.value)
-      || (TYPE_DEFAULT_PORTION[_alimNewType] ?? 100);
+    const mode = _alimNewMode;
+    const type = MODE_TO_TYPE[mode] || 'gramme';
+
+    // Portion de référence selon le mode
+    let portion;
+    if (mode === 'piece') {
+      portion = parseFloat(document.getElementById('alim-new-portion')?.value) || 0;
+    } else if (mode === 'portion') {
+      portion = parseFloat(document.getElementById('alim-new-portion')?.value) || 100;
+    } else {
+      portion = 100; // poids et volume → référence 100g / 100ml
+    }
+
     const kcal = parseFloat(document.getElementById('alim-new-kcal')?.value) || 0;
     const prot = parseFloat(document.getElementById('alim-new-prot')?.value) || 0;
     const gluc = parseFloat(document.getElementById('alim-new-gluc')?.value) || 0;
     const lip  = parseFloat(document.getElementById('alim-new-lip')?.value)  || 0;
 
-    const unitSuffix = { gramme: ' / 100g', ml: ' / 100ml', unite: ' / unité' }[_alimNewType] || ' / 100g';
+    const macroSuffix = mode === 'volume' ? ' / 100ml' : ' / 100g';
     let detail = '';
     if (kcal > 0) {
       detail = `${kcal} kcal`;
       if (prot > 0) detail += ` · ${prot}g protéines`;
-      detail += unitSuffix;
+      detail += macroSuffix;
+    } else if (mode === 'piece') {
+      detail = portion > 0 ? `environ ${portion}g / pièce` : '1 pièce';
+    } else if (mode === 'portion') {
+      detail = `1 portion · ${portion}g`;
+    } else if (mode === 'volume') {
+      detail = 'pour 100ml';
     } else {
-      detail = _alimNewType === 'unite' ? '1 unité' : `pour ${portion}${TYPE_UNIT_LABEL[_alimNewType] || 'g'}`;
+      detail = 'pour 100g';
     }
 
     const alim = {
@@ -2043,8 +2174,9 @@ function bindAlimNewModalEvents() {
       typeAliment:      _alimNewKind,
       categorie:        _alimNewCat,
       detail,
-      type:             _alimNewType,
-      portionReference: portion,
+      type,
+      modeConsommation: mode,
+      portionReference: portion || 100,
       m:                { k: kcal, p: prot, g: gluc, l: lip },
       custom:           true,
     };
@@ -2053,7 +2185,7 @@ function bindAlimNewModalEvents() {
       const marque = document.getElementById('alim-new-marque')?.value.trim();
       if (marque) alim.marque = marque;
     }
-    if (_alimNewType === 'unite') alim.unitWeight = portion;
+    if (type === 'unite' && portion > 0) alim.unitWeight = portion;
 
     _saveCustomAliment(alim);
     closeAlimNewModal();

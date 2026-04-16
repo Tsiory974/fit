@@ -22,29 +22,36 @@
      MAPPING CATÉGORIES OpenFoodFacts → app
   ════════════════════════════════════════════════ */
   const OFF_CAT_MAP = {
-    'en:beverages':         'Boissons',
-    'en:waters':            'Boissons',
-    'en:sodas':             'Boissons',
-    'en:juices':            'Boissons',
-    'en:milks':             'Produits laitiers',
-    'en:dairy':             'Produits laitiers',
-    'en:yogurts':           'Produits laitiers',
-    'en:cheeses':           'Produits laitiers',
-    'en:meats':             'Viandes',
-    'en:chicken':           'Viandes',
-    'en:beef':              'Viandes',
-    'en:poultry':           'Viandes',
-    'en:fish':              'Poissons',
-    'en:seafood':           'Poissons',
-    'en:fishes':            'Poissons',
-    'en:cereals':           'Féculents',
-    'en:breads':            'Féculents',
-    'en:pasta':             'Féculents',
-    'en:rice':              'Féculents',
-    'en:fruits':            'Fruits',
-    'en:fresh-fruits':      'Fruits',
-    'en:vegetables':        'Légumes',
-    'en:fresh-vegetables':  'Légumes',
+    'en:beverages':              'Boissons',
+    'en:waters':                 'Boissons',
+    'en:sodas':                  'Boissons',
+    'en:juices':                 'Boissons',
+    'en:milks':                  'Produits laitiers',
+    'en:dairy':                  'Produits laitiers',
+    'en:yogurts':                'Produits laitiers',
+    'en:cheeses':                'Produits laitiers',
+    'en:meats':                  'Viandes',
+    'en:chicken':                'Viandes',
+    'en:beef':                   'Viandes',
+    'en:poultry':                'Viandes',
+    'en:fish':                   'Poissons',
+    'en:seafood':                'Poissons',
+    'en:fishes':                 'Poissons',
+    'en:cereals':                'Féculents',
+    'en:breads':                 'Féculents',
+    'en:pasta':                  'Féculents',
+    'en:rice':                   'Féculents',
+    'en:fruits':                 'Fruits',
+    'en:fresh-fruits':           'Fruits',
+    'en:vegetables':             'Légumes',
+    'en:fresh-vegetables':       'Légumes',
+    'en:dietary-supplements':    'Compléments',
+    'en:food-supplements':       'Compléments',
+    'en:vitamins':               'Compléments',
+    'en:minerals':               'Compléments',
+    'en:protein-powders':        'Compléments',
+    'en:sports-nutrition':       'Compléments',
+    'en:meal-replacement':       'Compléments',
   };
 
   function _mapCategory(tags) {
@@ -259,13 +266,16 @@
     const cat = _mapCategory(product.categories_tags);
 
     // Portion
-    let portionVal  = 100;
-    let portionType = 'gramme';
-    const serving = _parseServing(product.serving_size);
-    if (serving) {
-      portionVal  = serving.value;
-      portionType = serving.unit === 'ml' ? 'ml' : 'gramme';
-    }
+    let portionVal = 100;
+    const serving  = _parseServing(product.serving_size);
+    if (serving) portionVal = serving.value;
+
+    // Mode de consommation :
+    //   liquide (ml) → "en volume"
+    //   portion définie → "par portion"
+    //   aucune donnée    → "par portion" (défaut produit)
+    const isLiquid = serving && serving.unit === 'ml';
+    const mode     = isLiquid ? 'volume' : 'portion';
 
     // Remplir les champs texte
     _setVal('alim-new-nom',    nom);
@@ -284,9 +294,12 @@
       });
     }
 
-    // Type de portion
-    if (typeof _applyAlimType === 'function') _applyAlimType(portionType);
-    _setVal('alim-new-portion', portionVal);
+    // Appliquer le mode de consommation (écrase le 'portion' par défaut de _applyAlimKind)
+    if (typeof _applyAlimMode === 'function') _applyAlimMode(mode);
+    window._alimNewMode = mode;
+
+    // Portion de référence (visible si mode 'portion', masquée si 'volume')
+    if (!isLiquid) _setVal('alim-new-portion', portionVal);
 
     // Activer le bouton "Créer"
     const saveBtn = document.getElementById('alim-new-save');
