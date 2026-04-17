@@ -28,7 +28,7 @@ let currentExoIdx    = 0;
 let currentSerie     = 1;
 let currentState     = 'ready';
 
-let stopwatchSecs    = 0;
+let stopwatchStart   = 0;    // timestamp ms du début de la série (Date.now())
 let stopwatchTimer   = null;
 
 let restTotal        = 0;   // durée totale en secondes (pour l'arc SVG)
@@ -166,6 +166,9 @@ function init() {
     } else if (currentState === 'rest') {
       // Retour en avant-plan : recalculer le temps restant depuis l'horloge réelle
       syncRestTimer();
+    } else if (currentState === 'active') {
+      // Retour en avant-plan pendant l'exercice : forcer un refresh du chrono
+      updateStopwatch();
     }
   });
   window.addEventListener('pagehide', saveSessionState);
@@ -314,13 +317,10 @@ function startSerie() {
   document.getElementById('active-target').textContent   =
     `Série ${currentSerie} / ${block.series}  ·  ${block.reps} reps`;
 
-  stopwatchSecs = 0;
+  stopwatchStart = Date.now();
   clearInterval(stopwatchTimer);
   updateStopwatch();
-  stopwatchTimer = setInterval(() => {
-    stopwatchSecs++;
-    updateStopwatch();
-  }, 1000);
+  stopwatchTimer = setInterval(updateStopwatch, 1000);
 
   showScreen('screen-active');
 }
@@ -432,7 +432,7 @@ function commitSerie(actualReps, poids) {
   results[currentExoIdx].series.push({
     planned:  planned,
     actual:   actualReps,
-    duration: stopwatchSecs,
+    duration: Math.floor((Date.now() - stopwatchStart) / 1000),
     poids:    poids,
     ressenti: poids !== null ? ressentiVal : null, // ressenti uniquement si poids renseigné
   });
@@ -1142,7 +1142,7 @@ function setMuscleTag(elementId, groupe, couleur) {
 
 function updateStopwatch() {
   const el = document.getElementById('ws-stopwatch');
-  if (el) el.textContent = formatTime(stopwatchSecs);
+  if (el) el.textContent = formatTime(Math.floor((Date.now() - stopwatchStart) / 1000));
 }
 
 function updateRestDisplay() {

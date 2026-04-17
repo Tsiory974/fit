@@ -210,11 +210,224 @@
   }
 
   /* ════════════════════════════════════════════════
+     OBJECTIF NUTRITIONNEL
+  ════════════════════════════════════════════════ */
+
+  /** Lit le formulaire et retourne un objet profil partiel (peut être incomplet) */
+  function _readForm() {
+    return {
+      poids:    parseFloat(document.getElementById('p-poids')?.value)   || null,
+      taille:   parseFloat(document.getElementById('p-taille')?.value)  || null,
+      sexe:     document.querySelector('input[name="p-sexe"]:checked')?.value || 'homme',
+      activite: parseFloat(document.getElementById('p-activite')?.value) || 1.55,
+      objectif: document.querySelector('input[name="p-objectif"]:checked')?.value || 'perte',
+    };
+  }
+
+  /** Met à jour l'affichage du bloc résumé depuis les valeurs courantes du formulaire */
+  function _updateSummary() {
+    const form = _readForm();
+    const summaryEl = document.getElementById('p-summary');
+    if (!summaryEl) return;
+
+    if (!form.poids || !form.taille) {
+      summaryEl.hidden = true;
+      return;
+    }
+
+    // Calcul inline (même formule que PROFIL_DB.calcGoals)
+    const tailleM  = form.taille / 100;
+    const poidsRef = Math.round(24 * tailleM * tailleM * 10) / 10;
+    const activite = form.activite || 1.55;
+
+    let kcal, p, l, g;
+    if (form.objectif === 'maintien') {
+      const caloriesBase = form.sexe === 'femme' ? form.poids * 22.5 : form.poids * 24;
+      kcal = Math.round(caloriesBase * activite);
+      p    = Math.round(form.poids * 1.6);
+      l    = Math.round(form.poids * 0.9);
+      g    = Math.max(0, Math.round((kcal - p * 4 - l * 9) / 4));
+    } else {
+      const caloriesBase = form.sexe === 'femme' ? poidsRef * 22.5 : poidsRef * 24;
+      kcal = Math.round(caloriesBase * activite);
+      p    = Math.round(poidsRef * 1.8);
+      l    = Math.round(poidsRef * 0.9);
+      g    = Math.max(0, Math.round((kcal - p * 4 - l * 9) / 4));
+    }
+
+    document.getElementById('p-summary-kcal').textContent = kcal;
+    document.getElementById('p-summary-p').textContent    = p;
+    document.getElementById('p-summary-g').textContent    = g;
+    document.getElementById('p-summary-l').textContent    = l;
+
+    // Projection temporelle
+    const projEl = document.getElementById('p-summary-projection');
+    if (projEl) {
+      if (form.objectif === 'maintien') {
+        projEl.textContent = 'Objectif : équilibre calorique';
+        projEl.hidden = false;
+      } else {
+        // Déficit = TDEE du poids actuel − kcal cible (poidsRef)
+        const tdeeActuel = Math.round(
+          (form.sexe === 'femme' ? form.poids * 22.5 : form.poids * 24) * activite
+        );
+        const deficit = tdeeActuel - kcal;
+        if (deficit > 150) {
+          const perteHebdo = (deficit * 7) / 7700;
+          // Arrondi à 0,5 le plus proche pour un affichage lisible
+          const perteArr = Math.round(perteHebdo * 2) / 2;
+          projEl.textContent = 'Rythme estimé : ~' + perteArr.toFixed(1).replace('.', ',') + ' kg / semaine';
+          projEl.hidden = false;
+        } else {
+          projEl.hidden = true;
+        }
+      }
+    }
+
+    summaryEl.hidden = false;
+  }
+
+  /** Remplit le panel Avancé avec les détails du calcul (depuis le profil sauvegardé) */
+  function _renderAvance() {
+    const block = document.getElementById('profil-avance-block');
+    if (!block) return;
+
+    const prof = window.PROFIL_DB?.get();
+    if (!prof || !prof.poids || !prof.taille) {
+      block.innerHTML = '<p class="profil-avance-empty">Configure et enregistre ton profil dans l\'onglet Objectif pour voir les détails.</p>';
+      return;
+    }
+
+    const tailleM  = prof.taille / 100;
+    const activite = parseFloat(prof.activite) || 1.55;
+    const objectif = prof.objectif || 'perte';
+    const imc      = Math.round((prof.poids / (tailleM * tailleM)) * 10) / 10;
+    const poidsRef = Math.round(24 * tailleM * tailleM * 10) / 10;
+
+    let caloriesBase, kcal, p, l, g, baseLabel;
+
+    if (objectif === 'maintien') {
+      caloriesBase = Math.round(prof.sexe === 'femme' ? prof.poids * 22.5 : prof.poids * 24);
+      kcal         = Math.round(caloriesBase * activite);
+      p            = Math.round(prof.poids * 1.6);
+      l            = Math.round(prof.poids * 0.9);
+      g            = Math.max(0, Math.round((kcal - p * 4 - l * 9) / 4));
+      baseLabel    = 'Calories de base (poids actuel)';
+    } else {
+      caloriesBase = Math.round(prof.sexe === 'femme' ? poidsRef * 22.5 : poidsRef * 24);
+      kcal         = Math.round(caloriesBase * activite);
+      p            = Math.round(poidsRef * 1.8);
+      l            = Math.round(poidsRef * 0.9);
+      g            = Math.max(0, Math.round((kcal - p * 4 - l * 9) / 4));
+      baseLabel    = 'Calories de base (poids de référence)';
+    }
+
+    function _row(label, val) {
+      return '<div class="profil-avance-row">' +
+        '<span class="profil-avance-row__label">' + label + '</span>' +
+        '<span class="profil-avance-row__val">' + val + '</span>' +
+        '</div>';
+    }
+
+    const objectifLabel = objectif === 'maintien' ? 'Maintien' : 'Perte de gras';
+
+    block.innerHTML =
+      _row('Objectif', objectifLabel) +
+      _row('IMC actuel', imc) +
+      _row('Poids de référence (IMC 24)', poidsRef + ' kg') +
+      _row(baseLabel, caloriesBase + ' kcal') +
+      _row('Calories journalières (× activité)', kcal + ' kcal') +
+      '<div class="profil-avance-separator"></div>' +
+      _row('Protéines cibles', p + ' g / jour') +
+      _row('Lipides cibles', l + ' g / jour') +
+      _row('Glucides cibles', g + ' g / jour');
+  }
+
+  /** Affiche la dernière pesée enregistrée dans le profil */
+  function _renderPoidsInfo() {
+    const block  = document.getElementById('p-poids-info');
+    const valEl  = document.getElementById('p-poids-info-val');
+    if (!block || !valEl) return;
+
+    const prof = window.PROFIL_DB?.get();
+    if (!prof || !prof.poids) {
+      block.hidden = true;
+      return;
+    }
+
+    let txt = prof.poids + ' kg';
+    if (prof.savedAt) {
+      const d = new Date(prof.savedAt);
+      if (!isNaN(d)) {
+        txt += ' · ' + d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+      }
+    }
+    valEl.textContent = txt;
+    block.hidden = false;
+  }
+
+  /** Charge le profil sauvegardé dans le formulaire */
+  function _loadObjectif() {
+    const prof = window.PROFIL_DB?.get();
+    if (!prof) return;
+
+    const setVal = (id, val) => { const el = document.getElementById(id); if (el && val != null) el.value = val; };
+    const setRadio = (name, val) => {
+      const el = document.querySelector(`input[name="${name}"][value="${val}"]`);
+      if (el) el.checked = true;
+    };
+    const setSelect = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && val != null) {
+        const opt = el.querySelector(`option[value="${val}"]`);
+        if (opt) el.value = val;
+      }
+    };
+
+    setVal('p-poids',        prof.poids);
+    setVal('p-taille',       prof.taille);
+    setRadio('p-sexe',       prof.sexe || 'homme');
+    setSelect('p-activite',  prof.activite);
+    setRadio('p-objectif',   prof.objectif || 'perte');
+
+    _updateSummary();
+    _renderPoidsInfo();
+  }
+
+  /** Soumission du formulaire profil */
+  function _saveObjectif(e) {
+    e.preventDefault();
+    const form = _readForm();
+
+    if (!form.poids || !form.taille) {
+      showToast('Remplis le poids et la taille.', true);
+      return;
+    }
+
+    window.PROFIL_DB.save(form);
+    showToast('Profil enregistré ✓');
+    _updateSummary();
+    _renderPoidsInfo();
+    _renderAvance();
+  }
+
+  /* ════════════════════════════════════════════════
      BIND EVENTS
   ════════════════════════════════════════════════ */
 
   function init() {
-    // Sauvegarde rapide
+    // ── Formulaire objectif ──
+    _loadObjectif();
+    _renderAvance();
+
+    const form = document.getElementById('profil-objectif-form');
+    if (form) {
+      form.addEventListener('submit', _saveObjectif);
+      form.addEventListener('input', _updateSummary);
+      form.addEventListener('change', _updateSummary);
+    }
+
+    // ── Sauvegarde rapide ──
     _refreshQuickSaveUI();
     document.getElementById('btn-quick-save')?.addEventListener('click', quickSave);
     document.getElementById('btn-quick-restore')?.addEventListener('click', quickRestore);

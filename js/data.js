@@ -450,16 +450,82 @@ window.ALIMENTS_DATA = [
 ];
 
 /* ============================================================
-   ALIMENTATION — objectifs journaliers par défaut
-   (peut être écrasé par le profil utilisateur)
+   PROFIL_DB — objectif nutritionnel utilisateur
+   Clé localStorage : ft_profile
+   Structure :
+     { poids, taille, sexe, activite, objectif, savedAt }
+   objectif : 'perte' (défaut) | 'maintien'
    ============================================================ */
-window.DAILY_GOALS = {
-  kcal:  2500,
-  p:      180,   // protéines g
-  g:      280,   // glucides g
-  l:       80,   // lipides g
-  water: 2500,   // ml
+window.PROFIL_DB = {
+  KEY: 'ft_profile',
+
+  get() {
+    const raw = localStorage.getItem(this.KEY);
+    return raw ? JSON.parse(raw) : null;
+  },
+
+  save(data) {
+    const toStore = Object.assign({}, data, { savedAt: new Date().toISOString() });
+    localStorage.setItem(this.KEY, JSON.stringify(toStore));
+    // DAILY_GOALS est un getter dynamique — il se recalcule automatiquement depuis localStorage.
+    // Aucune mise à jour manuelle nécessaire ici.
+  },
+
+  /**
+   * Calcule les objectifs journaliers selon l'objectif de l'utilisateur.
+   * - 'perte'   : basé sur poidsRef (IMC 24), crée un déficit implicite
+   * - 'maintien': basé sur le poids actuel, équilibre calorique
+   * Retourne les valeurs par défaut si le profil est absent ou incomplet.
+   * @returns {{ kcal, p, g, l, water, imc, poidsRef }}
+   */
+  calcGoals() {
+    const prof = this.get();
+    const defaults = { kcal: 2000, p: 130, g: 200, l: 65, water: 2500, imc: null, poidsRef: null };
+    if (!prof || !prof.poids || !prof.taille) return defaults;
+
+    const poids    = prof.poids;
+    const tailleM  = prof.taille / 100;            // cm → m
+    const sexe     = prof.sexe     || 'homme';
+    const activite = parseFloat(prof.activite) || 1.55;
+    const objectif = prof.objectif || 'perte';
+
+    // IMC et poids de référence (IMC cible = 24)
+    const imc      = Math.round((poids / (tailleM * tailleM)) * 10) / 10;
+    const poidsRef = Math.round(24 * tailleM * tailleM * 10) / 10;
+
+    let kcal, p, l, g;
+
+    if (objectif === 'maintien') {
+      // Maintien : calories basées sur le poids actuel, équilibre calorique
+      const caloriesBase = sexe === 'femme' ? poids * 22.5 : poids * 24;
+      kcal = Math.round(caloriesBase * activite);
+      p = Math.round(poids * 1.6);               // 1,6 g/kg poids actuel
+      l = Math.round(poids * 0.9);               // 0,9 g/kg poids actuel
+      g = Math.max(0, Math.round((kcal - p * 4 - l * 9) / 4));
+    } else {
+      // Perte de gras (défaut) : basé sur poidsRef, déficit implicite
+      const caloriesBase = sexe === 'femme' ? poidsRef * 22.5 : poidsRef * 24;
+      kcal = Math.round(caloriesBase * activite);
+      p = Math.round(poidsRef * 1.8);            // 1,8 g/kg poidsRef
+      l = Math.round(poidsRef * 0.9);            // 0,9 g/kg poidsRef
+      g = Math.max(0, Math.round((kcal - p * 4 - l * 9) / 4));
+    }
+
+    return { kcal, p, g, l, water: 2500, imc, poidsRef };
+  },
 };
+
+/* ============================================================
+   ALIMENTATION — objectifs journaliers
+   Getter dynamique : recalcule depuis localStorage à chaque accès.
+   Garantit que tous les modules lisent toujours des valeurs fraîches,
+   y compris après restauration depuis le bfcache navigateur.
+   ============================================================ */
+Object.defineProperty(window, 'DAILY_GOALS', {
+  get()         { return window.PROFIL_DB.calcGoals(); },
+  configurable: true,
+  enumerable:   true,
+});
 
 /* ============================================================
    ALIM_DB — lecture/écriture du journal alimentaire

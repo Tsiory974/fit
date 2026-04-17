@@ -222,7 +222,34 @@ body {
 #tab-seance:checked    ~ .tabs-track #panel-seance    { display: block; }
 #tab-planning:checked  ~ .tabs-track #panel-planning  { display: block; }
 #tab-modeles:checked   ~ .tabs-track #panel-modeles   { display: block; }
-#tab-exercices:checked ~ .tabs-track #panel-exercices { display: block; }
+
+/* Panneau Exercices — une seule zone scroll, header sticky
+   Même pattern que #alim-panel-aliments dans alimentation.css      */
+#tab-exercices:checked ~ .tabs-track #panel-exercices {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  height: calc(100vh  - var(--header-height) - var(--tabs-height) - var(--nav-height));
+  height: calc(100dvh - var(--header-height) - var(--tabs-height) - var(--nav-height));
+}
+
+/* Zone sticky — search + filtres — ne rétrécit jamais */
+#panel-exercices .search-bar {
+  flex-shrink: 0;
+  margin: 1rem 1rem 0.75rem;
+}
+
+#panel-exercices .filter-chips {
+  flex-shrink: 0;
+  padding: 0 1rem 0.625rem;
+  margin-bottom: 0;
+}
+
+/* Séparateur visuel uniquement sous la dernière rangée de filtres */
+#panel-exercices .filter-chips--meta {
+  border-bottom: 1px solid #1f242a;
+}
 
 /* La zone de chips a son propre scroll horizontal */
 .tab-panel .filter-chips {
@@ -537,10 +564,11 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
-  /* 6 cartes × ~62px + 5 gaps × 10px = ~422px */
-  max-height: 430px;
+  flex: 1;
+  min-height: 0;               /* requis : overflow sur un flex child */
   overflow-y: auto;
   overflow-x: hidden;
+  padding: 0.875rem 1rem 1rem;
   scrollbar-width: none;        /* Firefox */
   -webkit-overflow-scrolling: touch;
 }

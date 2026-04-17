@@ -26,111 +26,269 @@
     </div>
   </header>
 
-  <!-- ===== CONTENU PRINCIPAL ===== -->
-  <main class="profil-main">
+  <!-- ===== ONGLETS ===== -->
+  <main class="profil-tabs">
 
-    <!-- ─── Section Sauvegarde ─── -->
-    <section class="profil-section">
-      <div class="profil-section__header">
-        <span class="profil-section__icon" aria-hidden="true">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
-        </span>
-        <div>
-          <h2 class="profil-section__title">Mes données</h2>
-          <p class="profil-section__desc">Sauvegardez et restaurez vos données locales</p>
-        </div>
+    <input type="radio" id="ptab-objectif" name="profil-tab" checked hidden>
+    <input type="radio" id="ptab-donnees"  name="profil-tab" hidden>
+    <input type="radio" id="ptab-avance"   name="profil-tab" hidden>
+
+    <!-- ─── Barre d'onglets ─── -->
+    <div class="profil-tabs__bar">
+      <label for="ptab-objectif" class="profil-tabs__item">Objectif</label>
+      <label for="ptab-donnees"  class="profil-tabs__item">Mes données</label>
+      <label for="ptab-avance"   class="profil-tabs__item">Avancé</label>
+    </div>
+
+    <!-- ─── Zones de contenu ─── -->
+    <div class="profil-tabs__content">
+
+      <!-- ══════ Panel 1 — Objectif ══════ -->
+      <div id="ppanel-objectif" class="profil-tab-panel">
+        <section class="profil-section">
+          <form id="profil-objectif-form" class="profil-objectif-form" novalidate>
+
+            <!-- Objectif -->
+            <div class="profil-form-field profil-form-field--full">
+              <label class="profil-form-label">Objectif</label>
+              <div class="profil-radio-group profil-radio-group--3col">
+                <label class="profil-radio-chip">
+                  <input type="radio" name="p-objectif" value="perte" checked>
+                  <span>Perte de gras</span>
+                </label>
+                <label class="profil-radio-chip">
+                  <input type="radio" name="p-objectif" value="maintien">
+                  <span>Maintien</span>
+                </label>
+                <span class="profil-chip-disabled" aria-disabled="true">
+                  Prise de masse
+                  <span class="profil-chip-soon">Bientôt</span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Poids + Taille -->
+            <div class="profil-form-row">
+              <div class="profil-form-field">
+                <label class="profil-form-label" for="p-poids">Poids actuel</label>
+                <div class="profil-input-unit">
+                  <input type="number" id="p-poids" class="profil-input" min="30" max="300" step="0.1" placeholder="80">
+                  <span class="profil-input-unit__label">kg</span>
+                </div>
+              </div>
+              <div class="profil-form-field">
+                <label class="profil-form-label" for="p-taille">Taille</label>
+                <div class="profil-input-unit">
+                  <input type="number" id="p-taille" class="profil-input" min="100" max="250" step="1" placeholder="175">
+                  <span class="profil-input-unit__label">cm</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sexe -->
+            <div class="profil-form-field profil-form-field--full">
+              <label class="profil-form-label">Sexe</label>
+              <div class="profil-radio-group">
+                <label class="profil-radio-chip">
+                  <input type="radio" name="p-sexe" value="homme" checked>
+                  <span>Homme</span>
+                </label>
+                <label class="profil-radio-chip">
+                  <input type="radio" name="p-sexe" value="femme">
+                  <span>Femme</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Niveau d'activité -->
+            <div class="profil-form-field profil-form-field--full">
+              <label class="profil-form-label" for="p-activite">Niveau d'activité</label>
+              <select id="p-activite" class="profil-select">
+                <option value="1.2">Sédentaire (peu ou pas d'exercice)</option>
+                <option value="1.375">Légèrement actif (1–3 j/sem)</option>
+                <option value="1.55" selected>Modérément actif (3–5 j/sem)</option>
+                <option value="1.725">Très actif (6–7 j/sem)</option>
+                <option value="1.9">Extrêmement actif (sport + travail physique)</option>
+              </select>
+            </div>
+
+            <!-- Résumé calculé (kcal + macros uniquement) -->
+            <div class="profil-objectif-summary" id="p-summary" hidden>
+              <p class="profil-objectif-summary__title">Profil nutritionnel estimé</p>
+              <div class="profil-objectif-summary__grid">
+                <div class="profil-objectif-summary__item">
+                  <span class="profil-objectif-summary__val" id="p-summary-kcal">—</span>
+                  <span class="profil-objectif-summary__lbl">kcal/jour</span>
+                </div>
+                <div class="profil-objectif-summary__item">
+                  <span class="profil-objectif-summary__val" id="p-summary-p">—</span>
+                  <span class="profil-objectif-summary__lbl">Protéines g</span>
+                </div>
+                <div class="profil-objectif-summary__item">
+                  <span class="profil-objectif-summary__val" id="p-summary-g">—</span>
+                  <span class="profil-objectif-summary__lbl">Glucides g</span>
+                </div>
+                <div class="profil-objectif-summary__item">
+                  <span class="profil-objectif-summary__val" id="p-summary-l">—</span>
+                  <span class="profil-objectif-summary__lbl">Lipides g</span>
+                </div>
+              </div>
+              <p class="profil-objectif-summary__projection" id="p-summary-projection" hidden></p>
+              <p class="profil-objectif-summary__hint">Détails du calcul → onglet Avancé</p>
+            </div>
+
+            <button type="submit" class="profil-btn profil-btn--primary profil-objectif-submit">
+              Enregistrer
+            </button>
+
+            <!-- Dernière pesée enregistrée -->
+            <div class="profil-poids-info" id="p-poids-info" hidden>
+              <span class="profil-poids-info__label">Dernière pesée enregistrée</span>
+              <span class="profil-poids-info__val" id="p-poids-info-val"></span>
+            </div>
+
+          </form>
+        </section>
       </div>
 
-      <!-- Bandeau explicatif -->
-      <div class="profil-dev-notice">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-             width="14" height="14" aria-hidden="true">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="8" x2="12" y2="12"/>
-          <line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
-        Ces options permettent de sauvegarder et restaurer tes données locales pendant le développement de l'application.
-      </div>
-
-      <!-- Sauvegarde rapide -->
-      <div class="profil-card">
-        <div class="profil-card__label">
-          <span class="profil-card__label-icon" aria-hidden="true">💾</span>
-          <div>
-            <p class="profil-card__title">Sauvegarde rapide</p>
-            <p class="profil-card__hint" id="quick-save-hint">Enregistre un point de restauration dans l'application</p>
+      <!-- ══════ Panel 2 — Mes données ══════ -->
+      <div id="ppanel-donnees" class="profil-tab-panel">
+        <section class="profil-section">
+          <div class="profil-section__header">
+            <span class="profil-section__icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </span>
+            <div>
+              <h2 class="profil-section__title">Mes données</h2>
+              <p class="profil-section__desc">Sauvegardez et restaurez vos données locales</p>
+            </div>
           </div>
-        </div>
-        <button type="button" id="btn-quick-save" class="profil-btn profil-btn--primary">
-          Sauvegarder
-        </button>
-        <button type="button" id="btn-quick-restore" class="profil-btn profil-btn--secondary" hidden>
-          Restaurer la sauvegarde
-        </button>
-      </div>
 
-      <!-- Séparateur -->
-      <div class="profil-divider" aria-hidden="true"></div>
-
-      <!-- Export -->
-      <div class="profil-card">
-        <div class="profil-card__label">
-          <span class="profil-card__label-icon" aria-hidden="true">⬇️</span>
-          <div>
-            <p class="profil-card__title">Exporter mes données</p>
-            <p class="profil-card__hint">Télécharge un fichier <code>fitness-backup.json</code> avec toutes vos données</p>
+          <!-- Bandeau explicatif -->
+          <div class="profil-dev-notice">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                 width="14" height="14" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            Ces options permettent de sauvegarder et restaurer tes données locales pendant le développement de l'application.
           </div>
-        </div>
-        <button type="button" id="btn-export" class="profil-btn profil-btn--primary">
-          Exporter mes données
-        </button>
-      </div>
 
-      <!-- Séparateur -->
-      <div class="profil-divider" aria-hidden="true"></div>
-
-      <!-- Import -->
-      <div class="profil-card">
-        <div class="profil-card__label">
-          <span class="profil-card__label-icon" aria-hidden="true">⬆️</span>
-          <div>
-            <p class="profil-card__title">Importer mes données</p>
-            <p class="profil-card__hint">Remplace toutes vos données actuelles par le fichier importé</p>
+          <!-- Sauvegarde rapide -->
+          <div class="profil-card">
+            <div class="profil-card__label">
+              <span class="profil-card__label-icon" aria-hidden="true">💾</span>
+              <div>
+                <p class="profil-card__title">Sauvegarde rapide</p>
+                <p class="profil-card__hint" id="quick-save-hint">Enregistre un point de restauration dans l'application</p>
+              </div>
+            </div>
+            <button type="button" id="btn-quick-save" class="profil-btn profil-btn--primary">Sauvegarder</button>
+            <button type="button" id="btn-quick-restore" class="profil-btn profil-btn--secondary" hidden>Restaurer la sauvegarde</button>
           </div>
-        </div>
 
-        <!-- Zone de sélection de fichier -->
-        <label class="profil-file-label" id="import-file-label">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-               width="18" height="18" aria-hidden="true">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-          </svg>
-          <span id="import-file-name">Choisir un fichier .json</span>
-          <input type="file" id="import-file-input" accept=".json" class="profil-file-input" aria-label="Choisir un fichier de sauvegarde JSON">
-        </label>
+          <div class="profil-divider" aria-hidden="true"></div>
 
-        <button type="button" id="btn-import" class="profil-btn profil-btn--secondary" disabled>
-          Importer mes données
-        </button>
+          <!-- Export -->
+          <div class="profil-card">
+            <div class="profil-card__label">
+              <span class="profil-card__label-icon" aria-hidden="true">⬇️</span>
+              <div>
+                <p class="profil-card__title">Exporter mes données</p>
+                <p class="profil-card__hint">Télécharge un fichier <code>fitness-backup.json</code> avec toutes tes données</p>
+              </div>
+            </div>
+            <button type="button" id="btn-export" class="profil-btn profil-btn--primary">Exporter mes données</button>
+          </div>
 
-        <!-- Message d'erreur import -->
-        <p id="import-error" class="profil-msg profil-msg--error" hidden></p>
+          <div class="profil-divider" aria-hidden="true"></div>
+
+          <!-- Import -->
+          <div class="profil-card">
+            <div class="profil-card__label">
+              <span class="profil-card__label-icon" aria-hidden="true">⬆️</span>
+              <div>
+                <p class="profil-card__title">Importer mes données</p>
+                <p class="profil-card__hint">Remplace toutes tes données actuelles par le fichier importé</p>
+              </div>
+            </div>
+            <label class="profil-file-label" id="import-file-label">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                   width="18" height="18" aria-hidden="true">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+              </svg>
+              <span id="import-file-name">Choisir un fichier .json</span>
+              <input type="file" id="import-file-input" accept=".json" class="profil-file-input" aria-label="Choisir un fichier de sauvegarde JSON">
+            </label>
+            <button type="button" id="btn-import" class="profil-btn profil-btn--secondary" disabled>Importer mes données</button>
+            <p id="import-error" class="profil-msg profil-msg--error" hidden></p>
+          </div>
+        </section>
       </div>
-    </section>
 
-    <!-- ─── Section Infos app ─── -->
-    <section class="profil-section profil-section--info">
-      <p class="profil-app-name">FitTrack</p>
-      <p class="profil-app-version">Vos données sont stockées localement sur votre appareil</p>
-    </section>
+      <!-- ══════ Panel 3 — Avancé ══════ -->
+      <div id="ppanel-avance" class="profil-tab-panel">
+
+        <section class="profil-section">
+          <div class="profil-section__header">
+            <span class="profil-section__icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"/>
+                <line x1="12" y1="20" x2="12" y2="4"/>
+                <line x1="6"  y1="20" x2="6"  y2="14"/>
+              </svg>
+            </span>
+            <div>
+              <h2 class="profil-section__title">Détails du calcul</h2>
+              <p class="profil-section__desc">Basé sur le profil enregistré</p>
+            </div>
+          </div>
+          <div id="profil-avance-block" class="profil-avance-block">
+            <!-- Rendu par profil.js -->
+          </div>
+        </section>
+
+        <section class="profil-section">
+          <div class="profil-section__header">
+            <span class="profil-section__icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8"  x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+            </span>
+            <div>
+              <h2 class="profil-section__title">Méthode de calcul</h2>
+              <p class="profil-section__desc">Comment sont estimées tes cibles</p>
+            </div>
+          </div>
+          <div class="profil-avance-method">
+            <p><strong>Poids de référence</strong> — calculé pour un IMC de 24 (valeur neutre). C'est une base de calcul stable, pas un objectif imposé.</p>
+            <p><strong>Calories</strong> — calibrées sur le poids de référence (pas ton poids actuel), pour rester cohérentes tout au long du parcours sans recalcul constant.</p>
+            <p><strong>Protéines & lipides</strong> — à 1,8 g et 0,9 g par kg de poids de référence, pour préserver la masse musculaire en déficit calorique.</p>
+            <p><strong>Glucides</strong> — le reste des calories, après protéines et lipides.</p>
+          </div>
+        </section>
+
+        <section class="profil-section profil-section--info">
+          <p class="profil-app-name">FitTrack</p>
+          <p class="profil-app-version">Vos données sont stockées localement sur votre appareil</p>
+        </section>
+
+      </div><!-- /.ppanel-avance -->
+
+    </div><!-- /.profil-tabs__content -->
 
   </main>
 
@@ -195,6 +353,7 @@
 
   </nav>
 
+  <script src="js/data.js"></script>
   <script src="js/profil.js"></script>
 </body>
 </html>

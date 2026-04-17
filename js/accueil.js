@@ -280,6 +280,59 @@
   }
 
   /* ════════════════════════════════════════════════
+     BLOC OBJECTIF
+  ════════════════════════════════════════════════ */
+
+  function renderObjectifBlock() {
+    const card  = document.getElementById('home-objectif-card');
+    const block = document.getElementById('home-objectif-block');
+    if (!card || !block) return;
+
+    const prof = window.PROFIL_DB?.get();
+    if (!prof || !prof.poids || !prof.taille) {
+      card.hidden = true;
+      return;
+    }
+
+    card.hidden = false;
+
+    const goals = window.DAILY_GOALS;
+
+    // Info IMC + poids de référence (informatif, non anxiogène)
+    const imcHtml = (goals.imc !== null && goals.poidsRef !== null)
+      ? '<p class="home-card__coach">Poids de référence (IMC 24) : ' + goals.poidsRef + ' kg · IMC actuel : ' + goals.imc + '</p>'
+      : '';
+
+    // Grille macros cibles
+    const macrosHtml =
+      '<div class="home-objectif-macros">' +
+        '<div class="home-objectif-macro">' +
+          '<span class="home-objectif-macro__val">' + goals.kcal + '</span>' +
+          '<span class="home-objectif-macro__lbl">kcal</span>' +
+        '</div>' +
+        '<div class="home-objectif-macro">' +
+          '<span class="home-objectif-macro__val">' + goals.p + 'g</span>' +
+          '<span class="home-objectif-macro__lbl">Prot.</span>' +
+        '</div>' +
+        '<div class="home-objectif-macro">' +
+          '<span class="home-objectif-macro__val">' + goals.g + 'g</span>' +
+          '<span class="home-objectif-macro__lbl">Gluc.</span>' +
+        '</div>' +
+        '<div class="home-objectif-macro">' +
+          '<span class="home-objectif-macro__val">' + goals.l + 'g</span>' +
+          '<span class="home-objectif-macro__lbl">Lip.</span>' +
+        '</div>' +
+      '</div>';
+
+    block.innerHTML =
+      _badge('active', 'Perte de gras · Musculation') +
+      '<p class="home-card__coach">Cibles adaptées à ton profil et ton niveau d\'activité</p>' +
+      imcHtml +
+      macrosHtml +
+      '<a href="profil.html" class="home-btn home-btn--ghost">Modifier le profil</a>';
+  }
+
+  /* ════════════════════════════════════════════════
      COMPOSANTS HTML réutilisables
   ════════════════════════════════════════════════ */
 
@@ -311,6 +364,7 @@
     _applyPriority(ctx);
     renderMuscuBlock(data, ctx);
     renderAlimBlock(data, ctx);
+    renderObjectifBlock();
   }
 
   if (document.readyState === 'loading') {
@@ -318,5 +372,10 @@
   } else {
     init();
   }
+
+  // ── bfcache : re-render si la page est restaurée depuis le cache navigateur
+  // (bouton retour iOS Safari / Android Chrome) pour refléter un objectif
+  // modifié dans Profil sans nécessiter de rechargement manuel.
+  window.addEventListener('pageshow', (e) => { if (e.persisted) init(); });
 
 })();

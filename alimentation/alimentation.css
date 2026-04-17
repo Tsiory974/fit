@@ -1346,6 +1346,11 @@ input[name="alim-tabs"] {
   padding-bottom: 1rem;
 }
 
+/* [hidden] a une spécificité inférieure à display:flex ci-dessus → override explicite */
+#aj-modal-step-search[hidden] {
+  display: none;
+}
+
 #aj-modal-step-qty {
   flex: 1;
   min-height: 0;
@@ -1438,6 +1443,9 @@ input[name="alim-tabs"] {
   gap: 0.5rem;
 }
 
+/* display:flex ci-dessus bat [hidden]{display:none} du navigateur → override */
+.aj-modal__qty-counter[hidden] { display: none; }
+
 .aj-qty__btn {
   width: 54px;
   height: 54px;
@@ -1498,6 +1506,9 @@ input[name="alim-tabs"] {
   gap: 0.75rem;
   margin-bottom: 0.75rem;
 }
+
+/* display:flex ci-dessus bat [hidden]{display:none} du navigateur → override */
+.aj-modal__qty-row[hidden] { display: none; }
 
 .aj-modal__qty-label {
   font-size: 0.82rem;
@@ -4281,6 +4292,7 @@ input[name="alim-tabs"] {
   gap: 0.625rem;
   padding: 0.6rem 0.875rem;
   border-bottom: 1px solid #1a1e23;
+  cursor: pointer;
 }
 
 .pl-entry:last-child {

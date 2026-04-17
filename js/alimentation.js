@@ -55,6 +55,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// ── bfcache : re-render le panel du jour si la page est restaurée depuis le cache
+// navigateur (bouton retour sur iOS Safari / Android Chrome) pour que les objectifs
+// éventuellement modifiés dans Profil soient immédiatement reflétés.
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted) renderAujourdhuiPanel();
+});
+
 /* ═══════════════════════════════════════════════════════════════
    ONGLET 1 — AUJOURD'HUI
 ═══════════════════════════════════════════════════════════════ */
@@ -599,6 +606,36 @@ function _alimMode(alim) {
   return alim.modeConsommation || _modeFromType(alim.type);
 }
 
+// Libellé d'unité selon le mode. short=true → forme compacte ('u','p','g','ml')
+function _alimUnitLabel(alim, short = false) {
+  const mode = _alimMode(alim);
+  if (mode === 'volume')  return 'ml';
+  if (mode === 'piece')   return short ? 'u'  : 'pièce(s)';
+  if (mode === 'portion') return short ? 'p'  : 'portion(s)';
+  return 'g'; // weight
+}
+
+// Valeur par défaut du champ quantité selon le mode
+function _alimDefaultQty(alim) {
+  const mode = _alimMode(alim);
+  if (mode === 'piece' || mode === 'portion') return 1;
+  if (mode === 'volume') return alim.portionReference || 200;
+  return 100;
+}
+
+// Valeur max du champ quantité selon le mode
+function _alimMaxQty(alim) {
+  const mode = _alimMode(alim);
+  if (mode === 'piece' || mode === 'portion') return 99;
+  if (mode === 'volume') return 2000;
+  return 5000;
+}
+
+// Facteur de conversion : quantité stockée → multiplicateur pour les macros/100
+function _alimFactor(alim, quantite) {
+  return _alimMode(alim) === 'piece' ? quantite : quantite / 100;
+}
+
 // Configure l'étape 2 (quantité) selon le mode de l'aliment
 function _setupQtyStep(alim) {
   const mode      = _alimMode(alim);
@@ -894,6 +931,19 @@ function renderPlanningPanel() {
   });
 
   bindPlanningEvents();
+
+  // Listeners directs sur chaque entrée planifiée → plus fiable que l'event delegation
+  daysEl.querySelectorAll('.pl-entry').forEach(entryEl => {
+    entryEl.addEventListener('click', e => {
+      if (e.target.closest('.pl-entry__btns')) return;
+      const dateStr = entryEl.dataset.entryDate;
+      const entryId = entryEl.dataset.entryId;
+      if (!dateStr || !entryId) return;
+      const planDay = window.MEAL_PLAN_DB.getDay(dateStr);
+      const entry   = (planDay.entries || []).find(en => en.id === entryId);
+      if (entry) _openMenuDetail(dateStr, entry);
+    });
+  });
 }
 
 /* ── Événements du panneau Planning ── */
@@ -942,18 +992,6 @@ function bindPlanningEvents() {
       _plDayPickFrom    = copyBtn.dataset.copyDay;
       _plDayPickEntryId = null;
       openDayPickSheet();
-      return;
-    }
-    // Clic sur le corps d'une entrée planifiée → ouvrir le détail
-    const entryEl = e.target.closest('.pl-entry');
-    if (entryEl && !e.target.closest('.pl-entry__btns')) {
-      const dateStr = entryEl.dataset.entryDate;
-      const entryId = entryEl.dataset.entryId;
-      if (dateStr && entryId) {
-        const planDay = window.MEAL_PLAN_DB.getDay(dateStr);
-        const entry   = (planDay.entries || []).find(en => en.id === entryId);
-        if (entry) _openMenuDetail(dateStr, entry);
-      }
       return;
     }
   });
@@ -1254,7 +1292,9 @@ function renderRcEdit() {
   }
 
   itemsEl.innerHTML = rec.aliments.map((item, idx) => {
-    const unit = item.type === 'unite' ? 'unité(s)' : 'g';
+    const alimData = (window.ALIMENTS_DATA || []).find(a => a.id === item.alimId);
+    const unit     = alimData ? _alimUnitLabel(alimData) : 'g';
+    const maxQty   = alimData ? _alimMaxQty(alimData) : 2000;
     return `
       <div class="rc-edit__item">
         <span class="rc-edit__item-name">${item.nom}</span>
@@ -1262,7 +1302,7 @@ function renderRcEdit() {
           <input class="rc-edit__qty-input" type="number"
                  data-rc-item-idx="${idx}"
                  value="${item.quantite}"
-                 min="1" max="${item.type === 'unite' ? 99 : 2000}"
+                 min="1" max="${maxQty}"
                  inputmode="numeric"
                  aria-label="Quantité">
           <span class="rc-edit__qty-unit">${unit}</span>
@@ -1426,7 +1466,13 @@ function renderRcPickerList() {
     return;
   }
 
-  const isUniteLabel = a => (a.type || 'gramme') === 'unite' ? 'par unité' : '/100g';
+  const _rcPickerCtxLabel = a => {
+    const mode = _alimMode(a);
+    if (mode === 'piece')   return 'par pièce';
+    if (mode === 'portion') return 'par portion';
+    if (mode === 'volume')  return '/100ml';
+    return '/100g';
+  };
 
   list.innerHTML = items.map(a => `
     <div class="rc-picker__item" data-rc-pick="${a.id}">
@@ -1436,7 +1482,7 @@ function renderRcPickerList() {
       </div>
       <div class="rc-picker__item-right">
         <span class="rc-picker__item-kcal">${a.m.k} kcal</span>
-        <span class="rc-picker__item-unit">${isUniteLabel(a)}</span>
+        <span class="rc-picker__item-unit">${_rcPickerCtxLabel(a)}</span>
       </div>
       <div class="rc-picker__item-add" aria-hidden="true">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none"
@@ -1483,11 +1529,10 @@ function bindRcPickerEvents() {
     _rcAlimConfigSelectedAlim = alim;
     const nameEl = document.getElementById('rc-alim-config-name');
     if (nameEl) { nameEl.textContent = alim.nom; nameEl.classList.add('rc-alim-config__pick-name--selected'); }
-    const isUnite = (alim.type || 'gramme') === 'unite';
     const unitEl  = document.getElementById('rc-alim-config-unit');
     const qtyEl   = document.getElementById('rc-alim-config-qty');
-    if (unitEl) unitEl.textContent = isUnite ? 'unité(s)' : 'g';
-    if (qtyEl)  { qtyEl.value = isUnite ? '1' : '100'; qtyEl.max = isUnite ? '99' : '2000'; }
+    if (unitEl) unitEl.textContent = _alimUnitLabel(alim);
+    if (qtyEl)  { qtyEl.value = String(_alimDefaultQty(alim)); qtyEl.max = String(_alimMaxQty(alim)); }
     const confirmBtn = document.getElementById('rc-alim-config-confirm');
     if (confirmBtn) confirmBtn.disabled = false;
     closeRcPicker();
@@ -1529,11 +1574,10 @@ function selectAlimForConfig(alim) {
   if (listEl) { listEl.innerHTML = ''; listEl.classList.remove('rc-alim-search-list--visible'); }
   const wrapEl = document.getElementById('rc-alim-search-wrap');
   if (wrapEl) wrapEl.classList.remove('rc-alim-search-wrap--open');
-  const isUnite = (alim.type || 'gramme') === 'unite';
   const unitEl = document.getElementById('rc-alim-config-unit');
   const qtyEl  = document.getElementById('rc-alim-config-qty');
-  if (unitEl) unitEl.textContent = isUnite ? 'unité(s)' : 'g';
-  if (qtyEl)  { qtyEl.value = isUnite ? '1' : '100'; qtyEl.max = isUnite ? '99' : '2000'; }
+  if (unitEl) unitEl.textContent = _alimUnitLabel(alim);
+  if (qtyEl)  { qtyEl.value = String(_alimDefaultQty(alim)); qtyEl.max = String(_alimMaxQty(alim)); }
   const confirmBtn = document.getElementById('rc-alim-config-confirm');
   if (confirmBtn) confirmBtn.disabled = false;
   setTimeout(() => qtyEl?.focus(), 80);
@@ -1654,8 +1698,7 @@ function closeRcNewModal() {
 function _draftItemKcal(item) {
   const alim = (window.ALIMENTS_DATA || []).find(a => a.id === item.alimId);
   if (!alim) return 0;
-  const factor = (alim.type || 'gramme') === 'unite' ? item.quantite : item.quantite / 100;
-  return Math.round(alim.m.k * factor);
+  return Math.round(alim.m.k * _alimFactor(alim, item.quantite));
 }
 
 /* ── Mise à jour du résumé nutritionnel ── */
@@ -1666,11 +1709,11 @@ function renderRcNewTotals() {
   _rcDraftAliments.forEach(item => {
     const alim = (window.ALIMENTS_DATA || []).find(a => a.id === item.alimId);
     if (!alim) return;
-    const factor = (alim.type || 'gramme') === 'unite' ? item.quantite : item.quantite / 100;
-    totK += alim.m.k * factor;
-    totP += alim.m.p * factor;
-    totG += alim.m.g * factor;
-    totL += alim.m.l * factor;
+    const f = _alimFactor(alim, item.quantite);
+    totK += alim.m.k * f;
+    totP += alim.m.p * f;
+    totG += alim.m.g * f;
+    totL += alim.m.l * f;
   });
 
   totK = Math.round(totK);
@@ -1709,9 +1752,10 @@ function renderRcNewDraftList() {
   }
 
   list.innerHTML = _rcDraftAliments.map((item, idx) => {
-    const kcal   = _draftItemKcal(item);
-    const unit   = item.type === 'unite' ? 'u' : 'g';
-    const maxQty = item.type === 'unite' ? 99 : 2000;
+    const kcal     = _draftItemKcal(item);
+    const alimData = (window.ALIMENTS_DATA || []).find(a => a.id === item.alimId);
+    const unit     = alimData ? _alimUnitLabel(alimData, true) : 'g';
+    const maxQty   = alimData ? _alimMaxQty(alimData) : 2000;
     return `
       <div class="rc-new-draft-item">
         <div class="rc-new-draft-item__info">
@@ -1801,10 +1845,9 @@ function bindRcNewModalEvents() {
     listEl.hidden = true;
     listEl.innerHTML = '';
     wrapEl.classList.remove('rc-new__search-wrap--open');
-    const isUnite = (alim.type || 'gramme') === 'unite';
     if (qtyNameEl) qtyNameEl.textContent = alim.nom;
-    if (unitEl)    unitEl.textContent = isUnite ? 'unité(s)' : 'g';
-    if (qtyEl)     { qtyEl.value = isUnite ? '1' : '100'; qtyEl.max = isUnite ? '99' : '2000'; }
+    if (unitEl)    unitEl.textContent = _alimUnitLabel(alim);
+    if (qtyEl)     { qtyEl.value = String(_alimDefaultQty(alim)); qtyEl.max = String(_alimMaxQty(alim)); }
     if (qtyRowEl)  { qtyRowEl.hidden = false; setTimeout(() => qtyEl?.focus(), 80); }
   }
 
@@ -2272,8 +2315,8 @@ let _mdPickAlimId = null; // aliment sélectionné dans le picker (étape 2)
 function _mdItemMacros(item) {
   const alim = (window.ALIMENTS_DATA || []).find(a => a.id === item.alimId);
   if (!alim || !alim.m) return { k: 0, p: 0, g: 0, l: 0 };
-  const factor = (alim.type || 'gramme') === 'unite' ? item.quantite : item.quantite / 100;
-  return { k: alim.m.k * factor, p: alim.m.p * factor, g: alim.m.g * factor, l: alim.m.l * factor };
+  const f = _alimFactor(alim, item.quantite);
+  return { k: alim.m.k * f, p: alim.m.p * f, g: alim.m.g * f, l: alim.m.l * f };
 }
 
 function _mdTotals() {
@@ -2365,8 +2408,7 @@ function _renderMenuDetailAliments() {
     const macros    = _mdItemMacros(item);
     const kcal      = Math.round(macros.k);
     const alim      = (window.ALIMENTS_DATA || []).find(a => a.id === item.alimId);
-    const unitLabel = alim
-      ? (alim.type === 'ml' ? 'ml' : alim.type === 'unite' ? 'u' : 'g') : 'g';
+    const unitLabel = alim ? _alimUnitLabel(alim, true) : 'g';
 
     const row = document.createElement('div');
     row.className = 'pl-detail__alim-row';
@@ -2485,8 +2527,8 @@ function _mdPickSelectAlim(alimId) {
   if (listEl)  listEl.hidden  = true;
   if (stepQty) stepQty.hidden = false;
   if (labelEl) labelEl.textContent = alim.nom;
-  if (unitEl)  unitEl.textContent  = alim.type === 'ml' ? 'ml' : alim.type === 'unite' ? 'unité(s)' : 'g';
-  if (inputEl) { inputEl.value = alim.type === 'unite' ? 1 : 100; inputEl.focus(); }
+  if (unitEl)  unitEl.textContent  = _alimUnitLabel(alim);
+  if (inputEl) { inputEl.value = String(_alimDefaultQty(alim)); inputEl.focus(); }
 }
 
 function _consumeMenuDetail() {
