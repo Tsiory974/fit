@@ -86,50 +86,83 @@
   ════════════════════════════════════════════════ */
 
   function renderHeader(data, ctx) {
-    const dateEl = document.getElementById('home-date');
-    const msgEl  = document.getElementById('home-message');
-    const hintEl = document.getElementById('home-hint');
+    const dateEl  = document.getElementById('home-date');
+    const msgEl   = document.getElementById('home-message');
+    const hintEl  = document.getElementById('home-hint');
+    const badgeEl = document.getElementById('home-mode-badge');
+    const stripEl = document.getElementById('home-goal-strip');
     if (!dateEl || !msgEl) return;
 
-    // Date
+    // ── Date ──
     const now     = new Date();
     const dateStr = now.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
     dateEl.textContent = dateStr.charAt(0).toUpperCase() + dateStr.slice(1);
 
-    // Message principal + sous-texte selon la situation
+    // ── Badge de mode ──
+    if (badgeEl) {
+      if (ctx.hasActive) {
+        badgeEl.textContent = 'Séance en cours';
+        badgeEl.className   = 'home-mode-badge home-mode-badge--active';
+      } else if (ctx.hasPending) {
+        badgeEl.textContent = 'Jour d\'entraînement';
+        badgeEl.className   = 'home-mode-badge home-mode-badge--training';
+      } else if (ctx.hasDone) {
+        badgeEl.textContent = 'Séance terminée';
+        badgeEl.className   = 'home-mode-badge home-mode-badge--done';
+      } else {
+        badgeEl.textContent = 'Jour de repos';
+        badgeEl.className   = 'home-mode-badge home-mode-badge--rest';
+      }
+      badgeEl.hidden = false;
+    }
+
+    // ── Message principal + sous-texte ──
     let msg, hint;
 
     if (ctx.hasActive) {
       msg  = 'Continue sur ta lancée 🔥';
-      hint = 'Ta séance est en cours. Termine ce que tu as commencé.';
+      hint = 'Ta séance est en cours — termine ce que tu as commencé.';
     } else if (ctx.hasPending && !ctx.hasEaten) {
-      msg  = 'À toi de jouer 💪';
-      hint = 'Séance prévue aujourd\'hui — pense aussi à manger avant.';
+      msg  = 'Mange d\'abord, entraîne-toi ensuite.';
+      hint = 'Séance prévue aujourd\'hui — commence par noter ton repas.';
     } else if (ctx.hasPending) {
-      msg  = 'Séance prévue aujourd\'hui 💪';
-      hint = 'Lance-toi. Plus tôt c\'est fait, mieux tu récupères.';
+      msg  = 'Séance à faire aujourd\'hui.';
+      hint = 'Lance-toi maintenant — plus tôt c\'est fait, mieux tu récupères.';
     } else if (ctx.hasDone && !ctx.hasEaten) {
-      msg  = 'Séance faite — mange bien maintenant.';
+      msg  = 'Séance faite — mange maintenant.';
       hint = 'La récupération passe par l\'alimentation.';
     } else if (ctx.hasDone && ctx.alimPct >= 80) {
       msg  = 'Belle journée 🎯';
-      hint = 'Séance terminée, nutrition en bonne voie.';
+      hint = 'Séance et nutrition en bonne voie.';
     } else if (ctx.hasDone) {
-      msg  = 'Séance faite ✓';
-      hint = 'Continue à suivre ton alimentation.';
+      msg  = 'Séance faite — suis ta nutrition.';
+      hint = 'Il te reste des repas à enregistrer pour atteindre ton objectif.';
     } else if (!ctx.hasEaten) {
-      msg  = 'Par où commencer ?';
-      hint = 'Commence par enregistrer ton premier repas du jour.';
+      msg  = 'Commence par ton premier repas.';
+      hint = 'Enregistre ce que tu manges pour suivre tes calories.';
     } else if (ctx.alimPct >= 80) {
-      msg  = 'Jour de repos — tu gères.';
+      msg  = 'Tu gères — journée bien engagée.';
       hint = 'Nutrition en bonne voie. Profite de la récupération.';
     } else {
-      msg  = 'Jour de repos.';
+      msg  = 'Jour de repos — reste attentif.';
       hint = 'Suis ton alimentation et planifie ta prochaine séance.';
     }
 
     msgEl.textContent = msg;
     if (hintEl) hintEl.textContent = hint;
+
+    // ── Strip objectif discret ──
+    if (stripEl) {
+      const goals = window.DAILY_GOALS;
+      const prof  = window.PROFIL_DB?.get();
+      if (goals && goals.kcal && prof) {
+        const label = prof.objectif === 'maintien' ? 'Maintien' : 'Perte de gras';
+        stripEl.textContent = label + ' · ' + goals.kcal + ' kcal / jour · ' + goals.p + 'g protéines';
+        stripEl.hidden = false;
+      } else {
+        stripEl.hidden = true;
+      }
+    }
   }
 
   /* ════════════════════════════════════════════════
@@ -141,11 +174,14 @@
     const alimCard  = document.getElementById('home-alim-card');
     if (!muscuCard || !alimCard) return;
 
-    muscuCard.classList.remove('home-card--priority');
-    alimCard.classList.remove('home-card--priority');
+    muscuCard.classList.remove('home-card--priority', 'home-card--first');
+    alimCard.classList.remove('home-card--priority', 'home-card--first');
 
-    if (ctx.priority === 'muscu') muscuCard.classList.add('home-card--priority');
-    if (ctx.priority === 'alim')  alimCard.classList.add('home-card--priority');
+    if (ctx.priority === 'muscu') {
+      muscuCard.classList.add('home-card--priority', 'home-card--first');
+    } else if (ctx.priority === 'alim') {
+      alimCard.classList.add('home-card--priority', 'home-card--first');
+    }
   }
 
   /* ════════════════════════════════════════════════
@@ -219,37 +255,49 @@
     const { alimTotals, goals, pendingMeals } = data;
     const { alimPct, hasEaten, kcalGoal }     = ctx;
 
-    // Barre de progression
-    const barPct   = Math.min(110, alimPct);
-    const isOver   = alimTotals.k > kcalGoal;
-    const fillCls  = 'home-alim-bar__fill' + (isOver ? ' home-alim-bar__fill--over' : '');
-
-    // Message coach selon le niveau de remplissage
-    let coachMsg;
+    // ── État 1 : rien enregistré ──
     if (!hasEaten) {
-      coachMsg = 'Tu n\'as encore rien enregistré. Commence par le début.';
-    } else if (alimPct < 50) {
-      coachMsg = 'C\'est bien parti. Continue à alimenter ton journal.';
-    } else if (alimPct < 80) {
-      coachMsg = 'Bonne progression — encore quelques repas à enregistrer.';
-    } else if (alimPct < 100) {
-      coachMsg = 'Presque à l\'objectif. Dernier effort !';
-    } else {
-      coachMsg = 'Objectif kcal atteint aujourd\'hui 🎯';
+      const pendingHint = pendingMeals.length > 0
+        ? _coach(pendingMeals.length + ' repas planifié' + (pendingMeals.length > 1 ? 's' : '') + ' prévu aujourd\'hui.')
+        : '';
+      block.innerHTML =
+        '<p class="home-alim-step">Aucun repas enregistré aujourd\'hui.</p>' +
+        pendingHint +
+        '<a href="alimentation/alimentation.html" class="home-btn home-btn--primary">Ajouter un repas</a>';
+      return;
     }
 
-    // CTA principal : "Ajouter" si rien mangé, "Voir" sinon
-    const cta = !hasEaten
-      ? '<a href="alimentation/alimentation.html" class="home-btn home-btn--primary">Ajouter un repas</a>'
-      : '<a href="alimentation/alimentation.html" class="home-btn home-btn--primary">Voir aujourd\'hui</a>';
+    // ── État 2 : objectif atteint ou dépassé ──
+    if (alimPct >= 100) {
+      const isOver      = alimTotals.k > kcalGoal;
+      const protOk      = alimTotals.p >= goals.p;
+      const protLabel   = alimTotals.p + 'g' + (protOk ? ' ✓' : ' / ' + goals.p + 'g');
+      const protCls     = protOk ? 'home-alim-secondary__val home-alim-secondary__val--ok' : 'home-alim-secondary__val';
+      block.innerHTML =
+        _badge(isOver ? 'planned' : 'done', isOver ? 'Objectif dépassé' : '✓ Objectif kcal atteint') +
+        _coach(isOver ? 'Tu as dépassé ton objectif calorique.' : 'Bien joué — tu es dans le vert.') +
+        '<div class="home-alim-secondary">' +
+          '<div class="home-alim-secondary__item">' +
+            '<span class="home-alim-secondary__label">Protéines</span>' +
+            '<span class="' + protCls + '">' + protLabel + '</span>' +
+          '</div>' +
+        '</div>' +
+        '<a href="alimentation/alimentation.html" class="home-btn home-btn--ghost">Voir aujourd\'hui</a>';
+      return;
+    }
 
-    // Repas planifiés en attente
-    const pendingLabel = pendingMeals.length > 0
-      ? pendingMeals.length + ' repas planifié' + (pendingMeals.length > 1 ? 's' : '')
-      : 'Aucun repas planifié';
-
+    // ── État 3 : en cours ──
+    const barPct  = Math.min(100, alimPct);
+    const restant = kcalGoal - alimTotals.k;
+    let coachMsg;
+    if (alimPct < 40) {
+      coachMsg = 'Début de journée — n\'oublie pas tes repas.';
+    } else if (alimPct < 70) {
+      coachMsg = 'Bonne progression. Continue.';
+    } else {
+      coachMsg = 'Presque à l\'objectif — encore un effort.';
+    }
     block.innerHTML =
-      // Calories + barre
       '<div class="home-alim-macro">' +
         '<div class="home-alim-macro__main">' +
           '<span class="home-alim-macro__val">' + alimTotals.k + '</span>' +
@@ -257,79 +305,20 @@
           '<span class="home-alim-macro__goal">' + kcalGoal + ' kcal</span>' +
         '</div>' +
         '<div class="home-alim-bar">' +
-          '<div class="' + fillCls + '" style="width:' + barPct + '%"></div>' +
+          '<div class="home-alim-bar__fill" style="width:' + barPct + '%"></div>' +
         '</div>' +
       '</div>' +
-      // Message coach
+      '<p class="home-alim-reste">' + restant + ' kcal restantes</p>' +
       _coach(coachMsg) +
-      // Ligne protéines + planning
       '<div class="home-alim-secondary">' +
         '<div class="home-alim-secondary__item">' +
           '<span class="home-alim-secondary__label">Protéines</span>' +
-          '<span class="home-alim-secondary__val">' +
-            alimTotals.p + 'g' +
+          '<span class="home-alim-secondary__val">' + alimTotals.p + 'g' +
             ' <span class="home-alim-secondary__goal">/ ' + goals.p + 'g</span>' +
           '</span>' +
         '</div>' +
-        '<div class="home-alim-secondary__item">' +
-          '<span class="home-alim-secondary__label">Planning du jour</span>' +
-          '<span class="home-alim-secondary__val">' + _esc(pendingLabel) + '</span>' +
-        '</div>' +
       '</div>' +
-      cta;
-  }
-
-  /* ════════════════════════════════════════════════
-     BLOC OBJECTIF
-  ════════════════════════════════════════════════ */
-
-  function renderObjectifBlock() {
-    const card  = document.getElementById('home-objectif-card');
-    const block = document.getElementById('home-objectif-block');
-    if (!card || !block) return;
-
-    const prof = window.PROFIL_DB?.get();
-    if (!prof || !prof.poids || !prof.taille) {
-      card.hidden = true;
-      return;
-    }
-
-    card.hidden = false;
-
-    const goals = window.DAILY_GOALS;
-
-    // Info IMC + poids de référence (informatif, non anxiogène)
-    const imcHtml = (goals.imc !== null && goals.poidsRef !== null)
-      ? '<p class="home-card__coach">Poids de référence (IMC 24) : ' + goals.poidsRef + ' kg · IMC actuel : ' + goals.imc + '</p>'
-      : '';
-
-    // Grille macros cibles
-    const macrosHtml =
-      '<div class="home-objectif-macros">' +
-        '<div class="home-objectif-macro">' +
-          '<span class="home-objectif-macro__val">' + goals.kcal + '</span>' +
-          '<span class="home-objectif-macro__lbl">kcal</span>' +
-        '</div>' +
-        '<div class="home-objectif-macro">' +
-          '<span class="home-objectif-macro__val">' + goals.p + 'g</span>' +
-          '<span class="home-objectif-macro__lbl">Prot.</span>' +
-        '</div>' +
-        '<div class="home-objectif-macro">' +
-          '<span class="home-objectif-macro__val">' + goals.g + 'g</span>' +
-          '<span class="home-objectif-macro__lbl">Gluc.</span>' +
-        '</div>' +
-        '<div class="home-objectif-macro">' +
-          '<span class="home-objectif-macro__val">' + goals.l + 'g</span>' +
-          '<span class="home-objectif-macro__lbl">Lip.</span>' +
-        '</div>' +
-      '</div>';
-
-    block.innerHTML =
-      _badge('active', 'Perte de gras · Musculation') +
-      '<p class="home-card__coach">Cibles adaptées à ton profil et ton niveau d\'activité</p>' +
-      imcHtml +
-      macrosHtml +
-      '<a href="profil.html" class="home-btn home-btn--ghost">Modifier le profil</a>';
+      '<a href="alimentation/alimentation.html" class="home-btn home-btn--primary">Voir aujourd\'hui</a>';
   }
 
   /* ════════════════════════════════════════════════
@@ -364,7 +353,6 @@
     _applyPriority(ctx);
     renderMuscuBlock(data, ctx);
     renderAlimBlock(data, ctx);
-    renderObjectifBlock();
   }
 
   if (document.readyState === 'loading') {
