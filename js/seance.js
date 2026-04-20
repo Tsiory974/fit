@@ -524,15 +524,43 @@ function calculerSuggestionPoids(exo, block) {
     const base     = lastSess.find(e => e.poids > 0)?.poids || 0;
     const perf     = analyzeSessionEntries(lastSess, target);
 
-    // Diminuer : première série rate l'objectif, chute extrême, ou ressenti "trop dur"
-    if (!perf.firstHit || perf.extremeDrop || perf.anyDur) {
-      const nouveau = Math.max(step, Math.round((base - step) / 2.5) * 2.5);
-      const raison  = !perf.firstHit
-        ? `↓ −${step} kg · tu n'as pas atteint l'objectif (${base} → ${nouveau} kg)`
-        : perf.anyDur
-          ? `↓ −${step} kg · c'était trop dur (${base} → ${nouveau} kg)`
-          : `↓ −${step} kg · chute trop importante (${base} → ${nouveau} kg)`;
-      return { poids: nouveau, raison };
+    // Une séance est considérée "ratée" quand la 1ère série manque l'objectif
+    // ou que la dernière série s'effondre (chute extrême). Le ressenti "dur" seul
+    // n'est JAMAIS un motif de baisse — on reste à la même charge pour retenter.
+    const isSessionFailed = p => !!p && (!p.firstHit || p.extremeDrop);
+    const lastFailed      = isSessionFailed(perf);
+
+    if (lastFailed) {
+      // Baisse de charge uniquement après 2 séances ratées consécutives.
+      // Protège la progression d'un mauvais jour isolé (fatigue, sommeil, stress…).
+      const prevSess   = sessions[1];
+      const prevPerf   = prevSess ? analyzeSessionEntries(prevSess, target) : null;
+      const prevFailed = isSessionFailed(prevPerf);
+
+      if (prevFailed) {
+        const nouveau = Math.max(step, Math.round((base - step) / 2.5) * 2.5);
+        return {
+          poids:  nouveau,
+          raison: `↓ −${step} kg · 2 séances consécutives manquées (${base} → ${nouveau} kg)`,
+        };
+      }
+
+      // Séance ratée isolée → on garde la charge, on retente avant d'envisager une baisse
+      return {
+        poids:  base,
+        raison: `= ${base} kg · séance difficile, on retente à la même charge`,
+      };
+    }
+
+    // Garde-fou volume : si le groupe musculaire est hors zone hebdo (trop peu ou trop),
+    // on bloque toute hausse de charge pour éviter la surcharge involontaire.
+    const volStatus = getVolumeStatus(exo.groupe);
+    if (volStatus.status !== 'ok') {
+      const label = volStatus.status === 'low' ? 'insuffisant' : 'élevé';
+      return {
+        poids:  base,
+        raison: `= ${base} kg · volume hebdo ${label} (${volStatus.count} sér./sem.), progression suspendue`,
+      };
     }
 
     // Cooldown : compter le nombre de sessions effectuées à cette charge
@@ -540,15 +568,42 @@ function calculerSuggestionPoids(exo, block) {
     const sessionsABase = sessions.filter(s => (s.find(e => e.poids > 0)?.poids || 0) === base);
     const stableCount   = sessionsABase.length; // inclut la session d'aujourd'hui
 
+    // Isolation : double progression — on privilégie d'abord la hausse de reps.
+    // La charge ne bouge qu'une fois atteint le haut de la fourchette de reps.
+    // (Combiné à stableCount >= 2 ci-dessous, cela garantit "plusieurs fois au sommet".)
+    const range = getRepRange(block, exo);
+    if (exo.type === 'isolation' && range && target < range.max) {
+      return {
+        poids:  base,
+        raison: `= ${base} kg · isolation · vise ${range.max} reps avant d'augmenter (actuel : ${target})`,
+      };
+    }
+
     if (perf.allHit && stableCount >= 2) {
       // Vérifier que la session précédente à cette même charge était aussi complète
       const prevABase = sessionsABase[1]; // 2ème session à cette charge (avant aujourd'hui)
       const prevPerf  = analyzeSessionEntries(prevABase, target);
       if (prevPerf?.allHit) {
+        // Signal doux "dur" : une séance validée mais ressentie dure ajoute
+        // une stabilisation (3 séances réussies au lieu de 2). Jamais de
+        // deload — juste un délai pour laisser la récupération rattraper.
+        const hasDurSignal = perf.anyDur || prevPerf.anyDur;
+        if (hasDurSignal) {
+          const prev2ABase = sessionsABase[2];
+          const prev2Perf  = prev2ABase ? analyzeSessionEntries(prev2ABase, target) : null;
+          if (!prev2Perf?.allHit) {
+            return {
+              poids:  base,
+              raison: `= ${base} kg · séance dure malgré la réussite, on stabilise encore`,
+            };
+          }
+        }
+
         const nouveau = Math.round((base + step) / 2.5) * 2.5;
+        const nbOk    = hasDurSignal ? 3 : 2;
         const raison  = (perf.anyFacile || prevPerf.anyFacile)
           ? `↑ +${step} kg · tu étais à l'aise (${base} → ${nouveau} kg)`
-          : `↑ +${step} kg · 2 séances réussies à ${base} kg (→ ${nouveau} kg)`;
+          : `↑ +${step} kg · ${nbOk} séances réussies à ${base} kg (→ ${nouveau} kg)`;
         return { poids: nouveau, raison };
       }
     }
@@ -885,7 +940,9 @@ function analyzeRepsProgression(exo, block) {
   const range  = getRepRange(block, exo);
 
   // ── Augmenter : 3 sessions précédentes toutes complètes ──
-  if (prev.length >= 3) {
+  // Bloqué si le volume hebdo du groupe est hors zone (garde-fou cohérent avec le poids).
+  const volStatus = getVolumeStatus(exo.groupe);
+  if (volStatus.status === 'ok' && prev.length >= 3) {
     const allThreeHit = prev.slice(0, 3).every(s => analyzeSessionEntries(s, target)?.allHit);
     if (allThreeHit) {
       if (range && target >= range.max) return null; // déjà au plafond de l'objectif

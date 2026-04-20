@@ -412,6 +412,101 @@
   }
 
   /* ════════════════════════════════════════════════
+     SUIVI DU POIDS
+  ════════════════════════════════════════════════ */
+
+  function _renderWeightSection() {
+    const trendBlock   = document.getElementById('weight-trend-block');
+    const historyBlock = document.getElementById('weight-history-block');
+    if (!trendBlock || !historyBlock) return;
+
+    const trend   = window.WEIGHT_DB?.getTrend();
+    const entries = window.WEIGHT_DB?.getAll() || [];
+
+    // ── Tendance ──
+    if (!trend) {
+      const msg = entries.length === 0
+        ? 'Enregistre ta première pesée ci-dessous.'
+        : 'Enregistre encore quelques pesées sur 7 jours pour voir ta tendance.';
+      trendBlock.innerHTML = '<p class="weight-trend-empty">' + msg + '</p>';
+    } else {
+      const signe    = trend.perWeek > 0 ? '+' : '';
+      const val      = signe + trend.perWeek.toFixed(1).replace('.', ',') + ' kg / sem';
+      const cls      = trend.perWeek < -0.05 ? 'weight-trend--down'
+                     : trend.perWeek > 0.05  ? 'weight-trend--up'
+                     : 'weight-trend--stable';
+      const lbl      = trend.perWeek < -0.05 ? 'En baisse'
+                     : trend.perWeek > 0.05  ? 'En hausse'
+                     : 'Stable';
+      const period   = 'sur ' + trend.totalDays + ' jours · ' + trend.count + ' pesées';
+      trendBlock.innerHTML =
+        '<div class="weight-trend ' + cls + '">' +
+          '<div class="weight-trend__main">' +
+            '<span class="weight-trend__val">' + val + '</span>' +
+            '<span class="weight-trend__lbl">' + lbl + '</span>' +
+          '</div>' +
+          '<p class="weight-trend__period">' + period + '</p>' +
+        '</div>';
+    }
+
+    // ── Historique (5 dernières, ordre chronologique inversé) ──
+    if (entries.length === 0) {
+      historyBlock.innerHTML = '';
+      return;
+    }
+    const recent = entries.slice(-5).reverse();
+    historyBlock.innerHTML =
+      '<div class="weight-history">' +
+      recent.map((e, i) => {
+        const d       = new Date(e.date + 'T00:00:00');
+        const dateStr = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+        const prev    = i < recent.length - 1 ? recent[i + 1] : null;
+        let diffHtml  = '';
+        if (prev) {
+          const d = Math.round((e.poids - prev.poids) * 10) / 10;
+          if (d !== 0) {
+            const dStr = (d > 0 ? '+' : '') + d.toFixed(1).replace('.', ',');
+            const dCls = d < 0 ? 'weight-history-diff--down' : 'weight-history-diff--up';
+            diffHtml = '<span class="weight-history-diff ' + dCls + '">' + dStr + '</span>';
+          }
+        }
+        return '<div class="weight-history-row">' +
+          '<span class="weight-history-row__date">' + dateStr + '</span>' +
+          '<span class="weight-history-row__right">' +
+            '<span class="weight-history-row__poids">' + e.poids + ' kg</span>' +
+            diffHtml +
+          '</span>' +
+        '</div>';
+      }).join('') +
+      '</div>';
+  }
+
+  function _initWeightForm() {
+    // Pré-remplir la date avec aujourd'hui
+    const dateInput = document.getElementById('w-date');
+    if (dateInput && !dateInput.value) {
+      dateInput.value = window.localDateStr ? window.localDateStr() : new Date().toISOString().slice(0, 10);
+    }
+
+    document.getElementById('btn-add-weight')?.addEventListener('click', () => {
+      const poidsVal = parseFloat(document.getElementById('w-poids')?.value);
+      const dateVal  = document.getElementById('w-date')?.value;
+      if (!poidsVal || poidsVal < 20 || poidsVal > 400) {
+        showToast('Saisis un poids valide.', true);
+        return;
+      }
+      if (!dateVal) {
+        showToast('Sélectionne une date.', true);
+        return;
+      }
+      window.WEIGHT_DB.add(dateVal, poidsVal);
+      document.getElementById('w-poids').value = '';
+      _renderWeightSection();
+      showToast('Pesée enregistrée ✓');
+    });
+  }
+
+  /* ════════════════════════════════════════════════
      BIND EVENTS
   ════════════════════════════════════════════════ */
 
@@ -419,6 +514,10 @@
     // ── Formulaire objectif ──
     _loadObjectif();
     _renderAvance();
+
+    // ── Suivi du poids ──
+    _renderWeightSection();
+    _initWeightForm();
 
     const form = document.getElementById('profil-objectif-form');
     if (form) {

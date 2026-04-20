@@ -516,6 +516,69 @@ window.PROFIL_DB = {
 };
 
 /* ============================================================
+   WEIGHT_DB — historique des pesées
+   Clé localStorage : ft_weight_log
+   Structure : [{ date: 'YYYY-MM-DD', poids: number }, …]
+                Un seul enregistrement par date (la dernière saisie).
+   ============================================================ */
+window.WEIGHT_DB = {
+  KEY: 'ft_weight_log',
+
+  getAll() {
+    const raw = localStorage.getItem(this.KEY);
+    if (!raw) return [];
+    try { return JSON.parse(raw); } catch { return []; }
+  },
+
+  /** Ajoute ou remplace la pesée du jour donné, puis trie par date. */
+  add(dateStr, poids) {
+    const entries = this.getAll();
+    const idx = entries.findIndex(e => e.date === dateStr);
+    if (idx >= 0) {
+      entries[idx].poids = poids;
+    } else {
+      entries.push({ date: dateStr, poids });
+    }
+    entries.sort((a, b) => a.date.localeCompare(b.date));
+    localStorage.setItem(this.KEY, JSON.stringify(entries));
+  },
+
+  /** Retourne la pesée la plus récente, ou null. */
+  getLast() {
+    const e = this.getAll();
+    return e.length > 0 ? e[e.length - 1] : null;
+  },
+
+  /**
+   * Calcule la tendance sur l'ensemble des pesées enregistrées.
+   * Requiert ≥ 3 pesées réparties sur au moins 7 jours.
+   * Méthode : compare la moyenne des premières moitié vs seconde moitié,
+   * puis ramène en kg/semaine — évite la comparaison jour à jour.
+   * @returns {{ perWeek, diff, totalDays, count } | null}
+   */
+  getTrend() {
+    const entries = this.getAll();
+    if (entries.length < 3) return null;
+
+    const msDay    = 86400000;
+    const d0       = new Date(entries[0].date + 'T00:00:00').getTime();
+    const dN       = new Date(entries[entries.length - 1].date + 'T00:00:00').getTime();
+    const totalDays = Math.round((dN - d0) / msDay);
+    if (totalDays < 7) return null;
+
+    const mid      = Math.floor(entries.length / 2);
+    const avgEarly = entries.slice(0, mid).reduce((s, e) => s + e.poids, 0) / mid;
+    const avgLate  = entries.slice(mid).reduce((s, e) => s + e.poids, 0) / (entries.length - mid);
+
+    const diff    = Math.round((avgLate - avgEarly) * 100) / 100;
+    const weeks   = totalDays / 7;
+    const perWeek = Math.round((diff / weeks) * 10) / 10;
+
+    return { perWeek, diff, totalDays, count: entries.length };
+  },
+};
+
+/* ============================================================
    ALIMENTATION — objectifs journaliers
    Getter dynamique : recalcule depuis localStorage à chaque accès.
    Garantit que tous les modules lisent toujours des valeurs fraîches,

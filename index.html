@@ -18,6 +18,7 @@
     <p id="home-message" class="home-header__message">Chargement…</p>
     <p id="home-hint" class="home-header__hint"></p>
     <p id="home-goal-strip" class="home-goal-strip" hidden></p>
+    <p id="home-weight-strip" class="home-weight-strip" hidden></p>
   </header>
 
   <!-- ===== CONTENU PRINCIPAL ===== -->
@@ -58,6 +59,22 @@
         <h2 class="home-card__title">Alimentation</h2>
       </div>
       <div id="home-alim-block" class="home-card__body">
+        <!-- Rendu par accueil.js -->
+      </div>
+    </section>
+
+    <!-- ─── Bloc Hydratation ─── -->
+    <section class="home-card" id="home-hydra-card" aria-label="Hydratation">
+      <div class="home-card__head">
+        <span class="home-card__head-icon home-card__head-icon--water" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2C6 9 4 13 4 16a8 8 0 0 0 16 0c0-3-2-7-8-14z"/>
+          </svg>
+        </span>
+        <h2 class="home-card__title">Hydratation</h2>
+      </div>
+      <div id="home-hydra-block" class="home-card__body">
         <!-- Rendu par accueil.js -->
       </div>
     </section>

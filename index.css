@@ -93,6 +93,15 @@ body {
 
 .home-goal-strip[hidden] { display: none; }
 
+/* Strip poids + tendance */
+.home-weight-strip {
+  font-size: 0.7rem;
+  color: #4b5563;
+  line-height: 1.4;
+}
+
+.home-weight-strip[hidden] { display: none; }
+
 /* ============================================================
    CONTENU PRINCIPAL
    ============================================================ */
@@ -388,5 +397,85 @@ body {
 
 .home-alim-secondary__val--ok {
   color: #39e07a;
+}
+
+/* ============================================================
+   ICÔNE EAU — variante bleue
+   ============================================================ */
+.home-card__head-icon--water {
+  background: rgba(96, 165, 250, 0.1);
+  color: #60a5fa;
+}
+
+/* ============================================================
+   BLOC HYDRATATION
+   ============================================================ */
+.home-hydra-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.home-hydra-info {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.home-hydra-val {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #60a5fa;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.home-hydra-sep {
+  font-size: 1rem;
+  color: #374151;
+  font-weight: 400;
+}
+
+.home-hydra-goal {
+  font-size: 0.82rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.home-hydra-btn {
+  flex-shrink: 0;
+  background: rgba(96, 165, 250, 0.12);
+  color: #60a5fa;
+  border: 1px solid rgba(96, 165, 250, 0.28);
+  border-radius: 10px;
+  padding: 0.55rem 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+}
+
+.home-hydra-btn:active {
+  transform: scale(0.95);
+  opacity: 0.75;
+}
+
+.home-hydra-done {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #60a5fa;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Barre de progression bleue (eau) */
+.home-alim-bar__fill--water {
+  background: #60a5fa;
 }
 

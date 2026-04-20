@@ -163,6 +163,26 @@
         stripEl.hidden = true;
       }
     }
+
+    // ── Strip poids : dernière pesée + tendance ──
+    const weightEl = document.getElementById('home-weight-strip');
+    if (weightEl) {
+      const last  = window.WEIGHT_DB?.getLast();
+      const trend = window.WEIGHT_DB?.getTrend();
+      if (last) {
+        const d       = new Date(last.date + 'T00:00:00');
+        const dateStr = d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+        let txt = last.poids + ' kg · ' + dateStr;
+        if (trend) {
+          const signe = trend.perWeek > 0 ? '+' : '';
+          txt += ' · tendance ' + signe + trend.perWeek.toFixed(1).replace('.', ',') + ' kg/sem';
+        }
+        weightEl.textContent = txt;
+        weightEl.hidden = false;
+      } else {
+        weightEl.hidden = true;
+      }
+    }
   }
 
   /* ════════════════════════════════════════════════
@@ -322,6 +342,59 @@
   }
 
   /* ════════════════════════════════════════════════
+     BLOC HYDRATATION
+  ════════════════════════════════════════════════ */
+
+  function renderHydraBlock(today) {
+    const block = document.getElementById('home-hydra-block');
+    if (!block) return;
+
+    const day   = window.ALIM_DB ? window.ALIM_DB.getDay(today) : { water: 0 };
+    const goals = window.DAILY_GOALS;
+    const goal  = (goals && goals.water) ? goals.water : 2500;
+    const water = day.water || 0;
+    const pct   = Math.min(100, Math.round(water / goal * 100));
+    const done  = water >= goal;
+
+    let coachTxt;
+    if (done) {
+      coachTxt = 'Objectif hydratation atteint — beau travail\u00a0!';
+    } else if (water === 0) {
+      const lStr = (goal / 1000).toFixed(1).replace('.', ',');
+      coachTxt = 'Commence \u00e0 boire\u00a0\u2014 vise\u00a0' + lStr + '\u00a0L aujourd\u2019hui.';
+    } else {
+      coachTxt = (goal - water) + '\u00a0ml encore pour atteindre l\u2019objectif.';
+    }
+
+    block.innerHTML =
+      '<div class="home-hydra-row">' +
+        '<div class="home-hydra-info">' +
+          '<span class="home-hydra-val">' + water + '</span>' +
+          '<span class="home-hydra-sep">/</span>' +
+          '<span class="home-hydra-goal">' + goal + '\u00a0ml</span>' +
+        '</div>' +
+        (done
+          ? '<span class="home-hydra-done">\u2713 Objectif atteint</span>'
+          : '<button class="home-hydra-btn" id="home-hydra-add" aria-label="Ajouter 250 ml">+250\u00a0ml</button>') +
+      '</div>' +
+      '<div class="home-alim-bar">' +
+        '<div class="home-alim-bar__fill home-alim-bar__fill--water" style="width:' + pct + '%"></div>' +
+      '</div>' +
+      _coach(coachTxt);
+
+    if (!done) {
+      const btn = document.getElementById('home-hydra-add');
+      if (btn) {
+        btn.addEventListener('click', () => {
+          const d = window.ALIM_DB.getDay(today);
+          window.ALIM_DB.setWater(today, d.water + 250);
+          renderHydraBlock(today);
+        });
+      }
+    }
+  }
+
+  /* ════════════════════════════════════════════════
      COMPOSANTS HTML réutilisables
   ════════════════════════════════════════════════ */
 
@@ -353,6 +426,7 @@
     _applyPriority(ctx);
     renderMuscuBlock(data, ctx);
     renderAlimBlock(data, ctx);
+    renderHydraBlock(data.today);
   }
 
   if (document.readyState === 'loading') {

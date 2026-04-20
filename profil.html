@@ -149,6 +149,43 @@
 
           </form>
         </section>
+
+        <!-- ── Section suivi du poids ── -->
+        <section class="profil-section">
+          <div class="profil-section__header">
+            <span class="profil-section__icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z"/>
+                <path d="M12 6v6l4 2"/>
+              </svg>
+            </span>
+            <div>
+              <h2 class="profil-section__title">Suivi du poids</h2>
+              <p class="profil-section__desc">Tendance — pas de comparaison jour à jour</p>
+            </div>
+          </div>
+
+          <!-- Tendance calculée -->
+          <div id="weight-trend-block" class="weight-trend-block"></div>
+
+          <!-- Formulaire de saisie -->
+          <div class="weight-input-row">
+            <div class="profil-input-unit weight-input-unit">
+              <input type="number" id="w-poids" class="profil-input" min="30" max="300"
+                     step="0.1" placeholder="80.0" inputmode="decimal">
+              <span class="profil-input-unit__label">kg</span>
+            </div>
+            <input type="date" id="w-date" class="profil-input--date weight-date-input">
+            <button type="button" id="btn-add-weight" class="profil-btn profil-btn--primary weight-add-btn">
+              Enregistrer
+            </button>
+          </div>
+
+          <!-- Historique récent -->
+          <div id="weight-history-block" class="weight-history-block"></div>
+        </section>
+
       </div>
 
       <!-- ══════ Panel 2 — Mes données ══════ -->

@@ -804,6 +804,148 @@ body {
 }
 
 /* ============================================================
+   SUIVI DU POIDS
+   ============================================================ */
+
+/* Bloc tendance */
+.weight-trend-block {
+  padding: 0.875rem 1.125rem 0;
+}
+
+.weight-trend-empty {
+  font-size: 0.8rem;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.weight-trend {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: 10px;
+}
+
+.weight-trend__main {
+  display: flex;
+  align-items: baseline;
+  gap: 0.625rem;
+}
+
+.weight-trend__val {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.weight-trend__lbl {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.weight-trend__period {
+  font-size: 0.7rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+/* Variantes de couleur */
+.weight-trend--down {
+  background: rgba(57, 224, 122, 0.07);
+  border: 1px solid rgba(57, 224, 122, 0.18);
+}
+.weight-trend--down .weight-trend__val,
+.weight-trend--down .weight-trend__lbl { color: #39e07a; }
+
+.weight-trend--up {
+  background: rgba(251, 191, 36, 0.07);
+  border: 1px solid rgba(251, 191, 36, 0.18);
+}
+.weight-trend--up .weight-trend__val,
+.weight-trend--up .weight-trend__lbl { color: #fbbf24; }
+
+.weight-trend--stable {
+  background: rgba(107, 114, 128, 0.07);
+  border: 1px solid rgba(107, 114, 128, 0.18);
+}
+.weight-trend--stable .weight-trend__val,
+.weight-trend--stable .weight-trend__lbl { color: #9ca3af; }
+
+/* Formulaire de saisie */
+.weight-input-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+  padding: 0.875rem 1.125rem 0;
+}
+
+.weight-input-unit {
+  flex: 0 0 auto;
+  width: 100px;
+}
+
+.weight-date-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.weight-add-btn {
+  flex: 0 0 auto;
+  width: auto;
+  padding: 0.625rem 1rem;
+  font-size: 0.82rem;
+  border-radius: 10px;
+}
+
+/* Historique des pesées */
+.weight-history-block {
+  padding: 0.625rem 1.125rem 0.875rem;
+}
+
+.weight-history {
+  display: flex;
+  flex-direction: column;
+}
+
+.weight-history-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #1f242a;
+}
+
+.weight-history-row:last-child { border-bottom: none; }
+
+.weight-history-row__date {
+  font-size: 0.8rem;
+  color: #9ca3af;
+}
+
+.weight-history-row__right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.weight-history-row__poids {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #e5e7eb;
+}
+
+.weight-history-diff {
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.weight-history-diff--down { color: #39e07a; }
+.weight-history-diff--up   { color: #fbbf24; }
+
+/* ============================================================
    RESPONSIVE — Desktop
    ============================================================ */
 @media (min-width: 768px) {
