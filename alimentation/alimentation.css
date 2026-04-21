@@ -634,6 +634,7 @@ input[name="alim-tabs"] {
 /* ============================================================
    BOTTOM-SHEET — GESTION ALIMENT (archive / suppression)
    ============================================================ */
+#alim-manage-sheet[hidden] { display: none; }
 #alim-manage-sheet {
   position: fixed;
   inset: 0;
