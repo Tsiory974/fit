@@ -375,19 +375,24 @@ input[name="alim-tabs"] {
    LISTE D'ALIMENTS
    ============================================================ */
 /* ── ONGLET ALIMENTS : sticky header + liste scrollable ─────────
-   Le panel occupe exactement la hauteur visible (viewport moins
-   le header page, la barre d'onglets et la navbar bottom).
-   Les enfants sont structurés en deux zones via flexbox :
-     – zone sticky  : al-header + search-bar + filter-chips
-     – zone scroll  : aliments-list (seul scroll de la vue)
+   La hauteur est déclarée sur tabs-track (enfant direct du body)
+   plutôt que sur le panneau, pour que height:100% sur le panneau
+   soit résolu sans ambiguïté, y compris sur iOS Safari / Chrome
+   Android où les unités dvh seules sur un petit-fils peuvent
+   échouer si le parent n'a pas de hauteur explicite.
    ──────────────────────────────────────────────────────────────── */
+#alim-aliments:checked ~ .tabs-track {
+  height: calc(100vh  - var(--header-height) - var(--tabs-height) - var(--nav-height));
+  height: calc(100dvh - var(--header-height) - var(--tabs-height) - var(--nav-height));
+  overflow: hidden;
+}
+
 #alim-aliments:checked ~ .tabs-track #alim-panel-aliments {
   display: flex;
   flex-direction: column;
+  height: 100%;
   padding: 0;
   overflow: hidden;
-  height: calc(100vh  - var(--header-height) - var(--tabs-height) - var(--nav-height));
-  height: calc(100dvh - var(--header-height) - var(--tabs-height) - var(--nav-height));
 }
 
 /* Zone sticky — s'adapte au contenu, ne rétrécit jamais */
@@ -412,7 +417,7 @@ input[name="alim-tabs"] {
 .aliments-list {
   display: flex;
   flex-direction: column;
-  gap: 0.625rem;
+  gap: 0.75rem;
   flex: 1;
   min-height: 0;        /* requis pour que overflow fonctionne dans un flex child */
   overflow-y: auto;
@@ -446,7 +451,7 @@ input[name="alim-tabs"] {
   gap: 0.875rem;
   flex: 1;
   min-width: 0;
-  padding: 0.875rem 0 0.875rem 1rem;
+  padding: 1rem 0 1rem 1rem;
   text-decoration: none;
   color: inherit;
 }
@@ -475,14 +480,17 @@ input[name="alim-tabs"] {
 /* Badge catégorie */
 .aliment-card__cat-tag {
   flex-shrink: 0;
-  font-size: 0.62rem;
+  font-size: 0.58rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  padding: 4px 8px;
+  padding: 4px 7px;
   border-radius: 6px;
-  min-width: 72px;
+  width: 72px;
   text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .aliment-card__cat-tag--viandes {

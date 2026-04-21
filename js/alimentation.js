@@ -1981,7 +1981,7 @@ function renderAlimentsPanel() {
         </div>
         <div class="aliment-card__body">
           <h3 class="aliment-card__name">${a.nom}</h3>
-          <p  class="aliment-card__info">${a.detail || ''}</p>
+          <p  class="aliment-card__info">${a.detail || `P\u00a0${a.m.p}g \u00b7 G\u00a0${a.m.g}g \u00b7 L\u00a0${a.m.l}g`}</p>
         </div>
         <span class="aliment-card__arrow" aria-hidden="true">›</span>
       </a>

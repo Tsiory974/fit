@@ -221,7 +221,7 @@ body {
 /* Afficher uniquement le panneau actif */
 #tab-seance:checked    ~ .tabs-track #panel-seance    { display: block; }
 #tab-planning:checked  ~ .tabs-track #panel-planning  { display: block; }
-#tab-modeles:checked   ~ .tabs-track #panel-modeles   { display: block; }
+#tab-modeles:checked   ~ .tabs-track #panel-modeles   { display: flex; flex-direction: column; }
 
 /* Panneau Exercices — une seule zone scroll, header sticky
    Même pattern que #alim-panel-aliments dans alimentation.css      */
@@ -2131,11 +2131,6 @@ body {
 }
 
 /* Centrer le lien dans le panneau */
-#panel-modeles {
-  display: flex;
-  flex-direction: column;
-}
-
 #panel-modeles .modeles-manage-link {
   align-self: center;
 }
