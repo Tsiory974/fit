@@ -196,8 +196,20 @@
       <!-- Section "Récemment utilisées" (masquée si vide) -->
       <div id="modeles-recent" style="display:none"></div>
 
-      <!-- Liste de tous les modèles -->
+      <!-- Liste des modèles actifs -->
       <div id="modeles-list"></div>
+
+      <!-- Lien discret "Gérer mes séances" -->
+      <button type="button" class="modeles-manage-link" id="btn-open-manage">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             width="14" height="14" aria-hidden="true">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        <span>Gérer mes séances</span>
+        <span class="modeles-manage-link__count" id="manage-link-count"></span>
+      </button>
 
     </section>
 
@@ -681,6 +693,45 @@
       <div class="sd-actions" id="sd-actions">
         <button class="sd-btn sd-btn--start"  id="sd-start">▶&nbsp; Démarrer la séance</button>
         <button class="sd-btn sd-btn--delete" id="sd-delete">Supprimer du planning</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Bottom-sheet : gérer mes séances (actifs / archivés) ── -->
+  <div id="manage-sheet" role="dialog" aria-modal="true"
+       aria-label="Gérer mes séances" hidden>
+    <div class="sd-backdrop" id="manage-backdrop"></div>
+    <div class="sd-panel manage-panel">
+      <div class="sd-handle" aria-hidden="true"></div>
+
+      <div class="sd-header">
+        <div class="sd-header__left">
+          <div class="sd-title">Gérer mes séances</div>
+          <div class="sd-date" id="manage-subtitle">—</div>
+        </div>
+        <button class="sd-close" id="manage-close" aria-label="Fermer">✕</button>
+      </div>
+
+      <div class="sd-scroll-zone">
+        <!-- Section Actifs -->
+        <details class="manage-section" id="manage-section-active" open>
+          <summary class="manage-section__head">
+            <span class="manage-section__title">Actifs</span>
+            <span class="manage-section__count" id="manage-count-active">0</span>
+            <span class="manage-section__chevron" aria-hidden="true">▾</span>
+          </summary>
+          <div class="manage-section__body" id="manage-list-active"></div>
+        </details>
+
+        <!-- Section Archivés -->
+        <details class="manage-section" id="manage-section-archived">
+          <summary class="manage-section__head">
+            <span class="manage-section__title">Archivés</span>
+            <span class="manage-section__count" id="manage-count-archived">0</span>
+            <span class="manage-section__chevron" aria-hidden="true">▾</span>
+          </summary>
+          <div class="manage-section__body" id="manage-list-archived"></div>
+        </details>
       </div>
     </div>
   </div>

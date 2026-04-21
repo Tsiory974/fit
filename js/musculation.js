@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
   updateHeaderDate();
   _bindSessionDetailEvents();
   _bindPlanningWeekNav();
+  _bindManageSheetEvents();
 });
 
 /* ── Helpers semaine planning ── */
@@ -553,12 +554,19 @@ function _bindSessionDetailEvents() {
 function renderModelesPanel() {
   const listEl   = document.getElementById('modeles-list');
   const recentEl = document.getElementById('modeles-recent');
+  const linkEl   = document.getElementById('btn-open-manage');
+  const linkCt   = document.getElementById('manage-link-count');
   if (!listEl) return;
 
-  const templates = DB.getAllTemplates();
-  const recent    = DB.getRecentTemplates(3);
+  const allTemplates    = DB.getAllTemplates();
+  const activeTemplates = DB.getActiveTemplates();
+  const recent          = DB.getRecentTemplates(5);
 
-  // Section "Récemment utilisées"
+  // Masquer dans "Mes modèles actifs" les modèles déjà présents dans "Récemment utilisées"
+  const recentIds       = new Set(recent.map(r => r.template.id));
+  const otherActives    = activeTemplates.filter(t => !recentIds.has(t.id));
+
+  // Section "Récemment utilisées" — point d'entrée principal
   if (recentEl) {
     if (recent.length > 0) {
       recentEl.style.display = 'block';
@@ -572,22 +580,146 @@ function renderModelesPanel() {
       bindTemplateCardActions(recentEl);
     } else {
       recentEl.style.display = 'none';
+      recentEl.innerHTML    = '';
     }
   }
 
-  // Section "Mes modèles"
-  if (templates.length === 0) {
+  // Section "Mes modèles actifs" (hors récents)
+  if (activeTemplates.length === 0) {
     listEl.innerHTML = `
       <div class="sessions-empty">
         <p>Aucun modèle de séance.</p>
         <p>Crée ton premier modèle pour commencer.</p>
       </div>`;
+  } else if (otherActives.length === 0) {
+    // Tous les actifs sont déjà dans "Récemment utilisées"
+    listEl.innerHTML = '';
   } else {
     listEl.innerHTML = `
-      <p class="modeles-section-title">Mes modèles</p>
-      ${templates.map(tpl => renderTemplateCard(tpl)).join('')}`;
+      <p class="modeles-section-title">${recent.length > 0 ? 'Autres modèles' : 'Mes modèles'}</p>
+      ${otherActives.map(tpl => renderTemplateCard(tpl)).join('')}`;
     bindTemplateCardActions(listEl);
   }
+
+  // Lien "Gérer mes séances" — affiché seulement s'il existe des modèles
+  if (linkEl) {
+    if (allTemplates.length === 0) {
+      linkEl.style.display = 'none';
+    } else {
+      linkEl.style.display = 'inline-flex';
+      if (linkCt) linkCt.textContent = `(${allTemplates.length})`;
+    }
+  }
+}
+
+/* ─── Bottom-sheet "Gérer mes séances" ─── */
+
+function openManageSheet() {
+  const sheet = document.getElementById('manage-sheet');
+  if (!sheet) return;
+  renderManageSheet();
+  sheet.hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function closeManageSheet() {
+  const sheet = document.getElementById('manage-sheet');
+  if (!sheet) return;
+  sheet.hidden = true;
+  document.body.style.overflow = '';
+}
+
+function renderManageSheet() {
+  const actives   = DB.getActiveTemplates();
+  const archived  = DB.getArchivedTemplates();
+
+  const activeListEl   = document.getElementById('manage-list-active');
+  const archivedListEl = document.getElementById('manage-list-archived');
+  const activeCtEl     = document.getElementById('manage-count-active');
+  const archivedCtEl   = document.getElementById('manage-count-archived');
+  const subtitleEl     = document.getElementById('manage-subtitle');
+
+  if (activeCtEl)   activeCtEl.textContent   = String(actives.length);
+  if (archivedCtEl) archivedCtEl.textContent = String(archived.length);
+  if (subtitleEl)   subtitleEl.textContent   = `${actives.length} actif${actives.length !== 1 ? 's' : ''} · ${archived.length} archivé${archived.length !== 1 ? 's' : ''}`;
+
+  if (activeListEl) {
+    activeListEl.innerHTML = actives.length === 0
+      ? `<p class="manage-empty">Aucun modèle actif.</p>`
+      : actives.map(tpl => renderManageRow(tpl, false)).join('');
+    bindManageRowActions(activeListEl);
+  }
+
+  if (archivedListEl) {
+    archivedListEl.innerHTML = archived.length === 0
+      ? `<p class="manage-empty">Aucun modèle archivé.</p>`
+      : archived.map(tpl => renderManageRow(tpl, true)).join('');
+    bindManageRowActions(archivedListEl);
+  }
+}
+
+function renderManageRow(tpl, isArchived) {
+  const exoCount = tpl.exercices.length;
+  const actionLabel = isArchived ? 'Désarchiver' : 'Archiver';
+  const actionAttr  = isArchived ? 'data-unarchive-template' : 'data-archive-template';
+  return `
+    <div class="manage-row ${isArchived ? 'manage-row--archived' : ''}" data-template-id="${tpl.id}">
+      <div class="manage-row__info">
+        <span class="manage-row__name">${tpl.nom}</span>
+        <span class="manage-row__meta">${exoCount} exercice${exoCount !== 1 ? 's' : ''}</span>
+      </div>
+      <div class="manage-row__actions">
+        <button class="manage-row__btn manage-row__btn--archive"
+                ${actionAttr}="${tpl.id}" type="button">${actionLabel}</button>
+        <button class="manage-row__btn manage-row__btn--delete"
+                data-delete-template-manage="${tpl.id}" type="button" aria-label="Supprimer ${tpl.nom}">✕</button>
+      </div>
+    </div>`;
+}
+
+function bindManageRowActions(container) {
+  if (!container) return;
+
+  container.querySelectorAll('[data-archive-template]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      DB.archiveTemplate(btn.dataset.archiveTemplate);
+      renderManageSheet();
+      renderModelesPanel();
+      renderTodayPanel();
+    });
+  });
+
+  container.querySelectorAll('[data-unarchive-template]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      DB.unarchiveTemplate(btn.dataset.unarchiveTemplate);
+      renderManageSheet();
+      renderModelesPanel();
+      renderTodayPanel();
+    });
+  });
+
+  container.querySelectorAll('[data-delete-template-manage]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id  = btn.dataset.deleteTemplateManage;
+      const tpl = DB.getTemplate(id);
+      if (tpl && confirm(`Supprimer le modèle "${tpl.nom}" ?\nLes séances futures planifiées avec ce modèle seront également supprimées.`)) {
+        DB.deleteTemplate(id);
+        renderManageSheet();
+        renderModelesPanel();
+        renderTodayPanel();
+        renderPlanningPanel();
+      }
+    });
+  });
+}
+
+function _bindManageSheetEvents() {
+  const openBtn   = document.getElementById('btn-open-manage');
+  const closeBtn  = document.getElementById('manage-close');
+  const backdrop  = document.getElementById('manage-backdrop');
+  if (openBtn)  openBtn.addEventListener('click', openManageSheet);
+  if (closeBtn) closeBtn.addEventListener('click', closeManageSheet);
+  if (backdrop) backdrop.addEventListener('click', closeManageSheet);
 }
 
 function renderTemplateCard(tpl, recentLabel = null) {
@@ -745,9 +877,9 @@ function openPlanModal(dateStr, preselectedTemplateId = null) {
     });
   }
 
-  // Liste des modèles
+  // Liste des modèles (actifs uniquement)
   const tplList   = document.getElementById('plan-template-list');
-  const templates = DB.getAllTemplates();
+  const templates = DB.getActiveTemplates();
 
   if (tplList) {
     if (templates.length === 0) {

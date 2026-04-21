@@ -1121,6 +1121,17 @@
     </div>
   </div>
 
+  <!-- ── Bottom-sheet gestion aliment (archive / suppression / masquage) ── -->
+  <div id="alim-manage-sheet" role="dialog" aria-modal="true" aria-label="Gérer l'aliment" hidden>
+    <div class="alim-manage__backdrop" id="alim-manage-backdrop"></div>
+    <div class="alim-manage__panel">
+      <div class="alim-manage__handle" aria-hidden="true"></div>
+      <div class="alim-manage__name" id="alim-manage-name">—</div>
+      <div class="alim-manage__actions" id="alim-manage-actions"></div>
+      <button class="alim-manage__cancel" id="alim-manage-cancel" type="button">Annuler</button>
+    </div>
+  </div>
+
   <script src="../js/data.js"></script>
   <script src="../js/alimentation.js"></script>
   <script src="../js/scanner.js"></script>

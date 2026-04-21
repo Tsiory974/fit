@@ -349,24 +349,20 @@ function changeStepper(delta) {
 }
 
 function validateReps(actual) {
-  const { block, exo } = exercises[currentExoIdx];
+  const { block } = exercises[currentExoIdx];
   const planned    = parseInt(block.reps) || 10;
   const actualReps = (actual === null) ? planned : actual;
 
   pendingSerieReps = actualReps;
 
-  // Exercice poids du corps → pas de saisie poids
-  if (exo.materiel === 'Poids du corps') {
-    commitSerie(actualReps, null);
-    return;
-  }
-
+  // Poids du corps : on garde l'écran (chips ressenti) mais on masque la saisie poids.
   showWeightScreen(actualReps, block);
 }
 
 function showWeightScreen(actualReps, block) {
   const { exo } = exercises[currentExoIdx];
-  const isHalteres = exo.materiel === 'Haltères';
+  const isBodyweight = exo.materiel === 'Poids du corps';
+  const isHalteres   = exo.materiel === 'Haltères';
 
   // Réinitialiser le ressenti → OK par défaut
   ressentiVal = 'ok';
@@ -379,30 +375,43 @@ function showWeightScreen(actualReps, block) {
   // Mettre à jour le label de la question
   const labelEl = document.querySelector('.ws-weight-label');
   if (labelEl) {
-    labelEl.textContent = isHalteres
-      ? 'Poids utilisé (par haltère) ?'
-      : 'Quel poids as-tu utilisé ?';
+    labelEl.textContent = isBodyweight
+      ? 'Comment c\'était ?'
+      : isHalteres
+        ? 'Poids utilisé (par haltère) ?'
+        : 'Quel poids as-tu utilisé ?';
   }
-
-  // Utiliser le poids pré-décidé sur l'écran READY (ou fallback suggestion)
-  weightVal = preWeightVal > 0
-    ? preWeightVal
-    : calculerSuggestionPoids(exo, block).poids;
 
   document.getElementById('weight-serie-info').textContent =
     `Série ${currentSerie} · ${actualReps} reps`;
 
-  const input = document.getElementById('weight-input');
-  input.value = weightVal || '';
+  // Bloc saisie poids — masqué pour le poids du corps (seul le ressenti compte).
+  const weightCenter = document.querySelector('.ws-weight-center');
+  if (weightCenter) weightCenter.style.display = isBodyweight ? 'none' : '';
 
-  // Hint : confirmer le poids prévu
-  const hintEl = document.getElementById('weight-hint');
-  if (weightVal > 0) {
-    const kgLabel = isHalteres ? 'kg/haltère' : 'kg';
-    hintEl.textContent = `Prévu : ${weightVal} ${kgLabel} — ajuste si tu as utilisé autre chose`;
-    hintEl.style.display = '';
-  } else {
-    hintEl.style.display = 'none';
+  // Bouton "Sans poids / ignorer" — n'a pas de sens en poids du corps
+  // (la confirmation = ressenti capturé, pas un skip).
+  const skipBtn = document.getElementById('btn-weight-skip');
+  if (skipBtn) skipBtn.style.display = isBodyweight ? 'none' : '';
+
+  if (!isBodyweight) {
+    // Utiliser le poids pré-décidé sur l'écran READY (ou fallback suggestion)
+    weightVal = preWeightVal > 0
+      ? preWeightVal
+      : calculerSuggestionPoids(exo, block).poids;
+
+    const input = document.getElementById('weight-input');
+    input.value = weightVal || '';
+
+    // Hint : confirmer le poids prévu
+    const hintEl = document.getElementById('weight-hint');
+    if (weightVal > 0) {
+      const kgLabel = isHalteres ? 'kg/haltère' : 'kg';
+      hintEl.textContent = `Prévu : ${weightVal} ${kgLabel} — ajuste si tu as utilisé autre chose`;
+      hintEl.style.display = '';
+    } else {
+      hintEl.style.display = 'none';
+    }
   }
 
   showScreen('screen-weight');
@@ -419,6 +428,12 @@ function changePreWeight(delta) {
 }
 
 function confirmWeight() {
+  const { exo } = exercises[currentExoIdx];
+  // Poids du corps : on ignore l'input (masqué) et on commit sans poids.
+  if (exo.materiel === 'Poids du corps') {
+    commitSerie(pendingSerieReps, null);
+    return;
+  }
   const inputVal = parseFloat(document.getElementById('weight-input').value);
   weightVal = inputVal > 0 ? inputVal : 0;
   commitSerie(pendingSerieReps, weightVal || null);
@@ -434,7 +449,7 @@ function commitSerie(actualReps, poids) {
     actual:   actualReps,
     duration: Math.floor((Date.now() - stopwatchStart) / 1000),
     poids:    poids,
-    ressenti: poids !== null ? ressentiVal : null, // ressenti uniquement si poids renseigné
+    ressenti: ressentiVal, // toujours stocké — utile aussi en poids du corps
   });
 
   const isLastSerie = currentSerie >= totalSeries;
@@ -943,8 +958,17 @@ function analyzeRepsProgression(exo, block) {
   // Bloqué si le volume hebdo du groupe est hors zone (garde-fou cohérent avec le poids).
   const volStatus = getVolumeStatus(exo.groupe);
   if (volStatus.status === 'ok' && prev.length >= 3) {
-    const allThreeHit = prev.slice(0, 3).every(s => analyzeSessionEntries(s, target)?.allHit);
+    const perfs       = prev.slice(0, 3).map(s => analyzeSessionEntries(s, target));
+    const allThreeHit = perfs.every(p => p?.allHit);
     if (allThreeHit) {
+      // Signal doux "dur" symétrique au poids : si l'une des 3 séances réussies
+      // a été ressentie dure, on exige une 4ᵉ séance allHit avant d'augmenter.
+      // Pas de deload — juste un délai pour laisser la fatigue retomber.
+      const hasDurSignal = perfs.some(p => p?.anyDur);
+      if (hasDurSignal) {
+        const fourth = prev[3] ? analyzeSessionEntries(prev[3], target) : null;
+        if (!fourth?.allHit) return null; // on stabilise, pas d'augmentation cette fois
+      }
       if (range && target >= range.max) return null; // déjà au plafond de l'objectif
       // +1 rep par défaut (progression conservatrice) ; +2 pour les isolations
       const step      = exo.type === 'isolation' ? 2 : 1;
@@ -1030,20 +1054,24 @@ function buildRecapSuggestions() {
 
   // ── 1. Reps : analyse par exercice ──────────────────────
   exercises.forEach(({ block, exo }) => {
-    if (exo.materiel === 'Poids du corps') return;
-    const freshExo = DB.getExercice(exo.id) || exo;
-    const analysis = analyzeRepsProgression(freshExo, block);
+    const freshExo    = DB.getExercice(exo.id) || exo;
+    const isBodyweight = exo.materiel === 'Poids du corps';
+    const analysis    = analyzeRepsProgression(freshExo, block);
     if (!analysis) return;
 
-    // Règle : ne jamais ajuster poids ET reps dans le même sens.
+    // Règle (charges seulement) : ne jamais ajuster poids ET reps dans le même sens.
     // Le poids a la priorité — si le poids est déjà ajusté dans la même direction,
     // on supprime la suggestion reps pour éviter une double réduction (ou double hausse).
-    const sessionsAvecPoids = getHistByDate(freshExo).filter(s => s.some(e => e.poids > 0));
-    if (sessionsAvecPoids.length) {
-      const lastPoids           = sessionsAvecPoids[0].find(e => e.poids > 0)?.poids || 0;
-      const { poids: newPoids } = calculerSuggestionPoids(freshExo, block);
-      if (analysis.type === 'decrease' && newPoids < lastPoids) return; // poids baisse déjà → priorité poids
-      if (analysis.type === 'increase' && newPoids > lastPoids) return; // poids monte déjà → priorité poids
+    // En poids du corps, il n'y a pas de progression de charge → la suggestion reps
+    // est l'unique levier mécanique, on ne la déduplique pas.
+    if (!isBodyweight) {
+      const sessionsAvecPoids = getHistByDate(freshExo).filter(s => s.some(e => e.poids > 0));
+      if (sessionsAvecPoids.length) {
+        const lastPoids           = sessionsAvecPoids[0].find(e => e.poids > 0)?.poids || 0;
+        const { poids: newPoids } = calculerSuggestionPoids(freshExo, block);
+        if (analysis.type === 'decrease' && newPoids < lastPoids) return; // poids baisse déjà → priorité poids
+        if (analysis.type === 'increase' && newPoids > lastPoids) return; // poids monte déjà → priorité poids
+      }
     }
 
     if (analysis.type === 'increase') {

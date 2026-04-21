@@ -236,6 +236,9 @@ const DB = {
   getTemplateIds()    { return JSON.parse(localStorage.getItem(KEYS.TEMPLATE_LIST) || '[]'); },
   getTemplate(id)     { const r = localStorage.getItem(KEYS.TEMPLATE_PREFIX + id); return r ? JSON.parse(r) : null; },
   getAllTemplates()    { return this.getTemplateIds().map(id => this.getTemplate(id)).filter(Boolean); },
+  /** Modèles actifs — un modèle sans champ `archived` (ancien) est considéré actif. */
+  getActiveTemplates()   { return this.getAllTemplates().filter(t => !t.archived); },
+  getArchivedTemplates() { return this.getAllTemplates().filter(t =>  t.archived); },
   saveTemplate(t)     { localStorage.setItem(KEYS.TEMPLATE_PREFIX + t.id, JSON.stringify(t)); },
 
   addTemplate({ nom, exercices = [] }) {
@@ -243,13 +246,31 @@ const DB = {
     const ids = this.getTemplateIds();
     ids.push(id);
     localStorage.setItem(KEYS.TEMPLATE_LIST, JSON.stringify(ids));
-    const tpl = { id, nom, exercices, createdAt: new Date().toISOString() };
+    const tpl = { id, nom, exercices, archived: false, createdAt: new Date().toISOString() };
     this.saveTemplate(tpl);
     return tpl;
   },
 
   updateTemplate(tpl) {
     if (!this.getTemplateIds().includes(tpl.id)) return null;
+    this.saveTemplate(tpl);
+    return tpl;
+  },
+
+  archiveTemplate(id) {
+    const tpl = this.getTemplate(id);
+    if (!tpl) return null;
+    tpl.archived   = true;
+    tpl.archivedAt = new Date().toISOString();
+    this.saveTemplate(tpl);
+    return tpl;
+  },
+
+  unarchiveTemplate(id) {
+    const tpl = this.getTemplate(id);
+    if (!tpl) return null;
+    tpl.archived = false;
+    delete tpl.archivedAt;
     this.saveTemplate(tpl);
     return tpl;
   },
@@ -357,7 +378,7 @@ const DB = {
       if (!seen.has(p.templateId)) {
         seen.add(p.templateId);
         const tpl = this.getTemplate(p.templateId);
-        if (tpl) recent.push({ template: tpl, completedAt: p.completedAt });
+        if (tpl && !tpl.archived) recent.push({ template: tpl, completedAt: p.completedAt });
         if (recent.length >= n) break;
       }
     }
@@ -911,5 +932,82 @@ window.MEAL_PLAN_DB = {
       });
       this.saveDay(to);
     });
+  },
+};
+
+/* ============================================================
+   CUSTOM_ALIM_DB — gestion des aliments personnalisés
+   Permet d'archiver (masquer), désarchiver et supprimer.
+   Clés localStorage :
+     ft_custom_aliments         → Aliment[] (custom: true, archived?: boolean)
+     ft_hidden_static_aliments  → string[]  (IDs d'aliments statiques masqués)
+   ============================================================ */
+window.CUSTOM_ALIM_DB = {
+  CUSTOM_KEY: 'ft_custom_aliments',
+  HIDDEN_KEY: 'ft_hidden_static_aliments',
+
+  _getList() {
+    try { return JSON.parse(localStorage.getItem(this.CUSTOM_KEY) || '[]'); }
+    catch { return []; }
+  },
+  _saveList(list) { localStorage.setItem(this.CUSTOM_KEY, JSON.stringify(list)); },
+
+  getAll()     { return this._getList(); },
+  getActive()  { return this._getList().filter(a => !a.archived); },
+  getArchived(){ return this._getList().filter(a =>  a.archived); },
+
+  getHiddenStaticIds() {
+    try { return JSON.parse(localStorage.getItem(this.HIDDEN_KEY) || '[]'); }
+    catch { return []; }
+  },
+
+  /** Retourne true si l'aliment apparaît dans au moins un journal alimentaire. */
+  isUsedAnywhere(id) {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key || !key.startsWith('ft_alim_day_')) continue;
+      try {
+        const day = JSON.parse(localStorage.getItem(key));
+        for (const mk of Object.keys(day.meals || {})) {
+          if ((day.meals[mk].items || []).some(it => it.alimId === id)) return true;
+        }
+      } catch {}
+    }
+    return false;
+  },
+
+  archive(id) {
+    const list = this._getList();
+    const idx  = list.findIndex(a => a.id === id);
+    if (idx < 0) return false;
+    list[idx].archived   = true;
+    list[idx].archivedAt = new Date().toISOString();
+    this._saveList(list);
+    return true;
+  },
+
+  unarchive(id) {
+    const list = this._getList();
+    const idx  = list.findIndex(a => a.id === id);
+    if (idx < 0) return false;
+    list[idx].archived = false;
+    delete list[idx].archivedAt;
+    this._saveList(list);
+    return true;
+  },
+
+  delete(id) {
+    this._saveList(this._getList().filter(a => a.id !== id));
+  },
+
+  hideStatic(id) {
+    const ids = this.getHiddenStaticIds();
+    if (!ids.includes(id)) ids.push(id);
+    localStorage.setItem(this.HIDDEN_KEY, JSON.stringify(ids));
+  },
+
+  showStatic(id) {
+    const ids = this.getHiddenStaticIds().filter(i => i !== id);
+    localStorage.setItem(this.HIDDEN_KEY, JSON.stringify(ids));
   },
 };

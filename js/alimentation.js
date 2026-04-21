@@ -1920,16 +1920,20 @@ function renderAlimentsPanel() {
   const slugs = window.CAT_SLUG || {};
   const q     = currentAlimSearch.trim().toLowerCase();
 
+  // IDs d'aliments statiques masqués par l'utilisateur
+  const hiddenStaticIds = window.CUSTOM_ALIM_DB ? window.CUSTOM_ALIM_DB.getHiddenStaticIds() : [];
+  const hiddenSet       = new Set(hiddenStaticIds);
+
   const filtered = data.filter(a => {
+    if (!a.custom && hiddenSet.has(a.id)) return false;
     const matchSearch = !q || a.nom.toLowerCase().includes(q);
     const matchCat    = !currentAlimCategorie || a.categorie === currentAlimCategorie;
     return matchSearch && matchCat;
   });
 
-  // Compteur dans le header (total, pas filtré)
-  if (countEl) {
-    countEl.textContent = data.length > 0 ? `${data.length}` : '';
-  }
+  // Compteur dans le header (aliments visibles uniquement)
+  const totalVisible = data.filter(a => !(!a.custom && hiddenSet.has(a.id))).length;
+  if (countEl) countEl.textContent = totalVisible > 0 ? `${totalVisible}` : '';
 
   // État vide
   if (filtered.length === 0) {
@@ -1964,22 +1968,99 @@ function renderAlimentsPanel() {
            </button>
          </div>`;
     document.getElementById('al-empty-cta')?.addEventListener('click', openAlimNewModal);
+    _renderArchivedSection(container);
     return;
   }
 
-  // Cartes = liens <a> vers aliment.html?id=...
+  // Cartes — div wrapper avec lien interne + bouton action
   container.innerHTML = filtered.map(a => `
-    <a href="aliment.html?id=${a.id}" class="aliment-card">
-      <div class="aliment-card__cat-tag aliment-card__cat-tag--${slugs[a.categorie] || ''}">
-        ${a.categorie}
-      </div>
-      <div class="aliment-card__body">
-        <h3 class="aliment-card__name">${a.nom}</h3>
-        <p  class="aliment-card__info">${a.detail}</p>
-      </div>
-      <span class="aliment-card__arrow" aria-hidden="true">›</span>
-    </a>
+    <div class="aliment-card">
+      <a href="aliment.html?id=${a.id}" class="aliment-card__link">
+        <div class="aliment-card__cat-tag aliment-card__cat-tag--${slugs[a.categorie] || ''}">
+          ${a.categorie}
+        </div>
+        <div class="aliment-card__body">
+          <h3 class="aliment-card__name">${a.nom}</h3>
+          <p  class="aliment-card__info">${a.detail || ''}</p>
+        </div>
+        <span class="aliment-card__arrow" aria-hidden="true">›</span>
+      </a>
+      <button class="aliment-card__action" type="button"
+              data-manage-alim="${a.id}" data-manage-custom="${a.custom ? '1' : '0'}"
+              aria-label="Options">⋮</button>
+    </div>
   `).join('');
+
+  // Délégation : bouton ⋮ de chaque carte
+  container.querySelectorAll('[data-manage-alim]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      _openAlimManageSheet(btn.dataset.manageAlim, btn.dataset.manageCustom === '1');
+    });
+  });
+
+  // Section "aliments masqués" en bas de liste
+  _renderArchivedSection(container);
+}
+
+/** Ajoute en bas du conteneur la section des aliments masqués/archivés. */
+function _renderArchivedSection(container) {
+  if (!window.CUSTOM_ALIM_DB) return;
+
+  const archivedCustom  = window.CUSTOM_ALIM_DB.getArchived();
+  const hiddenStaticIds = window.CUSTOM_ALIM_DB.getHiddenStaticIds();
+  const hiddenStatics   = (window.ALIMENTS_DATA || []).filter(
+    a => !a.custom && hiddenStaticIds.includes(a.id)
+  );
+  const hiddenCount = archivedCustom.length + hiddenStatics.length;
+  if (hiddenCount === 0) return;
+
+  const items = [
+    ...archivedCustom.map(a => ({ ...a, _isCustom: true })),
+    ...hiddenStatics.map(a => ({ ...a, _isCustom: false })),
+  ];
+
+  const section = document.createElement('details');
+  section.className = 'al-archived-section';
+  section.innerHTML = `
+    <summary class="al-archived-toggle">
+      <span>${hiddenCount} aliment${hiddenCount > 1 ? 's' : ''} masqué${hiddenCount > 1 ? 's' : ''}</span>
+      <span class="al-archived-toggle__chevron" aria-hidden="true">▾</span>
+    </summary>
+    <div class="al-archived-list">
+      ${items.map(a => `
+        <div class="al-archived-row">
+          <div class="al-archived-row__info">
+            <span class="al-archived-row__name">${a.nom}</span>
+            <span class="al-archived-row__cat">${a.categorie}</span>
+          </div>
+          <button class="al-archived-row__restore" type="button"
+                  data-restore-alim="${a.id}" data-restore-custom="${a._isCustom ? '1' : '0'}">
+            Réafficher
+          </button>
+        </div>`).join('')}
+    </div>`;
+
+  container.appendChild(section);
+
+  section.querySelectorAll('[data-restore-alim]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id       = btn.dataset.restoreAlim;
+      const isCustom = btn.dataset.restoreCustom === '1';
+      if (isCustom) {
+        window.CUSTOM_ALIM_DB.unarchive(id);
+        // Réintégrer dans ALIMENTS_DATA si absent
+        const restored = window.CUSTOM_ALIM_DB.getAll().find(a => a.id === id);
+        if (restored && !(window.ALIMENTS_DATA || []).find(x => x.id === id)) {
+          window.ALIMENTS_DATA.push(restored);
+        }
+      } else {
+        window.CUSTOM_ALIM_DB.showStatic(id);
+      }
+      renderAlimentsPanel();
+    });
+  });
 }
 
 function bindAlimentsEvents() {
@@ -2013,6 +2094,81 @@ function bindAlimentsEvents() {
   if (fab) {
     fab.addEventListener('click', openAlimNewModal);
   }
+
+  _bindAlimManageSheetEvents();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ONGLET 4 — ALIMENTS — GESTION (archive / suppression)
+═══════════════════════════════════════════════════════════════ */
+
+let _manageAlimId   = null;
+let _manageIsCustom = false;
+
+function _openAlimManageSheet(id, isCustom) {
+  _manageAlimId   = id;
+  _manageIsCustom = isCustom;
+
+  const sheet = document.getElementById('alim-manage-sheet');
+  if (!sheet) return;
+
+  const alim    = (window.ALIMENTS_DATA || []).find(a => a.id === id);
+  const nameEl  = document.getElementById('alim-manage-name');
+  if (nameEl) nameEl.textContent = alim ? alim.nom : id;
+
+  const actionsEl = document.getElementById('alim-manage-actions');
+  if (!actionsEl) return;
+
+  if (isCustom) {
+    const isUsed = window.CUSTOM_ALIM_DB ? window.CUSTOM_ALIM_DB.isUsedAnywhere(id) : false;
+    if (isUsed) {
+      actionsEl.innerHTML = `
+        <button class="alim-manage__btn alim-manage__btn--archive" id="alim-manage-action-btn" type="button">
+          Archiver (masquer de la liste)
+        </button>
+        <p class="alim-manage__hint">Cet aliment a déjà été utilisé. L'historique restera intact.</p>`;
+    } else {
+      actionsEl.innerHTML = `
+        <button class="alim-manage__btn alim-manage__btn--delete" id="alim-manage-action-btn" type="button">
+          Supprimer définitivement
+        </button>`;
+    }
+    document.getElementById('alim-manage-action-btn')?.addEventListener('click', () => {
+      if (isUsed) {
+        window.CUSTOM_ALIM_DB.archive(id);
+      } else {
+        window.CUSTOM_ALIM_DB.delete(id);
+      }
+      window.ALIMENTS_DATA = (window.ALIMENTS_DATA || []).filter(a => a.id !== id);
+      _closeAlimManageSheet();
+      renderAlimentsPanel();
+    });
+  } else {
+    actionsEl.innerHTML = `
+      <button class="alim-manage__btn alim-manage__btn--archive" id="alim-manage-action-btn" type="button">
+        Masquer de la liste
+      </button>
+      <p class="alim-manage__hint">Cet aliment reste disponible dans vos recettes et journaux existants.</p>`;
+    document.getElementById('alim-manage-action-btn')?.addEventListener('click', () => {
+      window.CUSTOM_ALIM_DB.hideStatic(id);
+      _closeAlimManageSheet();
+      renderAlimentsPanel();
+    });
+  }
+
+  sheet.hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function _closeAlimManageSheet() {
+  const sheet = document.getElementById('alim-manage-sheet');
+  if (sheet) sheet.hidden = true;
+  document.body.style.overflow = '';
+}
+
+function _bindAlimManageSheetEvents() {
+  document.getElementById('alim-manage-cancel')?.addEventListener('click', _closeAlimManageSheet);
+  document.getElementById('alim-manage-backdrop')?.addEventListener('click', _closeAlimManageSheet);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -2024,7 +2180,8 @@ const CUSTOM_ALIM_KEY = 'ft_custom_aliments';
 function loadCustomAliments() {
   try {
     const stored = JSON.parse(localStorage.getItem(CUSTOM_ALIM_KEY) || '[]');
-    stored.forEach(a => {
+    // Ne charger que les aliments non archivés dans ALIMENTS_DATA
+    stored.filter(a => !a.archived).forEach(a => {
       if (!(window.ALIMENTS_DATA || []).find(x => x.id === a.id)) {
         (window.ALIMENTS_DATA = window.ALIMENTS_DATA || []).push(a);
       }

@@ -2099,6 +2099,198 @@ body {
   border-color: rgba(57, 224, 122, 0.45);
 }
 
+/* ── Lien discret "Gérer mes séances" ── */
+.modeles-manage-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 1rem auto 0.5rem;
+  padding: 0.5rem 0.9rem;
+  background: transparent;
+  border: 1px dashed #2a3038;
+  border-radius: 10px;
+  color: var(--text-idle);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  font-family: inherit;
+}
+
+.modeles-manage-link:hover {
+  color: #e5e7eb;
+  border-color: #3a4450;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.modeles-manage-link__count {
+  color: #4b5563;
+  font-weight: 500;
+  font-size: 0.72rem;
+}
+
+/* Centrer le lien dans le panneau */
+#panel-modeles {
+  display: flex;
+  flex-direction: column;
+}
+
+#panel-modeles .modeles-manage-link {
+  align-self: center;
+}
+
+/* ── Bottom-sheet : Gérer mes séances ── */
+#manage-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: flex-end;
+}
+
+#manage-sheet[hidden] { display: none; }
+
+.manage-panel {
+  /* Hérite de .sd-panel mais on augmente la hauteur pour un vrai plein écran */
+  max-height: 92vh;
+  max-height: 92dvh;
+}
+
+/* Section collapsible */
+.manage-section {
+  border-bottom: 1px solid #1a1f26;
+}
+
+.manage-section:last-child { border-bottom: none; }
+
+.manage-section__head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.manage-section__head::-webkit-details-marker { display: none; }
+
+.manage-section__title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #e5e7eb;
+  letter-spacing: 0.02em;
+}
+
+.manage-section__count {
+  font-size: 0.68rem;
+  color: var(--text-idle);
+  background: #1f2428;
+  padding: 1px 8px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.manage-section__chevron {
+  margin-left: auto;
+  color: #4b5563;
+  font-size: 0.85rem;
+  transition: transform 0.2s;
+}
+
+.manage-section[open] .manage-section__chevron {
+  transform: rotate(180deg);
+}
+
+.manage-section__body {
+  padding: 0 1rem 0.75rem;
+}
+
+.manage-empty {
+  font-size: 0.78rem;
+  color: var(--text-idle);
+  text-align: center;
+  padding: 0.75rem 0;
+  margin: 0;
+}
+
+/* Ligne modèle dans la feuille */
+.manage-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0;
+  border-bottom: 1px solid #1a1f26;
+}
+
+.manage-row:last-child { border-bottom: none; }
+
+.manage-row--archived .manage-row__name { color: #9ca3af; }
+
+.manage-row__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.manage-row__name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #e5e7eb;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.manage-row__meta {
+  font-size: 0.68rem;
+  color: var(--text-idle);
+}
+
+.manage-row__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  flex-shrink: 0;
+}
+
+.manage-row__btn {
+  padding: 0.45rem 0.7rem;
+  background: transparent;
+  border: 1px solid #2a3038;
+  border-radius: 8px;
+  color: #9ca3af;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  font-family: inherit;
+}
+
+.manage-row__btn--archive:hover {
+  border-color: rgba(57, 224, 122, 0.4);
+  color: var(--accent);
+  background: rgba(57, 224, 122, 0.06);
+}
+
+.manage-row__btn--delete {
+  width: 32px;
+  padding: 0.45rem 0;
+  text-align: center;
+  color: #4b5563;
+}
+
+.manage-row__btn--delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #ef4444;
+}
+
 /* ============================================================
    MODAL — PLANIFIER UNE SÉANCE (JS-controlled)
    ============================================================ */

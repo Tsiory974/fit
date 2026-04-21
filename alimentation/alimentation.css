@@ -425,23 +425,51 @@ input[name="alim-tabs"] {
 
 .aliment-card {
   display: flex;
-  align-items: center;
-  gap: 0.875rem;
+  align-items: stretch;
   background: #141820;
   border: 1px solid #1f2428;
   border-radius: 14px;
-  padding: 0.875rem 1rem;
-  cursor: pointer;
-  text-decoration: none;
-  color: inherit;
-  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+  overflow: hidden;
+  transition: background 0.2s ease, border-color 0.2s ease;
 }
 
 .aliment-card:hover,
 .aliment-card:active {
   background: #1a2028;
   border-color: #2a3540;
-  transform: translateX(2px);
+}
+
+/* Lien principal (toute la zone cliquable sauf le bouton ⋮) */
+.aliment-card__link {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  flex: 1;
+  min-width: 0;
+  padding: 0.875rem 0 0.875rem 1rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Bouton ⋮ options */
+.aliment-card__action {
+  flex-shrink: 0;
+  padding: 0 0.875rem;
+  background: none;
+  border: none;
+  border-left: 1px solid #1f2428;
+  color: var(--text-idle);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s, color 0.15s;
+}
+
+.aliment-card__action:hover {
+  background: rgba(255,255,255,0.05);
+  color: #e5e7eb;
 }
 
 /* Badge catégorie */
@@ -524,6 +552,177 @@ input[name="alim-tabs"] {
   line-height: 1;
   flex-shrink: 0;
 }
+
+/* ============================================================
+   ALIMENTS MASQUÉS / ARCHIVÉS — section collapsible en bas
+   ============================================================ */
+.al-archived-section {
+  margin-top: 0.5rem;
+}
+
+.al-archived-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--text-idle);
+  cursor: pointer;
+  padding: 0.625rem 0.5rem;
+  list-style: none;
+  user-select: none;
+}
+.al-archived-toggle::-webkit-details-marker { display: none; }
+
+.al-archived-toggle__chevron {
+  transition: transform 0.2s;
+}
+.al-archived-section[open] .al-archived-toggle__chevron {
+  transform: rotate(180deg);
+}
+
+.al-archived-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.25rem 0 0.75rem;
+}
+
+.al-archived-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #1a1e23;
+  border: 1px solid #2a2e35;
+  border-radius: 10px;
+  padding: 0.625rem 0.875rem;
+}
+
+.al-archived-row__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.al-archived-row__name {
+  display: block;
+  font-size: 0.85rem;
+  color: #9ca3af;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.al-archived-row__cat {
+  font-size: 0.7rem;
+  color: #4b5563;
+}
+
+.al-archived-row__restore {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid rgba(57,224,122,0.3);
+  border-radius: 8px;
+  color: var(--accent);
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.al-archived-row__restore:hover {
+  background: rgba(57,224,122,0.1);
+}
+
+/* ============================================================
+   BOTTOM-SHEET — GESTION ALIMENT (archive / suppression)
+   ============================================================ */
+#alim-manage-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: flex-end;
+}
+
+.alim-manage__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+}
+
+.alim-manage__panel {
+  position: relative;
+  width: 100%;
+  background: #1a1e23;
+  border-radius: 20px 20px 0 0;
+  padding: 0.75rem 1.25rem 2rem;
+  z-index: 1;
+}
+
+.alim-manage__handle {
+  width: 36px;
+  height: 4px;
+  background: #374151;
+  border-radius: 2px;
+  margin: 0 auto 1.25rem;
+}
+
+.alim-manage__name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e5e7eb;
+  text-align: center;
+  margin-bottom: 1.5rem;
+  padding: 0 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.alim-manage__btn {
+  display: block;
+  width: 100%;
+  padding: 0.875rem;
+  border-radius: 12px;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.alim-manage__btn--archive {
+  background: rgba(57,224,122,0.12);
+  color: var(--accent);
+}
+
+.alim-manage__btn--delete {
+  background: rgba(248,113,113,0.12);
+  color: #f87171;
+}
+
+.alim-manage__btn:hover { opacity: 0.8; }
+
+.alim-manage__hint {
+  font-size: 0.75rem;
+  color: var(--text-idle);
+  text-align: center;
+  margin-top: 0.5rem;
+  line-height: 1.4;
+}
+
+.alim-manage__cancel {
+  display: block;
+  width: 100%;
+  padding: 0.875rem;
+  border-radius: 12px;
+  border: 1px solid #2a3540;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 0.95rem;
+  cursor: pointer;
+  margin-top: 0.75rem;
+  transition: background 0.15s;
+}
+.alim-manage__cancel:hover { background: rgba(255,255,255,0.04); }
 
 /* ============================================================
    FAB — AJOUTER UN ALIMENT
