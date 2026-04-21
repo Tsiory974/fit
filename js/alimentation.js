@@ -2332,12 +2332,50 @@ function openAlimNewModal() {
   const barcodeError = document.getElementById('alim-barcode-error');
   if (barcodeError) barcodeError.hidden = true;
 
+  const dupWarn = document.getElementById('alim-new-dup-warn');
+  if (dupWarn) { dupWarn.textContent = ''; dupWarn.hidden = true; }
+
   document.getElementById('alim-new-modal')?.classList.add('alim-new-modal--open');
   setTimeout(() => nomEl?.focus(), 80);
 }
 
 function closeAlimNewModal() {
   document.getElementById('alim-new-modal')?.classList.remove('alim-new-modal--open');
+}
+
+/* ── Helpers similarité de noms (détection doublons) ─────────────────── */
+function _normName(s) {
+  return s.trim().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ');
+}
+
+function _lev(a, b) {
+  const m = a.length, n = b.length;
+  if (!m) return n; if (!n) return m;
+  const row = Array.from({length: n + 1}, (_, i) => i);
+  for (let i = 1; i <= m; i++) {
+    let prev = i;
+    for (let j = 1; j <= n; j++) {
+      const val = a[i-1] === b[j-1] ? row[j-1] : 1 + Math.min(prev, row[j], row[j-1]);
+      row[j-1] = prev; prev = val;
+    }
+    row[n] = prev;
+  }
+  return row[n];
+}
+
+function _findSimilarAliment(nom) {
+  const needle = _normName(nom);
+  if (needle.length < 3) return null;
+  return (window.ALIMENTS_DATA || []).find(a => {
+    const hay = _normName(a.nom);
+    if (hay === needle) return true;
+    const longer = Math.max(needle.length, hay.length);
+    const shorter = Math.min(needle.length, hay.length);
+    if (shorter / longer < 0.65) return false; // longueurs trop différentes → pas un doublon
+    return _lev(needle, hay) / longer < 0.25;
+  }) || null;
 }
 
 function bindAlimNewModalEvents() {
@@ -2355,11 +2393,18 @@ function bindAlimNewModalEvents() {
     });
   });
 
-  // Activer le bouton Créer dès qu'un nom est saisi
+  // Activer le bouton Créer + avertissement doublon dès qu'un nom est saisi
   const nomEl = document.getElementById('alim-new-nom');
   nomEl?.addEventListener('input', () => {
+    const nom = nomEl.value.trim();
     const saveBtn = document.getElementById('alim-new-save');
-    if (saveBtn) saveBtn.disabled = !nomEl.value.trim();
+    if (saveBtn) saveBtn.disabled = !nom;
+    const warnEl = document.getElementById('alim-new-dup-warn');
+    if (warnEl) {
+      const similar = nom.length >= 3 ? _findSimilarAliment(nom) : null;
+      warnEl.textContent = similar ? `"${similar.nom}" existe déjà dans votre liste.` : '';
+      warnEl.hidden = !similar;
+    }
   });
 
   // Toggle mode de consommation

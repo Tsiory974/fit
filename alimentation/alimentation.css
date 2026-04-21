@@ -435,7 +435,12 @@ input[name="alim-tabs"] {
   border: 1px solid #1f2428;
   border-radius: 14px;
   overflow: hidden;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  min-height: 64px;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.aliment-card:active {
+  transform: translateX(2px);
 }
 
 .aliment-card:hover,
@@ -3285,6 +3290,18 @@ input[name="alim-tabs"] {
 
 .alim-new__mode-btn--active .alim-new__mode-label {
   color: var(--accent, #39e07a);
+}
+
+/* ── Avertissement doublon ── */
+.alim-new__dup-warn {
+  font-size: 0.72rem;
+  color: #f59e0b;
+  margin-top: 5px;
+  padding: 4px 8px;
+  background: rgba(245,158,11,0.08);
+  border: 1px solid rgba(245,158,11,0.2);
+  border-radius: 6px;
+  line-height: 1.4;
 }
 
 /* ── Référence macros ── */
