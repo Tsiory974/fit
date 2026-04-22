@@ -3377,6 +3377,18 @@ body {
    CARDIO — SHEET DÉCLARATION MANUELLE
    (réutilise les classes sd-panel / sd-backdrop)
    ============================================================ */
+
+/* Conteneur fixed — miroir de #musc-session-detail */
+#cardio-declare-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: flex-end;
+}
+
+#cardio-declare-sheet[hidden] { display: none; }
+
 .cardio-decl-form-field {
   padding: 0 1rem 1rem;
 }

@@ -1401,11 +1401,15 @@ function bindAddExerciseForm() {
   }
 
   groupeSelect.addEventListener('change', () => {
-    const fieldSG     = document.getElementById('field-sous-groupe');
-    const selectSG    = document.getElementById('new-exo-sous-groupe');
-    const sousGroupes = SOUS_GROUPES[groupeSelect.value] || [];
+    const fieldSG      = document.getElementById('field-sous-groupe');
+    const selectSG     = document.getElementById('new-exo-sous-groupe');
+    const fieldType    = document.getElementById('field-exo-type');
+    const fieldMat     = document.getElementById('field-exo-materiel');
+    const isCardio     = groupeSelect.value === 'Cardio';
+    const sousGroupes  = SOUS_GROUPES[groupeSelect.value] || [];
 
-    if (sousGroupes.length > 0) {
+    // Sous-groupe : uniquement pour les groupes musculaires avec zones
+    if (!isCardio && sousGroupes.length > 0) {
       selectSG.innerHTML = '<option value="">Indifférent</option>' +
         sousGroupes.map(sg =>
           `<option value="${sg}">${sg.charAt(0).toUpperCase() + sg.slice(1)}</option>`
@@ -1415,6 +1419,10 @@ function bindAddExerciseForm() {
       fieldSG.style.display = 'none';
       selectSG.innerHTML    = '';
     }
+
+    // Type et matériel : non pertinents pour Cardio
+    if (fieldType)  fieldType.style.display  = isCardio ? 'none' : '';
+    if (fieldMat)   fieldMat.style.display   = isCardio ? 'none' : '';
   });
 
   form.addEventListener('submit', e => {
@@ -1425,8 +1433,9 @@ function bindAddExerciseForm() {
     const groupe     = groupeSelect.value;
     const couleur    = groupeSelect.selectedOptions[0]?.dataset.couleur || 'autre';
     const sousGroupe = document.getElementById('new-exo-sous-groupe')?.value || '';
-    const type       = form.querySelector('[name="new-exo-type"]:checked')?.value     || '';
-    const materiel   = form.querySelector('[name="new-exo-materiel"]:checked')?.value || '';
+    const isCardio   = groupe === 'Cardio';
+    const type       = isCardio ? 'cardio' : (form.querySelector('[name="new-exo-type"]:checked')?.value     || '');
+    const materiel   = isCardio ? ''       : (form.querySelector('[name="new-exo-materiel"]:checked')?.value || '');
 
     if (!nom || !groupe) return;
 
@@ -1448,6 +1457,10 @@ function bindAddExerciseForm() {
     if (toggle) toggle.checked = false;
     form.reset();
     document.getElementById('field-sous-groupe').style.display = 'none';
+    const ft = document.getElementById('field-exo-type');
+    const fm = document.getElementById('field-exo-materiel');
+    if (ft) ft.style.display = '';
+    if (fm) fm.style.display = '';
     // Réinitialiser la section infos
     newExoImages = [];
     renderNewExoImages();
