@@ -1481,6 +1481,12 @@ input[name="alim-tabs"] {
   border-radius: 20px 20px 0 0;
   border-top: 1px solid #1f242a;
   padding: 1rem 1rem 0;
+  box-sizing: border-box;
+  /* height définie (pas seulement max-height) : requis pour que flex: 1
+     des enfants ait une hauteur résolue sur iOS Safari */
+  height: 90vh;
+  height: 90dvh;
+  height: var(--modal-avail-h, 90dvh);
   max-height: 90vh;       /* fallback navigateurs anciens */
   max-height: 90dvh;      /* dvh = viewport dynamique : se réduit quand le clavier s'ouvre */
   max-height: var(--modal-avail-h, 90dvh); /* surcharge JS pour iOS < 15.4 */
@@ -1554,6 +1560,8 @@ input[name="alim-tabs"] {
   flex-direction: column;
   gap: 0.375rem;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .aj-modal__list::-webkit-scrollbar { display: none; }
