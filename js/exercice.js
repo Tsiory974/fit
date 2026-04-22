@@ -118,6 +118,28 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ── 4. Fonctions d'affichage ────────────────────────────── */
 
   function showPage(exo) {
+    const isCardio = exo.groupe === 'Cardio';
+
+    if (isCardio) {
+      document.querySelectorAll('[data-exo-rm]').forEach(el => el.style.display = 'none');
+      const heroBlock = document.querySelector('.stat-hero');
+      if (heroBlock) heroBlock.style.display = 'none';
+      const zoneBlock = document.querySelector('.zone-selector-wrapper');
+      if (zoneBlock) zoneBlock.style.display = 'none';
+      const rmChartBlock = document.querySelector('.rm-chart-block');
+      if (rmChartBlock) rmChartBlock.style.display = 'none';
+      const recoBlock = document.getElementById('reco-block');
+      if (recoBlock) recoBlock.style.display = 'none';
+      const cardioStatsBlock = document.getElementById('cardio-stats-block');
+      if (cardioStatsBlock) cardioStatsBlock.style.display = '';
+
+      renderCardioStats(exo);
+      renderChartCardio(exo);
+      renderHistorique(exo);
+      renderInfo(exo);
+      return;
+    }
+
     const rm = calculateRM(exo);
     const isPoidsDuCorps = exo.materiel === 'Poids du corps';
 
@@ -320,7 +342,41 @@ document.addEventListener('DOMContentLoaded', () => {
       const month  = d.toLocaleDateString('fr-FR', { month: 'short' });
       const year   = d.getFullYear();
 
-      // Couleur du badge poids — basée sur le 1RM calculé (pas exo.rm)
+      const isCardioEntry = entry.duree !== undefined && entry.duree !== null;
+
+      if (isCardioEntry) {
+        return `
+          <li>
+            <article class="history-entry">
+              <div class="history-entry__date-col">
+                <span class="history-entry__day">${day}</span>
+                <span class="history-entry__month">${month}</span>
+                <span class="history-entry__year">${year}</span>
+              </div>
+              <div class="history-entry__body">
+                <div class="history-entry__title">${entry.titre || 'Activité cardio'}</div>
+                <div class="history-entry__stats">
+                  <span class="history-entry__stat">
+                    <span class="history-entry__stat-icon">⏱</span>${entry.duree} min
+                  </span>
+                  ${entry.distance ? `
+                  <span class="history-entry__stat">
+                    <span class="history-entry__stat-icon">📍</span>${entry.distance} km
+                  </span>` : ''}
+                  ${entry.intensite ? `
+                  <span class="history-entry__stat">
+                    <span class="history-entry__stat-icon">🔥</span>${entry.intensite}
+                  </span>` : ''}
+                </div>
+                <div class="history-entry__cardio-badge">${entry.duree} min</div>
+              </div>
+              <button class="history-entry__delete" data-index="${idx}"
+                      aria-label="Supprimer cette entrée" title="Supprimer">✕</button>
+            </article>
+          </li>`;
+      }
+
+      // Entrée musculation classique
       let badgeClass = '';
       if (rm) {
         if (entry.poids >= rm * 0.9) badgeClass = 'history-entry__weight-badge--max';
@@ -373,6 +429,108 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     });
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+     CARDIO — stats résumées + graphique durée
+  ───────────────────────────────────────────────────────────── */
+
+  function renderCardioStats(exo) {
+    const gridEl  = document.getElementById('cardio-stats-grid');
+    if (!gridEl) return;
+
+    const entries = (exo.historique || []).filter(e => e.duree);
+    const total   = entries.reduce((acc, e) => acc + (e.duree || 0), 0);
+    const best    = entries.length ? Math.max(...entries.map(e => e.duree)) : 0;
+    const last    = entries[0];
+
+    const lastStr  = last ? `${last.duree} min` : '—';
+    const bestStr  = best ? `${best} min` : '—';
+    const totalH   = Math.floor(total / 60);
+    const totalM   = total % 60;
+    const totalStr = totalH > 0
+      ? `${totalH}h${totalM > 0 ? totalM + 'm' : ''}`
+      : (total ? `${total} min` : '—');
+
+    gridEl.innerHTML = [
+      { val: lastStr,                     lbl: 'Dernière' },
+      { val: entries.length || '—',       lbl: 'Sessions' },
+      { val: totalStr,                    lbl: 'Temps total' },
+      { val: bestStr,                     lbl: 'Meilleure' },
+    ].map(c => `
+      <div class="cardio-stat-card">
+        <span class="cardio-stat-card__val">${c.val}</span>
+        <span class="cardio-stat-card__lbl">${c.lbl}</span>
+      </div>`).join('');
+  }
+
+  function renderChartCardio(exo) {
+    const barsEl   = document.getElementById('cardio-bars');
+    const labelsEl = document.getElementById('cardio-labels');
+    const gridEl   = document.getElementById('cardio-grid');
+    const trendEl  = document.getElementById('cardio-chart-trend');
+    if (!barsEl || !labelsEl) return;
+
+    const byDate = {};
+    (exo.historique || []).forEach(e => {
+      if (!e.duree) return;
+      const dateKey = (e.date || '').slice(0, 10);
+      if (!dateKey) return;
+      if (!byDate[dateKey] || e.duree > byDate[dateKey]) byDate[dateKey] = e.duree;
+    });
+
+    const points = Object.entries(byDate)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([dateKey, duree]) => ({ date: new Date(dateKey), duree }));
+
+    if (points.length > 0) {
+      const maxDuree = Math.max(...points.map(p => p.duree));
+      for (let i = points.length - 1; i >= 0; i--) {
+        if (points[i].duree === maxDuree) { points[i].isPeak = true; break; }
+      }
+    }
+
+    if (points.length === 0) {
+      barsEl.innerHTML   = '<p class="chart-empty">Aucune activité pour l\'instant.</p>';
+      labelsEl.innerHTML = '';
+      if (gridEl) gridEl.innerHTML = '';
+      if (trendEl) trendEl.textContent = '';
+      return;
+    }
+
+    const maxDuree = Math.max(...points.map(p => p.duree));
+
+    if (gridEl) {
+      const step = Math.ceil(maxDuree / 4 / 5) * 5 || 10;
+      gridEl.innerHTML = [4, 3, 2, 1].map(i => {
+        const val = i * step;
+        const pos = Math.round(val / maxDuree * 100);
+        return `<span class="chart-grid__line" style="--pos:${pos}%"><em>${val} min</em></span>`;
+      }).join('');
+    }
+
+    barsEl.innerHTML   = '';
+    labelsEl.innerHTML = '';
+
+    points.forEach(p => {
+      const h   = Math.round(p.duree / maxDuree * 100);
+      const bar = document.createElement('div');
+      bar.className = 'chart-bar' + (p.isPeak ? ' chart-bar--peak' : '');
+      bar.style.setProperty('--h', h + '%');
+      bar.innerHTML = `<span class="chart-bar__tip">${p.duree} min</span>`;
+      barsEl.appendChild(bar);
+
+      const lbl = document.createElement('span');
+      lbl.textContent = p.date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
+      labelsEl.appendChild(lbl);
+    });
+
+    if (points.length >= 2 && trendEl) {
+      const diff = points[points.length - 1].duree - points[0].duree;
+      const up   = diff >= 0;
+      trendEl.className   = 'rm-chart-block__trend rm-chart-block__trend--' + (up ? 'up' : 'down');
+      trendEl.textContent = (up ? '↑ +' : '↓ ') + Math.abs(diff) + ' min';
+    }
   }
 
   /* ─────────────────────────────────────────────────────────────

@@ -254,6 +254,93 @@
 
 
     <!-- ══════════════════════════════════════════
+         ÉCRAN CARDIO
+         Chrono + formulaire résultats
+    ══════════════════════════════════════════ -->
+    <div class="ws-screen" id="screen-cardio">
+
+      <!-- Carte exercice -->
+      <div class="ws-exo-card">
+        <span class="ws-muscle-tag ws-muscle-tag--cardio" id="cardio-muscle-tag">Cardio</span>
+        <h1 class="ws-exo-title" id="cardio-exo-name">—</h1>
+        <p class="ws-cardio-planned">Durée cible : <strong id="cardio-planned-val">—</strong></p>
+      </div>
+
+      <!-- Phase 1 : chrono en cours -->
+      <div id="cardio-phase-run">
+        <div class="ws-stopwatch-wrap">
+          <span class="ws-stopwatch" id="cardio-stopwatch" aria-live="polite">0:00</span>
+        </div>
+        <div class="ws-screen__cta">
+          <button class="ws-btn ws-btn--done" id="btn-cardio-stop">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                 width="22" height="22" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Activité terminée
+          </button>
+        </div>
+      </div>
+
+      <!-- Phase 2 : saisie résultats -->
+      <div id="cardio-phase-confirm" hidden>
+
+        <!-- Durée -->
+        <div class="cardio-field">
+          <label class="cardio-field__label" for="cardio-duree-input">Durée (min)</label>
+          <div class="ws-weight-input-row">
+            <button type="button" class="ws-stepper__btn" id="btn-cardio-dur-minus" aria-label="Moins 1 min">−</button>
+            <input type="number" class="ws-weight-input" id="cardio-duree-input"
+                   min="1" step="1" inputmode="numeric" aria-label="Durée en minutes">
+            <button type="button" class="ws-stepper__btn" id="btn-cardio-dur-plus" aria-label="Plus 1 min">＋</button>
+          </div>
+        </div>
+
+        <!-- Distance (optionnel) -->
+        <div class="cardio-field">
+          <label class="cardio-field__label">
+            Distance <span style="font-weight:400;color:#6b7280;text-transform:none;letter-spacing:0">(optionnel)</span>
+          </label>
+          <div class="ws-weight-input-row">
+            <button type="button" class="ws-stepper__btn" id="btn-cardio-dist-minus" aria-label="Moins 0.5 km">−</button>
+            <div class="ws-weight-val-wrap">
+              <input type="number" class="ws-weight-input" id="cardio-distance-input"
+                     min="0" step="0.5" inputmode="decimal" placeholder="0" aria-label="Distance en km">
+              <span class="ws-weight-unit">km</span>
+            </div>
+            <button type="button" class="ws-stepper__btn" id="btn-cardio-dist-plus" aria-label="Plus 0.5 km">＋</button>
+          </div>
+        </div>
+
+        <!-- Intensité (optionnel) -->
+        <div class="cardio-field">
+          <label class="cardio-field__label">
+            Intensité <span style="font-weight:400;color:#6b7280;text-transform:none;letter-spacing:0">(optionnel)</span>
+          </label>
+          <div class="cardio-intensite-chips" id="cardio-intensite-chips">
+            <button type="button" class="cardio-intensite-chip" data-intensite="faible">Faible</button>
+            <button type="button" class="cardio-intensite-chip" data-intensite="moderee">Modérée</button>
+            <button type="button" class="cardio-intensite-chip" data-intensite="elevee">Élevée</button>
+          </div>
+        </div>
+
+        <div class="ws-screen__cta">
+          <button class="ws-btn ws-btn--primary" id="btn-cardio-confirm">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                 width="20" height="20" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Valider l'activité
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+
+    <!-- ══════════════════════════════════════════
          ÉCRAN 5 : RÉCAP
          Résumé complet + enregistrement
     ══════════════════════════════════════════ -->

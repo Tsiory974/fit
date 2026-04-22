@@ -741,39 +741,6 @@ input[name="alim-tabs"] {
 /* ============================================================
    FAB — AJOUTER UN ALIMENT
    ============================================================ */
-.fab-add-aliment {
-  position: fixed;
-  bottom: calc(var(--nav-height) + 1rem);
-  right: 1.25rem;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: #0a0e12;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  box-shadow: 0 4px 20px rgba(57, 224, 122, 0.4);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease;
-  opacity: 0;
-  pointer-events: none;
-  z-index: 50;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* Visible seulement quand l'onglet Aliments est actif */
-#alim-aliments:checked ~ .fab-add-aliment {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.fab-add-aliment:hover,
-.fab-add-aliment:active {
-  transform: scale(1.08);
-  box-shadow: 0 6px 28px rgba(57, 224, 122, 0.55);
-}
 
 /* ============================================================
    ONGLET AUJOURD'HUI
@@ -1752,6 +1719,17 @@ input[name="alim-tabs"] {
   gap: 0.5rem;
   margin-bottom: 1rem;
   flex-wrap: wrap;
+  align-items: center;
+}
+
+.aj-modal__qty-ctx {
+  width: 100%;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-idle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 0.25rem;
 }
 
 .aj-modal__macro-chip {

@@ -50,7 +50,7 @@ const KEYS = {
 };
 
 // Incrémenter force la migration au rechargement
-const DB_VERSION_CURRENT = 6;
+const DB_VERSION_CURRENT = 7;
 
 const DEFAULT_EXERCISES = [
   // ── Pectoraux ──
@@ -96,6 +96,15 @@ const DEFAULT_EXERCISES = [
   { id: 'gainage',                  nom: 'Gainage',                                groupe: 'Abdos',     couleur: 'abdos',   sousGroupe: '',           type: 'isolation',       materiel: 'Poids du corps' },
   { id: 'russian-twist',            nom: 'Russian twist',                          groupe: 'Abdos',     couleur: 'abdos',   sousGroupe: '',           type: 'isolation',       materiel: 'Poids du corps' },
   { id: 'mountain-climbers',        nom: 'Mountain climbers',                      groupe: 'Abdos',     couleur: 'abdos',   sousGroupe: '',           type: 'isolation',       materiel: 'Poids du corps' },
+  // ── Cardio ──
+  { id: 'course-pied',              nom: 'Course à pied',                          groupe: 'Cardio',    couleur: 'cardio',  sousGroupe: '',           type: 'cardio',          materiel: ''              },
+  { id: 'velo',                     nom: 'Vélo',                                   groupe: 'Cardio',    couleur: 'cardio',  sousGroupe: '',           type: 'cardio',          materiel: ''              },
+  { id: 'natation',                 nom: 'Natation',                               groupe: 'Cardio',    couleur: 'cardio',  sousGroupe: '',           type: 'cardio',          materiel: ''              },
+  { id: 'elliptique',               nom: 'Elliptique',                             groupe: 'Cardio',    couleur: 'cardio',  sousGroupe: '',           type: 'cardio',          materiel: ''              },
+  { id: 'rameur',                   nom: 'Rameur',                                 groupe: 'Cardio',    couleur: 'cardio',  sousGroupe: '',           type: 'cardio',          materiel: ''              },
+  { id: 'corde-a-sauter',           nom: 'Corde à sauter',                         groupe: 'Cardio',    couleur: 'cardio',  sousGroupe: '',           type: 'cardio',          materiel: ''              },
+  { id: 'marche-rapide',            nom: 'Marche rapide',                          groupe: 'Cardio',    couleur: 'cardio',  sousGroupe: '',           type: 'cardio',          materiel: ''              },
+  { id: 'hiit',                     nom: 'HIIT',                                   groupe: 'Cardio',    couleur: 'cardio',  sousGroupe: '',           type: 'cardio',          materiel: ''              },
 ];
 
 const DB = {
@@ -698,6 +707,24 @@ window.ALIM_DB = {
 };
 window.MEAL_KEYS = MEAL_KEYS;
 
+/* ──────────────────────────────────────────────────────────────
+   Helper partagé : convertit item.quantite (compte ou grammes)
+   en facteur macros = grammesRéels / 100.
+   Utilisé par RECETTES_DB et MEAL_PLAN_DB pour unifier le calcul.
+   ────────────────────────────────────────────────────────────── */
+function _alimItemFactor(alim, item) {
+  const mode = alim.modeConsommation;
+  let grams;
+  if (mode === 'piece' || item.type === 'unite') {
+    grams = item.quantite * (alim.unitWeight || alim.portionReference || 100);
+  } else if (mode === 'portion') {
+    grams = item.quantite * (alim.portionReference || 100);
+  } else {
+    grams = item.quantite; // poids (g) ou volume (ml)
+  }
+  return grams / 100;
+}
+
 /* ============================================================
    RECETTES_DB — gestion des recettes enregistrées
    Clés localStorage :
@@ -776,10 +803,7 @@ window.RECETTES_DB = {
     (rec.aliments || []).forEach(item => {
       const alim = (window.ALIMENTS_DATA || []).find(a => a.id === item.alimId);
       if (!alim) return;
-      const grams = (item.type === 'unite')
-        ? item.quantite * (alim.unitWeight || 100)
-        : item.quantite;
-      const r = grams / 100;
+      const r = _alimItemFactor(alim, item);
       k += alim.m.k * r;
       p += alim.m.p * r;
       g += alim.m.g * r;
@@ -875,8 +899,7 @@ window.MEAL_PLAN_DB = {
     (entry.aliments || []).forEach(item => {
       const alim = (window.ALIMENTS_DATA || []).find(a => a.id === item.alimId);
       if (!alim) return;
-      const factor = (alim.type === 'unite') ? item.quantite : item.quantite / 100;
-      k += alim.m.k * factor;
+      k += alim.m.k * _alimItemFactor(alim, item);
     });
     return Math.round(k);
   },

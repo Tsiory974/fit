@@ -1332,6 +1332,87 @@
 }
 
 /* ============================================================
+   CARDIO — couleur + composants spécifiques
+   ============================================================ */
+:root {
+  --color-cardio: #38bdf8;
+}
+
+.exercise-header__muscle--cardio {
+  color: var(--color-cardio);
+  background: rgba(56, 189, 248, 0.1);
+  border-color: rgba(56, 189, 248, 0.25);
+}
+
+/* Grille de stats cardio (4 tuiles 2×2) */
+.cardio-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.625rem;
+  margin-bottom: 1.25rem;
+}
+
+.cardio-stat-card {
+  background: #141820;
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  border-radius: 14px;
+  padding: 0.875rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.cardio-stat-card__val {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--color-cardio);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.cardio-stat-card__lbl {
+  font-size: 0.63rem;
+  font-weight: 600;
+  color: var(--text-idle);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Badge durée dans l'historique (équivalent du badge poids) */
+.history-entry__cardio-badge {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--color-cardio);
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  padding: 3px 10px;
+  border-radius: 8px;
+}
+
+/* Chip intensité dans l'historique */
+.history-entry__intensite {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(56, 189, 248, 0.08);
+  color: var(--color-cardio);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+}
+
+/* Barres du graphique cardio — dégradé bleu ciel */
+#cardio-bars .chart-bar {
+  background: linear-gradient(180deg, var(--color-cardio) 0%, rgba(56, 189, 248, 0.35) 100%);
+}
+
+#cardio-bars .chart-bar--peak {
+  background: linear-gradient(180deg, #fff 0%, var(--color-cardio) 100%);
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
+}
+
+/* ============================================================
    RESPONSIVE — Desktop (≥ 768px)
    ============================================================ */
 @media (min-width: 768px) {

@@ -95,6 +95,28 @@
       <!-- ── ONGLET 1 : MES STATS ── -->
       <section class="tab-panel stats-tab" id="panel-stats" role="tabpanel" aria-labelledby="tab-stats">
 
+        <!-- CARDIO STATS — visible uniquement pour les exercices Cardio -->
+        <div id="cardio-stats-block" style="display:none">
+
+          <!-- Tuiles récapitulatives -->
+          <div class="cardio-stats-grid" id="cardio-stats-grid"></div>
+
+          <!-- Graphique durée -->
+          <div class="rm-chart-block">
+            <div class="rm-chart-block__header">
+              <h2 class="section-title">Évolution de la durée</h2>
+              <span class="rm-chart-block__trend" id="cardio-chart-trend"></span>
+            </div>
+            <p class="section-sub">Durée par session (minutes)</p>
+            <div class="rm-chart" role="img" aria-label="Graphique d'évolution de la durée">
+              <div class="chart-grid" id="cardio-grid" aria-hidden="true"></div>
+              <div class="chart-bars" id="cardio-bars"></div>
+              <div class="chart-labels" id="cardio-labels" aria-hidden="true"></div>
+            </div>
+          </div>
+
+        </div>
+
         <!-- BLOC 1 : CARTE 1RM (calculé automatiquement via l'historique) -->
         <div class="stat-hero">
           <div class="stat-hero__label">1RM estimé <span class="stat-hero__badge">automatique</span></div>

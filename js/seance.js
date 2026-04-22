@@ -31,6 +31,11 @@ let currentState     = 'ready';
 let stopwatchStart   = 0;    // timestamp ms du début de la série (Date.now())
 let stopwatchTimer   = null;
 
+let cardioStopwatchStart = 0;
+let cardioTimer          = null;
+let cardioDistanceVal    = 0;
+let cardioIntensiteVal   = '';
+
 let restTotal        = 0;   // durée totale en secondes (pour l'arc SVG)
 let restEndTime      = 0;   // timestamp ms de fin — temps restant = restEndTime - Date.now()
 let restTimer        = null;
@@ -159,6 +164,29 @@ function init() {
     });
   });
 
+  // ── Boutons cardio ──────────────────────────────────────────
+  document.getElementById('btn-cardio-stop')?.addEventListener('click', stopCardio);
+  document.getElementById('btn-cardio-confirm')?.addEventListener('click', confirmCardio);
+  document.getElementById('btn-cardio-dur-minus')?.addEventListener('click', () => changeCardioValue('duree', -1));
+  document.getElementById('btn-cardio-dur-plus')?.addEventListener('click',  () => changeCardioValue('duree', +1));
+  document.getElementById('btn-cardio-dist-minus')?.addEventListener('click', () => changeCardioValue('distance', -0.5));
+  document.getElementById('btn-cardio-dist-plus')?.addEventListener('click',  () => changeCardioValue('distance', +0.5));
+  document.querySelectorAll('#cardio-intensite-chips .cardio-intensite-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const val = chip.dataset.intensite;
+      if (cardioIntensiteVal === val) {
+        cardioIntensiteVal = '';
+        chip.classList.remove('cardio-intensite-chip--selected');
+      } else {
+        document.querySelectorAll('#cardio-intensite-chips .cardio-intensite-chip').forEach(c => {
+          c.classList.remove('cardio-intensite-chip--selected');
+        });
+        cardioIntensiteVal = val;
+        chip.classList.add('cardio-intensite-chip--selected');
+      }
+    });
+  });
+
   // ── Sauvegarde + resync chrono repos à la navigation ──────
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
@@ -211,6 +239,12 @@ function showScreen(id) {
 function showReady() {
   currentState = 'ready';
   const { block, exo } = exercises[currentExoIdx];
+
+  // Branche cardio : contourne le flux series/reps/poids
+  if (exo.groupe === 'Cardio') {
+    showCardioScreen();
+    return;
+  }
 
   updateHeader();
 
@@ -841,7 +875,26 @@ function showRecap() {
 
   const listEl = document.getElementById('recap-list');
   listEl.innerHTML = results.map((r, i) => {
-    const block = session.exercices[i] || {};
+    const block    = session.exercices[i] || {};
+    const isCardio = r.groupe === 'Cardio';
+    const couleur  = r.couleur || 'pecto';
+
+    if (isCardio) {
+      const c = r.cardio || {};
+      const INTENSITE_LABELS = { faible: 'Faible', moderee: 'Modérée', elevee: 'Élevée' };
+      return `
+        <div class="ws-recap-exo">
+          <div class="ws-recap-exo__header">
+            <span class="ws-muscle-tag ws-muscle-tag--cardio">Cardio</span>
+            <span class="ws-recap-exo__name">${r.nom}</span>
+          </div>
+          <div class="ws-recap-cardio">
+            ${c.duree ? `<span class="ws-recap-cardio__val">${c.duree}</span><span class="ws-recap-cardio__label">min</span>` : ''}
+            ${c.distance ? `<span class="ws-recap-cardio__val">${c.distance}</span><span class="ws-recap-cardio__label">km</span>` : ''}
+            ${c.intensite ? `<span class="ws-recap-cardio__badge">${INTENSITE_LABELS[c.intensite] || c.intensite}</span>` : ''}
+          </div>
+        </div>`;
+    }
 
     const RESSENTI_ICON = { facile: '💪', ok: '👍', dur: '😰' };
     const seriesHtml = r.series.map((s, idx) => {
@@ -862,7 +915,7 @@ function showRecap() {
     return `
       <div class="ws-recap-exo">
         <div class="ws-recap-exo__header">
-          <span class="ws-muscle-tag ws-muscle-tag--${r.couleur || 'pecto'}">${r.groupe}</span>
+          <span class="ws-muscle-tag ws-muscle-tag--${couleur}">${r.groupe}</span>
           <span class="ws-recap-exo__name">${r.nom}</span>
         </div>
         ${seriesHtml || '<div style="padding:.75rem 1rem;font-size:.8rem;color:#4b5563">Aucune série</div>'}
@@ -1054,6 +1107,7 @@ function buildRecapSuggestions() {
 
   // ── 1. Reps : analyse par exercice ──────────────────────
   exercises.forEach(({ block, exo }) => {
+    if (exo.groupe === 'Cardio') return; // pas de progression stricte pour le cardio
     const freshExo    = DB.getExercice(exo.id) || exo;
     const isBodyweight = exo.materiel === 'Poids du corps';
     const analysis    = analyzeRepsProgression(freshExo, block);
@@ -1098,6 +1152,7 @@ function buildRecapSuggestions() {
   const groupesTrained = [...new Set(exercises.map(({ exo }) => exo.groupe))];
 
   groupesTrained.forEach(groupe => {
+    if (groupe === 'Cardio') return; // volume cardio non mesuré en séries
     const count = weeklyVol[groupe] || 0;
     if (count < VOL_OPTIMAL_MIN) {
       suggestions.push({
@@ -1121,6 +1176,98 @@ function buildRecapSuggestions() {
   });
 
   return suggestions;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   CARDIO — MACHINE À ÉTATS
+═══════════════════════════════════════════════════════════ */
+
+function showCardioScreen() {
+  const { block, exo } = exercises[currentExoIdx];
+  currentState = 'cardio-run';
+  updateHeader();
+
+  setMuscleTag('cardio-muscle-tag', exo.groupe, exo.couleur);
+  document.getElementById('cardio-exo-name').textContent = exo.nom;
+  const plannedMin = block.duree || 30;
+  document.getElementById('cardio-planned-val').textContent = `${plannedMin} min`;
+
+  // Lancer le chrono
+  clearInterval(cardioTimer);
+  cardioStopwatchStart = Date.now();
+  updateCardioStopwatch();
+  cardioTimer = setInterval(updateCardioStopwatch, 1000);
+
+  // Phase run visible, confirm caché
+  document.getElementById('cardio-phase-run').hidden    = false;
+  document.getElementById('cardio-phase-confirm').hidden = true;
+
+  showScreen('screen-cardio');
+}
+
+function stopCardio() {
+  clearInterval(cardioTimer);
+  currentState = 'cardio-confirm';
+
+  // Pré-remplir avec le temps réel arrondi à la minute (min 1 min)
+  const elapsedSecs = Math.floor((Date.now() - cardioStopwatchStart) / 1000);
+  const elapsedMins = Math.max(1, Math.round(elapsedSecs / 60));
+  const dureeInput  = document.getElementById('cardio-duree-input');
+  if (dureeInput) dureeInput.value = elapsedMins;
+
+  cardioDistanceVal  = 0;
+  cardioIntensiteVal = '';
+  const distInput = document.getElementById('cardio-distance-input');
+  if (distInput) distInput.value = '';
+  document.querySelectorAll('#cardio-intensite-chips .cardio-intensite-chip').forEach(c => {
+    c.classList.remove('cardio-intensite-chip--selected');
+  });
+
+  document.getElementById('cardio-phase-run').hidden    = true;
+  document.getElementById('cardio-phase-confirm').hidden = false;
+
+  // Sync état de l'input distance
+  document.getElementById('cardio-distance-input')?.addEventListener('input', e => {
+    cardioDistanceVal = parseFloat(e.target.value) || 0;
+  }, { once: true });
+}
+
+function changeCardioValue(field, delta) {
+  if (field === 'duree') {
+    const input = document.getElementById('cardio-duree-input');
+    const val   = Math.max(1, (parseInt(input?.value) || 1) + delta);
+    if (input) input.value = val;
+  } else if (field === 'distance') {
+    cardioDistanceVal = Math.max(0, Math.round((cardioDistanceVal + delta) * 2) / 2);
+    const input = document.getElementById('cardio-distance-input');
+    if (input) input.value = cardioDistanceVal || '';
+  }
+}
+
+function confirmCardio() {
+  const dureeInput = document.getElementById('cardio-duree-input');
+  const duree      = parseInt(dureeInput?.value) || 1;
+  const distRaw    = parseFloat(document.getElementById('cardio-distance-input')?.value) || 0;
+  const distance   = distRaw > 0 ? distRaw : null;
+  const intensite  = cardioIntensiteVal || null;
+
+  results[currentExoIdx].cardio = { duree, distance, intensite };
+
+  const isLastExo = currentExoIdx >= exercises.length - 1;
+  if (isLastExo) {
+    saveAllResults();
+    showRecap();
+  } else {
+    saveSessionState();
+    currentExoIdx++;
+    currentSerie = 1;
+    showReady();
+  }
+}
+
+function updateCardioStopwatch() {
+  const el = document.getElementById('cardio-stopwatch');
+  if (el) el.textContent = formatTime(Math.floor((Date.now() - cardioStopwatchStart) / 1000));
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -1151,22 +1298,36 @@ function saveSessionState() {
    SAUVEGARDE FINALE
 ═══════════════════════════════════════════════════════════ */
 function saveAllResults() {
-  const now = new Date().toISOString();
   results.forEach((r, i) => {
+    const block    = (session.exercices || [])[i] || {};
+    const exo      = exercises[i]?.exo;
+    const isCardio = exo?.groupe === 'Cardio';
+
+    if (isCardio) {
+      const c = r.cardio;
+      if (c && c.duree) {
+        DB.addHistoriqueEntry(r.exoId, {
+          titre:     session.nom,
+          duree:     c.duree,
+          distance:  c.distance ?? null,
+          intensite: c.intensite ?? null,
+        });
+      }
+      return;
+    }
+
     if (!r.series.length) return;
-    const block = (session.exercices || [])[i] || {};
-    const exo   = exercises[i]?.exo;
 
     // Sauvegarder chaque série individuellement pour un 1RM précis
     r.series.forEach((s, idx) => {
       DB.addHistoriqueEntry(r.exoId, {
         titre:       session.nom,
         series:      idx + 1,
-        reps:        s.actual,           // number (pas string)
+        reps:        s.actual,
         repos:       block.repos || '',
         poids:       s.poids ?? null,
-        ressenti:    s.ressenti || null, // 'facile' | 'ok' | 'dur' | null
-        repsObjectif: parseInt(block.reps) || null, // pour détecter si objectif atteint
+        ressenti:    s.ressenti || null,
+        repsObjectif: parseInt(block.reps) || null,
       });
     });
   });
@@ -1188,6 +1349,7 @@ function confirmQuit() {
   if (confirm('Quitter la séance en cours ?\nTa progression ne sera pas sauvegardée.')) {
     clearInterval(stopwatchTimer);
     clearInterval(restTimer);
+    clearInterval(cardioTimer);
     DB.clearActiveSession();
     location.href = 'musculation.html';
   }
@@ -1209,7 +1371,13 @@ function updateHeader() {
 
   counterEl.textContent = `${currentExoIdx + 1}/${exercises.length}`;
 
-  const { block } = exercises[currentExoIdx];
+  const { block, exo } = exercises[currentExoIdx];
+
+  if (exo.groupe === 'Cardio') {
+    dotsEl.innerHTML = '<span class="ws-dot ws-dot--current"></span>';
+    return;
+  }
+
   const n = parseInt(block.series) || 1;
   dotsEl.innerHTML = Array.from({ length: n }, (_, i) => {
     if (i + 1 < currentSerie)   return '<span class="ws-dot ws-dot--done"></span>';

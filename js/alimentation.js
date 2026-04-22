@@ -494,7 +494,7 @@ function bindAddMealSheetEvents() {
     if (!rec || rec.aliments.length === 0) return;
     const today = localDateStr();
     rec.aliments.forEach(item => {
-      window.ALIM_DB.addItem(today, _addSheetMealKey, item.alimId, item.quantite);
+      window.ALIM_DB.addItem(today, _addSheetMealKey, item.alimId, _itemQtyToGrams(item));
     });
     closeAddMealSheet();
     renderAujourdhuiPanel();
@@ -590,8 +590,17 @@ function renderModalList(q) {
   list.innerHTML = filtered.map(a => `
     <div class="aj-modal__alim-row" data-pick-alim="${a.id}">
       <span class="aj-modal__alim-name">${a.nom}</span>
-      <span class="aj-modal__alim-info">${a.m.k} kcal/100g</span>
+      <span class="aj-modal__alim-info">${_alimListInfo(a)}</span>
     </div>`).join('');
+}
+
+function _alimListInfo(a) {
+  const mode = _alimMode(a);
+  const ref  = a.unitWeight || a.portionReference;
+  if (mode === 'piece' && ref > 0)   return `${Math.round(a.m.k * ref / 100)} kcal/pièce`;
+  if (mode === 'portion' && ref > 0) return `${Math.round(a.m.k * ref / 100)} kcal/portion`;
+  if (mode === 'volume')             return `${a.m.k} kcal/100ml`;
+  return `${a.m.k} kcal/100g`;
 }
 
 // Déduit le mode depuis le type legacy stocké sur l'aliment
@@ -631,9 +640,23 @@ function _alimMaxQty(alim) {
   return 5000;
 }
 
-// Facteur de conversion : quantité stockée → multiplicateur pour les macros/100
+// Convertit un compte (pièces/portions) ou volume/grammes en grammes réels
+function _alimCountToGrams(alim, quantite) {
+  const mode = _alimMode(alim);
+  if (mode === 'piece')   return quantite * (alim.unitWeight || alim.portionReference || 100);
+  if (mode === 'portion') return quantite * (alim.portionReference || 100);
+  return quantite; // poids (g) ou volume (ml) — déjà en unités absolues
+}
+
+// Facteur de conversion : compte/grammes stockés → multiplicateur pour macros/100g
 function _alimFactor(alim, quantite) {
-  return _alimMode(alim) === 'piece' ? quantite : quantite / 100;
+  return _alimCountToGrams(alim, quantite) / 100;
+}
+
+// Convertit item.quantite d'un item de recette/planning en grammes pour ALIM_DB
+function _itemQtyToGrams(item) {
+  const alim = (window.ALIMENTS_DATA || []).find(a => a.id === item.alimId);
+  return alim ? _alimCountToGrams(alim, item.quantite) : item.quantite;
 }
 
 // Configure l'étape 2 (quantité) selon le mode de l'aliment
@@ -698,9 +721,25 @@ function updateQtyMacros() {
   const qty    = _getQtyGrams(_modalAlim);
   const r      = qty / 100;
   const m      = _modalAlim.m;
+  const mode   = _alimMode(_modalAlim);
   const macros = document.getElementById('aj-modal-qty-macros');
   if (!macros) return;
+
+  let ctxLabel;
+  if (mode === 'piece') {
+    const n = parseInt(document.getElementById('aj-qty-count')?.textContent) || 1;
+    ctxLabel = `Pour ${n} pièce${n > 1 ? 's' : ''}`;
+  } else if (mode === 'portion') {
+    const n = parseInt(document.getElementById('aj-qty-count')?.textContent) || 1;
+    ctxLabel = `Pour ${n} portion${n > 1 ? 's' : ''}`;
+  } else if (mode === 'volume') {
+    ctxLabel = `Pour ${qty} ml`;
+  } else {
+    ctxLabel = `Pour ${qty} g`;
+  }
+
   macros.innerHTML = `
+    <p class="aj-modal__qty-ctx">${ctxLabel}</p>
     <span class="aj-modal__macro-chip">${Math.round(m.k * r)} kcal</span>
     <span class="aj-modal__macro-chip">P ${(m.p * r).toFixed(1)}g</span>
     <span class="aj-modal__macro-chip">G ${(m.g * r).toFixed(1)}g</span>
@@ -2089,12 +2128,6 @@ function bindAlimentsEvents() {
     });
   }
 
-  // FAB — ajouter un aliment
-  const fab = document.getElementById('fab-add-aliment');
-  if (fab) {
-    fab.addEventListener('click', openAlimNewModal);
-  }
-
   _bindAlimManageSheetEvents();
 }
 
@@ -2236,24 +2269,29 @@ function _applyAlimMode(mode) {
   const macroRef     = document.getElementById('alim-new-macro-ref');
 
   if (mode === 'piece') {
-    if (portionRow)   portionRow.hidden             = false;
-    if (portionLabel) portionLabel.textContent      = 'Poids d\'une pièce (g) — optionnel';
-    if (portionEl) { portionEl.value = ''; portionEl.placeholder = 'Ex : 120'; portionEl.min = '0'; }
-    if (portionUnit)  portionUnit.textContent       = 'g';
-    if (macroRef)     macroRef.textContent          = 'Valeurs pour 100g';
+    if (portionRow)   portionRow.hidden        = false;
+    if (portionLabel) portionLabel.textContent = '1 pièce =';
+    if (portionEl) { portionEl.value = ''; portionEl.placeholder = 'Ex : 120'; portionEl.min = '1'; }
+    if (portionUnit)  portionUnit.textContent  = 'g';
+    if (macroRef)     macroRef.textContent     = 'Valeurs pour 100g';
   } else if (mode === 'portion') {
-    if (portionRow)   portionRow.hidden             = false;
-    if (portionLabel) portionLabel.textContent      = 'Poids d\'une portion (g)';
-    if (portionEl) { portionEl.value = '100'; portionEl.placeholder = ''; portionEl.min = '1'; }
-    if (portionUnit)  portionUnit.textContent       = 'g';
-    if (macroRef)     macroRef.textContent          = 'Valeurs pour 100g';
+    if (portionRow)   portionRow.hidden        = false;
+    if (portionLabel) portionLabel.textContent = '1 portion =';
+    if (portionEl) { portionEl.value = ''; portionEl.placeholder = 'Ex : 150'; portionEl.min = '1'; }
+    if (portionUnit)  portionUnit.textContent  = 'g';
+    if (macroRef)     macroRef.textContent     = 'Valeurs pour 100g';
   } else if (mode === 'poids') {
-    if (portionRow)   portionRow.hidden             = true;
-    if (macroRef)     macroRef.textContent          = 'Valeurs pour 100g';
+    if (portionRow)   portionRow.hidden        = true;
+    if (macroRef)     macroRef.textContent     = 'Valeurs pour 100g';
   } else if (mode === 'volume') {
-    if (portionRow)   portionRow.hidden             = true;
-    if (macroRef)     macroRef.textContent          = 'Valeurs pour 100ml';
+    if (portionRow)   portionRow.hidden        = false;
+    if (portionLabel) portionLabel.textContent = '1 unité =';
+    if (portionEl) { portionEl.value = ''; portionEl.placeholder = 'Ex : 250'; portionEl.min = '1'; }
+    if (portionUnit)  portionUnit.textContent  = 'ml';
+    if (macroRef)     macroRef.textContent     = 'Valeurs pour 100ml';
   }
+
+  _updateAlimNewSaveBtn();
 }
 
 // Applique le mode simple / produit
@@ -2296,6 +2334,16 @@ function _applyAlimKind(kind) {
     if (macrosSection) macrosSection.hidden = true;
     if (macrosBtn)     macrosBtn.textContent = '+ Ajouter infos nutritionnelles';
   }
+}
+
+function _updateAlimNewSaveBtn() {
+  const nom         = document.getElementById('alim-new-nom')?.value.trim();
+  const needsPortion = _alimNewMode !== 'poids';
+  const portion     = needsPortion
+    ? parseFloat(document.getElementById('alim-new-portion')?.value) || 0
+    : 1; // poids → toujours valide
+  const saveBtn = document.getElementById('alim-new-save');
+  if (saveBtn) saveBtn.disabled = !nom || (needsPortion && portion < 1);
 }
 
 function openAlimNewModal() {
@@ -2386,10 +2434,7 @@ function bindAlimNewModalEvents() {
   document.querySelectorAll('[data-alim-kind]').forEach(btn => {
     btn.addEventListener('click', () => {
       _applyAlimKind(btn.dataset.alimKind);
-      // Vérifier si le nom est déjà rempli pour activer le bouton
-      const nom = document.getElementById('alim-new-nom')?.value.trim();
-      const saveBtn = document.getElementById('alim-new-save');
-      if (saveBtn) saveBtn.disabled = !nom;
+      _updateAlimNewSaveBtn();
     });
   });
 
@@ -2397,8 +2442,7 @@ function bindAlimNewModalEvents() {
   const nomEl = document.getElementById('alim-new-nom');
   nomEl?.addEventListener('input', () => {
     const nom = nomEl.value.trim();
-    const saveBtn = document.getElementById('alim-new-save');
-    if (saveBtn) saveBtn.disabled = !nom;
+    _updateAlimNewSaveBtn();
     const warnEl = document.getElementById('alim-new-dup-warn');
     if (warnEl) {
       const similar = nom.length >= 3 ? _findSimilarAliment(nom) : null;
@@ -2406,6 +2450,9 @@ function bindAlimNewModalEvents() {
       warnEl.hidden = !similar;
     }
   });
+
+  // Champ portion de référence → re-valide le bouton Créer
+  document.getElementById('alim-new-portion')?.addEventListener('input', _updateAlimNewSaveBtn);
 
   // Toggle mode de consommation
   document.querySelectorAll('[data-alim-mode]').forEach(btn => {
@@ -2445,12 +2492,10 @@ function bindAlimNewModalEvents() {
 
     // Portion de référence selon le mode
     let portion;
-    if (mode === 'piece') {
+    if (mode === 'piece' || mode === 'portion' || mode === 'volume') {
       portion = parseFloat(document.getElementById('alim-new-portion')?.value) || 0;
-    } else if (mode === 'portion') {
-      portion = parseFloat(document.getElementById('alim-new-portion')?.value) || 100;
     } else {
-      portion = 100; // poids et volume → référence 100g / 100ml
+      portion = 0; // poids → pas de portion de référence
     }
 
     const kcal = parseFloat(document.getElementById('alim-new-kcal')?.value) || 0;
@@ -2465,11 +2510,11 @@ function bindAlimNewModalEvents() {
       if (prot > 0) detail += ` · ${prot}g protéines`;
       detail += macroSuffix;
     } else if (mode === 'piece') {
-      detail = portion > 0 ? `environ ${portion}g / pièce` : '1 pièce';
+      detail = portion > 0 ? `1 pièce · ${portion}g` : '1 pièce';
     } else if (mode === 'portion') {
       detail = `1 portion · ${portion}g`;
     } else if (mode === 'volume') {
-      detail = 'pour 100ml';
+      detail = portion > 0 ? `1 unité · ${portion}ml` : 'pour 100ml';
     } else {
       detail = 'pour 100g';
     }
@@ -2482,7 +2527,7 @@ function bindAlimNewModalEvents() {
       detail,
       type,
       modeConsommation: mode,
-      portionReference: portion || 100,
+      portionReference: portion || (mode === 'poids' ? 100 : 0),
       m:                { k: kcal, p: prot, g: gluc, l: lip },
       custom:           true,
     };
@@ -2736,7 +2781,7 @@ function _mdPickSelectAlim(alimId) {
 function _consumeMenuDetail() {
   const today = localDateStr();
   _mdDraft.forEach(item => {
-    window.ALIM_DB.addItem(today, _mdEntry.mealKey, item.alimId, item.quantite);
+    window.ALIM_DB.addItem(today, _mdEntry.mealKey, item.alimId, _itemQtyToGrams(item));
   });
   if (_mdEntry && window.MEAL_PLAN_DB) {
     window.MEAL_PLAN_DB.setStatus(_mdDate || today, _mdEntry.id, 'consomme');

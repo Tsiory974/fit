@@ -15,6 +15,7 @@
   --color-jambes:  #ef4444;
   --color-abdos:   #eab308;
   --color-autre:   #6b7280;
+  --color-cardio:  #38bdf8;
 }
 
 /* ============================================================
@@ -185,6 +186,7 @@ body {
 .ws-muscle-tag--jambes   { color: var(--color-jambes);  background: rgba(239,68,68,0.1);   border-color: rgba(239,68,68,0.2); }
 .ws-muscle-tag--abdos    { color: var(--color-abdos);   background: rgba(234,179,8,0.1);   border-color: rgba(234,179,8,0.2); }
 .ws-muscle-tag--autre    { color: var(--color-autre);   background: rgba(107,114,128,0.1); border-color: rgba(107,114,128,0.2); }
+.ws-muscle-tag--cardio   { color: var(--color-cardio);  background: rgba(56,189,248,0.1);  border-color: rgba(56,189,248,0.2); }
 
 /* ============================================================
    ÉCRAN 1 : PRÊT
@@ -1009,4 +1011,106 @@ body {
     margin-right: auto;
     width: 100%;
   }
+}
+
+/* ============================================================
+   ÉCRAN CARDIO
+   Chrono (phase run) + formulaire résultats (phase confirm)
+   ============================================================ */
+
+/* Plannifié : ligne durée cible */
+.ws-cardio-planned {
+  font-size: 0.8rem;
+  color: var(--text-idle);
+  margin-top: 0.5rem;
+}
+.ws-cardio-planned strong {
+  color: var(--color-cardio);
+  font-weight: 700;
+}
+
+/* Chrono cardio — reprend ws-stopwatch-wrap */
+#cardio-phase-run {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+#cardio-phase-confirm {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 0;
+}
+
+/* Champ de saisie cardio */
+.cardio-field {
+  margin-bottom: 1.25rem;
+}
+
+.cardio-field__label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.625rem;
+}
+
+/* Chips intensité — reprend le style de musculation.css mais dans seance */
+.cardio-intensite-chips {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.cardio-intensite-chip {
+  padding: 0.4rem 0.875rem;
+  background: #1a1e23;
+  border: 1px solid #2a3038;
+  border-radius: 20px;
+  color: #9ca3af;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.cardio-intensite-chip--selected {
+  color: var(--color-cardio);
+  background: rgba(56, 189, 248, 0.1);
+  border-color: rgba(56, 189, 248, 0.35);
+}
+
+/* Recap cardio dans l'écran RÉCAP */
+.ws-recap-cardio {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 1rem;
+  flex-wrap: wrap;
+}
+
+.ws-recap-cardio__val {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-cardio);
+}
+
+.ws-recap-cardio__label {
+  font-size: 0.72rem;
+  color: var(--text-idle);
+}
+
+.ws-recap-cardio__badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--color-cardio);
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 20px;
+  padding: 2px 8px;
+  text-transform: capitalize;
 }

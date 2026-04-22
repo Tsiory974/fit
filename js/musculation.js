@@ -50,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
   _bindSessionDetailEvents();
   _bindPlanningWeekNav();
   _bindManageSheetEvents();
+  _bindCardioDeclarationEvents();
 });
 
 /* ── Helpers semaine planning ── */
@@ -146,11 +147,15 @@ function renderTodayPanel() {
     const exercisesHtml = tpl.exercices.slice(0, 5).map(block => {
       const exo = DB.getExercice(block.exoId);
       if (!exo) return '';
+      const isCardio = exo.groupe === 'Cardio';
+      const infoText = isCardio
+        ? (block.duree ? `${block.duree} min` : '30 min')
+        : `${block.series}×${block.reps} · ${block.repos}`;
       return `
         <div class="today-exercise-row">
           <span class="today-exercise-row__tag today-exercise-row__tag--${exo.couleur}">${exo.groupe}</span>
           <span class="today-exercise-row__name">${exo.nom}</span>
-          <span class="today-exercise-row__info">${block.series}×${block.reps} · ${block.repos}</span>
+          <span class="today-exercise-row__info">${infoText}</span>
         </div>`;
     }).join('');
 
@@ -380,13 +385,21 @@ function _openSessionDetail(plannedId) {
 }
 
 function _renderSdSummary(p) {
-  const exoCount  = _sdExercices.length;
-  const totalSets = _sdExercices.reduce((s, b) => s + (parseInt(b.series) || 3), 0);
-  document.getElementById('sd-summary').innerHTML = `
-    <span class="sd-summary__item">${exoCount} exercice${exoCount !== 1 ? 's' : ''}</span>
-    <span class="sd-summary__sep">·</span>
-    <span class="sd-summary__item">${totalSets} série${totalSets !== 1 ? 's' : ''}</span>
-    ${p && p.completed ? '<span class="sd-summary__badge">✓ Terminé</span>' : ''}`;
+  const exoCount = _sdExercices.length;
+  const muscBlocks   = _sdExercices.filter(b => DB.getExercice(b.exoId)?.groupe !== 'Cardio');
+  const cardioBlocks = _sdExercices.filter(b => DB.getExercice(b.exoId)?.groupe === 'Cardio');
+  const totalSets = muscBlocks.reduce((s, b) => s + (parseInt(b.series) || 3), 0);
+  const cardioMin = cardioBlocks.reduce((s, b) => s + (parseInt(b.duree) || 30), 0);
+
+  let html = `<span class="sd-summary__item">${exoCount} exercice${exoCount !== 1 ? 's' : ''}</span>`;
+  if (totalSets > 0) {
+    html += `<span class="sd-summary__sep">·</span><span class="sd-summary__item">${totalSets} série${totalSets !== 1 ? 's' : ''}</span>`;
+  }
+  if (cardioMin > 0) {
+    html += `<span class="sd-summary__sep">·</span><span class="sd-summary__item">${cardioMin} min cardio</span>`;
+  }
+  if (p && p.completed) html += '<span class="sd-summary__badge">✓ Terminé</span>';
+  document.getElementById('sd-summary').innerHTML = html;
 }
 
 function _renderSdExoList(isCompleted) {
@@ -401,6 +414,29 @@ function _renderSdExoList(isCompleted) {
   listEl.innerHTML = _sdExercices.map((b, idx) => {
     const exo = DB.getExercice(b.exoId);
     if (!exo) return '';
+    const isCardio = exo.groupe === 'Cardio';
+    const deleteBtn = !isCompleted
+      ? `<button class="sd-exo-delete" data-sd-del="${idx}" aria-label="Supprimer ${exo.nom}">✕</button>`
+      : '';
+
+    if (isCardio) {
+      const dureeLabel = b.duree ? `${b.duree} min` : '30 min';
+      const distLabel  = b.distance ? ` · ${b.distance} km` : '';
+      const intLabel   = b.intensite ? ` · ${b.intensite}` : '';
+      return `
+        <div class="sd-exo-row">
+          <div class="sd-exo-row__left">
+            <span class="sd-exo-dot sd-exo-dot--cardio"></span>
+            <span class="sd-exo-name">${exo.nom}</span>
+          </div>
+          <div class="sd-exo-row__right">
+            <span class="sd-exo-cardio-duration">${dureeLabel}</span>
+            ${(distLabel || intLabel) ? `<span class="sd-exo-cardio-detail">${distLabel}${intLabel}</span>` : ''}
+            ${deleteBtn}
+          </div>
+        </div>`;
+    }
+
     const repsLabel  = b.reps  ? `${b.series} × ${b.reps}` : `${b.series} série${b.series !== 1 ? 's' : ''}`;
     const poidsLabel = b.poids ? `${b.poids} kg` : '';
     const reposLabel = b.repos ? `${b.repos} s` : '';
@@ -414,7 +450,7 @@ function _renderSdExoList(isCompleted) {
           <span class="sd-exo-sets">${repsLabel}</span>
           ${poidsLabel ? `<span class="sd-exo-weight">${poidsLabel}</span>` : ''}
           ${reposLabel ? `<span class="sd-exo-rest">${reposLabel} repos</span>` : ''}
-          ${!isCompleted ? `<button class="sd-exo-delete" data-sd-del="${idx}" aria-label="Supprimer ${exo.nom}">✕</button>` : ''}
+          ${deleteBtn}
         </div>
       </div>`;
   }).join('');
@@ -479,19 +515,28 @@ function _renderSdPickerList() {
     listEl.innerHTML = '<p class="sd-picker-empty">Aucun exercice trouvé.</p>';
     return;
   }
-  listEl.innerHTML = exos.map(e => `
+  listEl.innerHTML = exos.map(e => {
+    const isCardio = e.groupe === 'Cardio';
+    return `
     <div class="sd-picker-item" data-sd-pick="${e.id}">
       <span class="sd-exo-dot sd-exo-dot--${e.couleur}"></span>
       <span class="sd-picker-item__name">${e.nom}</span>
-      <span class="sd-picker-item__group">${e.groupe}</span>
-    </div>`).join('');
+      ${isCardio
+        ? '<span class="sd-picker-item__cardio-badge">Cardio</span>'
+        : `<span class="sd-picker-item__group">${e.groupe}</span>`}
+    </div>`;
+  }).join('');
   listEl.querySelectorAll('[data-sd-pick]').forEach(row => {
     row.addEventListener('click', () => _sdSelectExo(row.dataset.sdPick));
   });
 }
 
 function _sdSelectExo(exoId) {
-  _sdExercices.push({ exoId, series: 3, reps: 10, repos: 90, poids: '' });
+  const pickedExo = DB.getExercice(exoId);
+  const isCardio  = pickedExo?.groupe === 'Cardio';
+  _sdExercices.push(isCardio
+    ? { exoId, duree: 30, distance: '', intensite: '' }
+    : { exoId, series: 3, reps: 10, repos: 90, poids: '' });
   DB.updatePlannedExercices(_sdPlannedId, _sdExercices);
   _closeSdPicker();
 
@@ -809,7 +854,15 @@ function renderExerciseList() {
   });
 
   exercises.forEach(exo => {
-    const rm   = calculerRMDepuisHistorique(exo);
+    const isCardio = exo.groupe === 'Cardio';
+    const rm   = isCardio ? null : calculerRMDepuisHistorique(exo);
+    let infoText;
+    if (isCardio) {
+      const lastEntry = (exo.historique || []).find(e => e.duree);
+      infoText = lastEntry ? `Dernière : ${lastEntry.duree} min` : 'Aucune activité enregistrée';
+    } else {
+      infoText = rm ? `${rm} kg max` : 'Pas encore de 1RM';
+    }
     const card = document.createElement('a');
     card.href      = `exercice.html?id=${exo.id}`;
     card.className = 'exercise-card';
@@ -820,7 +873,7 @@ function renderExerciseList() {
       <div class="exercise-card__body">
         <h3 class="exercise-card__name">${exo.nom}</h3>
         <p  class="exercise-card__info">
-          ${rm ? rm + ' kg max' : 'Pas encore de 1RM'}
+          ${infoText}
         </p>
       </div>
       <button class="exercise-card__delete" data-delete-exo="${exo.id}"
@@ -1063,6 +1116,12 @@ function renderTemplateDraftList() {
   container.innerHTML = templateDraftExercices.map((block, idx) => {
     const exo = DB.getExercice(block.exoId);
     if (!exo) return '';
+    const isCardio = exo.groupe === 'Cardio';
+    const metaHtml = isCardio
+      ? `<span class="tpl-exo-row__param">${block.duree || 30} min</span>`
+      : `<span class="tpl-exo-row__param">${block.series}×${block.reps}</span>
+         <span class="tpl-exo-row__param">${block.repos}</span>
+         <span class="tpl-exo-row__obj">${OBJECTIF_LABELS[block.objectif] ?? 'Libre'}</span>`;
     return `
       <div class="tpl-exo-row" data-idx="${idx}" role="button" tabindex="0"
            aria-label="Modifier ${exo.nom}">
@@ -1071,9 +1130,7 @@ function renderTemplateDraftList() {
           <span class="tpl-exo-row__name">${exo.nom}</span>
         </div>
         <div class="tpl-exo-row__meta">
-          <span class="tpl-exo-row__param">${block.series}×${block.reps}</span>
-          <span class="tpl-exo-row__param">${block.repos}</span>
-          <span class="tpl-exo-row__obj">${OBJECTIF_LABELS[block.objectif] ?? 'Libre'}</span>
+          ${metaHtml}
         </div>
         <button type="button" class="tpl-exo-row__remove"
                 data-remove-idx="${idx}" aria-label="Retirer">✕</button>
@@ -1111,23 +1168,32 @@ function openExoConfigModal(mode, idx) {
     selectWrap.style.display = '';
     title.textContent        = 'Ajouter un exercice';
     confirmLbl.textContent   = 'Ajouter';
-    // Valeurs par défaut
+    // Valeurs par défaut musculation
     document.getElementById('exo-config-series').value = '3';
     document.getElementById('exo-config-reps').value   = '10';
     document.getElementById('exo-config-repos').value  = '90 s';
+    document.getElementById('exo-config-duree').value  = '30';
     const radio = document.querySelector('[name="exo-config-obj"][value="hypertrophie"]');
     if (radio) radio.checked = true;
+    // Afficher les champs musculation par défaut (le select déclenchera le toggle)
+    _exoConfigToggleCardio(false);
   } else {
     selectWrap.style.display = 'none';
-    const block = templateDraftExercices[idx];
-    const exo   = DB.getExercice(block.exoId);
+    const block    = templateDraftExercices[idx];
+    const exo      = DB.getExercice(block.exoId);
+    const isCardio = exo?.groupe === 'Cardio';
     title.textContent      = exo?.nom || 'Modifier';
     confirmLbl.textContent = 'Enregistrer';
-    document.getElementById('exo-config-series').value = block.series;
-    document.getElementById('exo-config-reps').value   = block.reps;
-    document.getElementById('exo-config-repos').value  = block.repos;
-    const radio = document.querySelector(`[name="exo-config-obj"][value="${block.objectif}"]`);
-    if (radio) radio.checked = true;
+    _exoConfigToggleCardio(isCardio);
+    if (isCardio) {
+      document.getElementById('exo-config-duree').value = block.duree || 30;
+    } else {
+      document.getElementById('exo-config-series').value = block.series;
+      document.getElementById('exo-config-reps').value   = block.reps;
+      document.getElementById('exo-config-repos').value  = block.repos;
+      const radio = document.querySelector(`[name="exo-config-obj"][value="${block.objectif}"]`);
+      if (radio) radio.checked = true;
+    }
   }
 
   modal.classList.add('exo-config-modal--open');
@@ -1137,6 +1203,24 @@ function openExoConfigModal(mode, idx) {
 function closeExoConfigModal() {
   document.getElementById('modal-exo-config').classList.remove('exo-config-modal--open');
   editingExoIdx = null;
+}
+
+function _exoConfigIsCardio() {
+  if (editingExoIdx !== null) {
+    const block = templateDraftExercices[editingExoIdx];
+    return DB.getExercice(block?.exoId)?.groupe === 'Cardio';
+  }
+  const exoId = document.getElementById('exo-config-select')?.value;
+  return exoId ? DB.getExercice(exoId)?.groupe === 'Cardio' : false;
+}
+
+function _exoConfigToggleCardio(isCardio) {
+  const standardRows = document.getElementById('exo-config-standard-rows');
+  const cardioRow    = document.getElementById('exo-config-cardio-row');
+  const objRow       = document.getElementById('exo-config-obj-row');
+  if (standardRows) standardRows.style.display = isCardio ? 'none' : '';
+  if (cardioRow)    cardioRow.style.display    = isCardio ? '' : 'none';
+  if (objRow)       objRow.style.display       = isCardio ? 'none' : '';
 }
 
 /** Câble le bottom sheet de configuration exercice */
@@ -1150,28 +1234,47 @@ function bindExoConfigModal() {
       opt.textContent = `${exo.nom} (${exo.groupe})`;
       select.appendChild(opt);
     });
+    select.addEventListener('change', () => {
+      _exoConfigToggleCardio(_exoConfigIsCardio());
+    });
   }
 
   document.getElementById('exo-config-overlay')?.addEventListener('click', closeExoConfigModal);
   document.getElementById('exo-config-cancel')?.addEventListener('click',  closeExoConfigModal);
 
   document.getElementById('exo-config-confirm')?.addEventListener('click', () => {
-    const series   = parseInt(document.getElementById('exo-config-series').value) || 3;
-    const reps     = parseInt(document.getElementById('exo-config-reps').value)   || 10;
-    const repos    = document.getElementById('exo-config-repos').value.trim()     || '90 s';
-    const objectif = document.querySelector('[name="exo-config-obj"]:checked')?.value ?? 'hypertrophie';
+    const isCardio = _exoConfigIsCardio();
 
     if (editingExoIdx !== null) {
-      // Mode édition : mettre à jour le bloc existant
-      templateDraftExercices[editingExoIdx] = {
-        ...templateDraftExercices[editingExoIdx],
-        series, reps, repos, objectif,
-      };
+      if (isCardio) {
+        const duree = parseInt(document.getElementById('exo-config-duree').value) || 30;
+        templateDraftExercices[editingExoIdx] = {
+          ...templateDraftExercices[editingExoIdx],
+          duree,
+        };
+      } else {
+        const series   = parseInt(document.getElementById('exo-config-series').value) || 3;
+        const reps     = parseInt(document.getElementById('exo-config-reps').value)   || 10;
+        const repos    = document.getElementById('exo-config-repos').value.trim()     || '90 s';
+        const objectif = document.querySelector('[name="exo-config-obj"]:checked')?.value ?? 'hypertrophie';
+        templateDraftExercices[editingExoIdx] = {
+          ...templateDraftExercices[editingExoIdx],
+          series, reps, repos, objectif,
+        };
+      }
     } else {
-      // Mode ajout : vérifier qu'un exercice est sélectionné
       const exoId = document.getElementById('exo-config-select').value;
       if (!exoId) return;
-      templateDraftExercices.push({ exoId, series, reps, repos, objectif });
+      if (isCardio) {
+        const duree = parseInt(document.getElementById('exo-config-duree').value) || 30;
+        templateDraftExercices.push({ exoId, duree, distance: '', intensite: '' });
+      } else {
+        const series   = parseInt(document.getElementById('exo-config-series').value) || 3;
+        const reps     = parseInt(document.getElementById('exo-config-reps').value)   || 10;
+        const repos    = document.getElementById('exo-config-repos').value.trim()     || '90 s';
+        const objectif = document.querySelector('[name="exo-config-obj"]:checked')?.value ?? 'hypertrophie';
+        templateDraftExercices.push({ exoId, series, reps, repos, objectif });
+      }
     }
 
     renderTemplateDraftList();
@@ -1388,5 +1491,102 @@ function updateHeaderDate() {
   if (!el) return;
   el.textContent = new Date().toLocaleDateString('fr-FR', {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CARDIO — DÉCLARATION MANUELLE
+═══════════════════════════════════════════════════════════════ */
+
+let _cardioDeclIntensiteVal = '';
+
+function openCardioDeclarationSheet() {
+  const sheet  = document.getElementById('cardio-declare-sheet');
+  const select = document.getElementById('cardio-decl-exo');
+  if (!sheet || !select) return;
+
+  // Peupler la liste des activités cardio
+  const cardioExos = DB.getAllExercices().filter(e => e.groupe === 'Cardio');
+  select.innerHTML = cardioExos.length
+    ? cardioExos.map(e => `<option value="${e.id}">${e.nom}</option>`).join('')
+    : '<option value="">Aucune activité cardio disponible</option>';
+
+  // Date par défaut : aujourd'hui
+  const dateInput = document.getElementById('cardio-decl-date');
+  if (dateInput) {
+    dateInput.value = localDateStr();
+    dateInput.max   = localDateStr();
+  }
+
+  // Reset formulaire
+  const dureeInput    = document.getElementById('cardio-decl-duree');
+  const distanceInput = document.getElementById('cardio-decl-distance');
+  if (dureeInput)    dureeInput.value    = '';
+  if (distanceInput) distanceInput.value = '';
+  _cardioDeclIntensiteVal = '';
+  document.querySelectorAll('#cardio-decl-intensite-chips .cardio-intensite-chip').forEach(c => {
+    c.classList.remove('cardio-intensite-chip--selected');
+  });
+
+  sheet.hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+
+function closeCardioDeclarationSheet() {
+  const sheet = document.getElementById('cardio-declare-sheet');
+  if (sheet) sheet.hidden = true;
+  document.body.style.overflow = '';
+}
+
+function saveCardioDeclaration() {
+  const exoId    = document.getElementById('cardio-decl-exo')?.value;
+  const dateVal  = document.getElementById('cardio-decl-date')?.value;
+  const dureeVal = parseInt(document.getElementById('cardio-decl-duree')?.value);
+  const distRaw  = parseFloat(document.getElementById('cardio-decl-distance')?.value);
+  const distance = distRaw > 0 ? distRaw : null;
+
+  if (!exoId) { alert('Sélectionne une activité.'); return; }
+  if (!dureeVal || dureeVal < 1) { alert('Saisis une durée valide.'); return; }
+
+  const exo = DB.getExercice(exoId);
+  if (!exo) return;
+
+  const isoDate = dateVal
+    ? new Date(dateVal + 'T12:00:00').toISOString()
+    : new Date().toISOString();
+
+  exo.historique.unshift({
+    titre:     'Déclaration manuelle',
+    duree:     dureeVal,
+    distance:  distance,
+    intensite: _cardioDeclIntensiteVal || null,
+    date:      isoDate,
+  });
+  DB.saveExercice(exo);
+
+  closeCardioDeclarationSheet();
+}
+
+function _bindCardioDeclarationEvents() {
+  document.getElementById('btn-cardio-declare')?.addEventListener('click', openCardioDeclarationSheet);
+  document.getElementById('cardio-declare-close')?.addEventListener('click', closeCardioDeclarationSheet);
+  document.getElementById('cardio-declare-backdrop')?.addEventListener('click', closeCardioDeclarationSheet);
+  document.getElementById('cardio-decl-save')?.addEventListener('click', saveCardioDeclaration);
+
+  // Chips intensité
+  document.querySelectorAll('#cardio-decl-intensite-chips .cardio-intensite-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const val = chip.dataset.intensite;
+      if (_cardioDeclIntensiteVal === val) {
+        _cardioDeclIntensiteVal = '';
+        chip.classList.remove('cardio-intensite-chip--selected');
+      } else {
+        document.querySelectorAll('#cardio-decl-intensite-chips .cardio-intensite-chip').forEach(c => {
+          c.classList.remove('cardio-intensite-chip--selected');
+        });
+        _cardioDeclIntensiteVal = val;
+        chip.classList.add('cardio-intensite-chip--selected');
+      }
+    });
   });
 }

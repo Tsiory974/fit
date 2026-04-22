@@ -22,6 +22,7 @@
   --color-triceps:   #fb923c;   /* orange clair */
   --color-jambes:    #ef4444;   /* rouge  */
   --color-abdos:     #eab308;   /* jaune  */
+  --color-cardio:    #38bdf8;   /* bleu sky / cardio */
 }
 
 /* ============================================================
@@ -647,6 +648,11 @@ body {
   background: rgba(234, 179, 8, 0.1);
   border-color: rgba(234, 179, 8, 0.25);
 }
+.exercise-card__muscle-tag--cardio {
+  color: var(--color-cardio);
+  background: rgba(56, 189, 248, 0.1);
+  border-color: rgba(56, 189, 248, 0.25);
+}
 
 /* Infos de l'exercice */
 .exercise-card__body {
@@ -1238,6 +1244,7 @@ body {
 .today-exercise-row__tag--triceps  { color: var(--color-triceps);  background: rgba(251,146,60,0.1); border-color: rgba(251,146,60,0.2); }
 .today-exercise-row__tag--jambes   { color: var(--color-jambes);  background: rgba(239,68,68,0.1);  border-color: rgba(239,68,68,0.2); }
 .today-exercise-row__tag--abdos    { color: var(--color-abdos);   background: rgba(234,179,8,0.1);  border-color: rgba(234,179,8,0.2); }
+.today-exercise-row__tag--cardio   { color: var(--color-cardio);  background: rgba(56,189,248,0.1); border-color: rgba(56,189,248,0.2); }
 
 .today-exercise-row__name {
   flex: 1;
@@ -1417,6 +1424,7 @@ body {
 .session-card__exo-chip--triceps  { color: var(--color-triceps);  background: rgba(251,146,60,0.1); border-color: rgba(251,146,60,0.2); }
 .session-card__exo-chip--jambes   { color: var(--color-jambes);  background: rgba(239,68,68,0.1);  border-color: rgba(239,68,68,0.2); }
 .session-card__exo-chip--abdos    { color: var(--color-abdos);   background: rgba(234,179,8,0.1);  border-color: rgba(234,179,8,0.2); }
+.session-card__exo-chip--cardio   { color: var(--color-cardio);  background: rgba(56,189,248,0.1); border-color: rgba(56,189,248,0.2); }
 
 .session-card__exo-more {
   font-size: 0.65rem;
@@ -3014,6 +3022,14 @@ body {
 .sd-exo-dot--violet   { background: #8b5cf6; }
 .sd-exo-dot--rose     { background: #ec4899; }
 .sd-exo-dot--gris     { background: #6b7280; }
+.sd-exo-dot--cardio   { background: var(--color-cardio); }
+.sd-exo-dot--pecto    { background: var(--color-pecto); }
+.sd-exo-dot--dos      { background: var(--color-dos); }
+.sd-exo-dot--epaules  { background: var(--color-epaules); }
+.sd-exo-dot--biceps   { background: var(--color-biceps); }
+.sd-exo-dot--triceps  { background: var(--color-triceps); }
+.sd-exo-dot--jambes   { background: var(--color-jambes); }
+.sd-exo-dot--abdos    { background: var(--color-abdos); }
 
 .sd-exo-name {
   font-size: 0.82rem;
@@ -3256,4 +3272,162 @@ body {
   color: var(--text-idle);
   padding: 0.75rem 0.5rem;
   margin: 0;
+}
+
+/* ── Indicateur cardio dans le picker ── */
+.sd-picker-item__cardio-badge {
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: var(--color-cardio);
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 4px;
+  padding: 1px 5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ============================================================
+   CARDIO — BOUTON DÉCLARATION (onglet Aujourd'hui)
+   ============================================================ */
+.cardio-declare-zone {
+  margin-top: 1.25rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #1a1f26;
+}
+
+.btn-cardio-declare {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: rgba(56, 189, 248, 0.06);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  border-radius: 12px;
+  color: var(--color-cardio);
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s, border-color 0.2s;
+}
+.btn-cardio-declare:active {
+  background: rgba(56, 189, 248, 0.12);
+}
+
+/* ============================================================
+   CARDIO — CHIPS INTENSITÉ (partagés séance + déclaration)
+   ============================================================ */
+.cardio-intensite-chips {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.cardio-intensite-chip {
+  padding: 0.4rem 0.875rem;
+  background: #1a1e23;
+  border: 1px solid #2a3038;
+  border-radius: 20px;
+  color: #9ca3af;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.cardio-intensite-chip--selected {
+  color: var(--color-cardio);
+  background: rgba(56, 189, 248, 0.1);
+  border-color: rgba(56, 189, 248, 0.35);
+}
+
+/* ============================================================
+   CARDIO — CONFIGURATION DANS LE MODÈLE (exo-config-modal)
+   ============================================================ */
+#exo-config-cardio-row {
+  padding: 0;
+}
+
+/* ============================================================
+   CARDIO — AFFICHAGE DANS SD-EXO-ROW
+   ============================================================ */
+.sd-exo-cardio-info {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.sd-exo-cardio-duration {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-cardio);
+}
+
+.sd-exo-cardio-detail {
+  font-size: 0.72rem;
+  color: var(--text-idle);
+}
+
+/* ============================================================
+   CARDIO — SHEET DÉCLARATION MANUELLE
+   (réutilise les classes sd-panel / sd-backdrop)
+   ============================================================ */
+.cardio-decl-form-field {
+  padding: 0 1rem 1rem;
+}
+
+.cardio-decl-label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.5rem;
+}
+
+.cardio-decl-label span {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text-idle);
+}
+
+/* ── Récap cardio dans le panneau Aujourd'hui ── */
+.today-cardio-log {
+  background: rgba(56, 189, 248, 0.05);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  border-radius: 12px;
+  padding: 0.875rem 1rem;
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.today-cardio-log__icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.today-cardio-log__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.today-cardio-log__name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-cardio);
+}
+
+.today-cardio-log__meta {
+  font-size: 0.72rem;
+  color: var(--text-idle);
+  margin-top: 2px;
 }
