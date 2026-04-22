@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   populatePage(aliment);
+  renderModeBlock(aliment);
   bindNotes(aliment.id);
 });
 
@@ -98,6 +99,40 @@ function populatePage(aliment) {
       infoBlock.insertBefore(row, infoBlock.firstChild);
     }
   }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   MODE DE CONSOMMATION
+   N'est affiché que pour les aliments custom (modeConsommation défini).
+───────────────────────────────────────────────────────────── */
+
+function renderModeBlock(aliment) {
+  const block = document.getElementById('alim-mode-block');
+  const badge = document.getElementById('alim-mode-badge');
+  const equiv = document.getElementById('alim-mode-equiv');
+  if (!block || !badge || !equiv) return;
+
+  const mode = aliment.modeConsommation;
+  if (!mode) return; // aliment statique sans mode défini → bloc caché
+
+  const ref = aliment.portionReference;
+  const uw  = aliment.unitWeight;
+
+  if (mode === 'piece') {
+    badge.textContent = 'Par pièce';
+    equiv.textContent = `1 pièce = ${uw || ref || '?'} g`;
+  } else if (mode === 'portion') {
+    badge.textContent = 'Par portion';
+    equiv.textContent = `1 portion = ${ref || '?'} g`;
+  } else if (mode === 'volume') {
+    badge.textContent = 'En volume';
+    equiv.textContent = `1 unité = ${ref || '?'} ml`;
+  } else {
+    badge.textContent = 'Au poids';
+    equiv.textContent = 'Quantité saisie directement en grammes';
+  }
+
+  block.hidden = false;
 }
 
 /* ─────────────────────────────────────────────────────────────
