@@ -624,9 +624,14 @@
       '<div class="prog-summary-bar-wrap">' +
         '<div class="prog-summary-bar" style="width:' + Math.min(100, Math.round(weekNow / totalWeeks * 100)) + '%"></div>' +
       '</div>' +
-      '<p class="prog-summary-weeks">Semaine ' + Math.min(weekNow, totalWeeks) + ' / ' + totalWeeks + '</p>';
+      '<p class="prog-summary-weeks">Semaine ' + Math.min(weekNow, totalWeeks) + ' / ' + totalWeeks + '</p>' +
+      (info ? '<button type="button" class="prog-phase-detail-btn" data-idx="' + info.phaseIndex + '">Détail de la phase →</button>' : '');
 
     block.hidden = false;
+
+    block.querySelector('.prog-phase-detail-btn')?.addEventListener('click', function () {
+      if (window.PhaseDetail) window.PhaseDetail.open(prog, parseInt(this.dataset.idx, 10));
+    });
   }
 
   function _loadProgForm() {

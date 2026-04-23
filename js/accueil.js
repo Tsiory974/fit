@@ -458,8 +458,10 @@
         '<span class="home-prog-name">' + _esc(prog.nom) + '</span>' +
         '<span class="home-prog-week-badge">Sem. ' + weekOverall + ' / ' + totalWeeks + '</span>' +
       '</div>' +
-      '<p class="home-prog-phase">' + _esc(phaseName) + '</p>' +
-      '<p class="home-prog-reps">' + repsLabel + '</p>' +
+      '<button type="button" class="home-prog-phase-btn">' +
+        '<span class="home-prog-phase">' + _esc(phaseName) + '</span>' +
+        '<span class="home-prog-reps">' + repsLabel + '</span>' +
+      '</button>' +
       '<div class="home-prog-bar-wrap">' +
         '<div class="home-prog-bar" style="width:' + barW + '%"></div>' +
       '</div>' +
@@ -467,6 +469,10 @@
         '<span>Sem. ' + weekInPhase + ' / ' + phase.durationWeeks + ' de cette phase</span>' +
         '<span>' + pct + ' % du programme</span>' +
       '</div>';
+
+    block.querySelector('.home-prog-phase-btn')?.addEventListener('click', function () {
+      if (window.PhaseDetail) window.PhaseDetail.open(prog, info.phaseIndex);
+    });
   }
 
   /* ════════════════════════════════════════════════
