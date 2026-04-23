@@ -1034,3 +1034,59 @@ window.CUSTOM_ALIM_DB = {
     localStorage.setItem(this.HIDDEN_KEY, JSON.stringify(ids));
   },
 };
+
+/* ============================================================
+   PROGRAMME_DB — programme d'entraînement long terme
+   Clé localStorage : ft_programme
+   Structure :
+     { id, nom, startDate: 'YYYY-MM-DD', phases: [{
+         nom, orientation, durationWeeks, repsMin, repsMax
+     }] }
+   ============================================================ */
+window.PROGRAMME_DB = {
+  KEY: 'ft_programme',
+
+  get() {
+    try { return JSON.parse(localStorage.getItem(this.KEY)); } catch { return null; }
+  },
+
+  save(prog) {
+    localStorage.setItem(this.KEY, JSON.stringify(prog));
+  },
+
+  remove() {
+    localStorage.removeItem(this.KEY);
+  },
+
+  getTotalWeeks(prog) {
+    return (prog.phases || []).reduce((s, p) => s + (p.durationWeeks || 0), 0);
+  },
+
+  getCurrentWeek(prog) {
+    const start    = new Date(prog.startDate + 'T00:00:00');
+    const diffDays = Math.floor((Date.now() - start.getTime()) / 86400000);
+    return Math.max(1, Math.floor(diffDays / 7) + 1);
+  },
+
+  getActivePhase(prog) {
+    const week       = this.getCurrentWeek(prog);
+    const totalWeeks = this.getTotalWeeks(prog);
+    let cumWeeks = 0;
+    for (let i = 0; i < prog.phases.length; i++) {
+      const phase          = prog.phases[i];
+      const phaseStartWeek = cumWeeks + 1;
+      cumWeeks            += phase.durationWeeks;
+      if (week <= cumWeeks) {
+        return {
+          phase,
+          phaseIndex:        i,
+          weekInPhase:       week - phaseStartWeek + 1,
+          totalWeeksInPhase: phase.durationWeeks,
+          weekOverall:       week,
+          totalWeeks,
+        };
+      }
+    }
+    return null; // programme terminé
+  },
+};

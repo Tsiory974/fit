@@ -234,6 +234,56 @@ function showScreen(id) {
 }
 
 /* ═══════════════════════════════════════════════════════════
+   PROGRAMME — bande de phase + récap
+═══════════════════════════════════════════════════════════ */
+function _updatePhaseStrip() {
+  const strip = document.getElementById('ws-phase-strip');
+  if (!strip || !window.PROGRAMME_DB) return;
+
+  const prog = window.PROGRAMME_DB.get();
+  if (!prog) { strip.hidden = true; return; }
+
+  const info = window.PROGRAMME_DB.getActivePhase(prog);
+  if (!info) { strip.hidden = true; return; }
+
+  const { phase, phaseIndex } = info;
+  const phaseName = phase.nom || ('Phase ' + (phaseIndex + 1));
+  strip.textContent = phaseName + ' · ' + phase.repsMin + '–' + phase.repsMax + ' reps · Garder 1–2 reps en réserve';
+  strip.hidden = false;
+}
+
+function _renderRecapProgramme() {
+  const block = document.getElementById('recap-programme');
+  if (!block || !window.PROGRAMME_DB) return;
+
+  const prog = window.PROGRAMME_DB.get();
+  if (!prog) { block.hidden = true; return; }
+
+  const info       = window.PROGRAMME_DB.getActivePhase(prog);
+  const totalWeeks = window.PROGRAMME_DB.getTotalWeeks(prog);
+
+  if (!info) {
+    block.innerHTML =
+      '<span class="ws-recap-prog__icon">🏁</span>' +
+      '<span class="ws-recap-prog__text">Programme terminé — pense à planifier une semaine de décharge.</span>';
+    block.hidden = false;
+    return;
+  }
+
+  const { phase, phaseIndex, weekOverall } = info;
+  const phaseName = phase.nom || ('Phase ' + (phaseIndex + 1));
+
+  block.innerHTML =
+    '<span class="ws-recap-prog__icon">📋</span>' +
+    '<div class="ws-recap-prog__body">' +
+      '<span class="ws-recap-prog__phase">' + phaseName + '</span>' +
+      '<span class="ws-recap-prog__reps">Objectif reps : ' + phase.repsMin + '–' + phase.repsMax + '</span>' +
+      '<span class="ws-recap-prog__week">Semaine ' + weekOverall + ' / ' + totalWeeks + '</span>' +
+    '</div>';
+  block.hidden = false;
+}
+
+/* ═══════════════════════════════════════════════════════════
    ÉCRAN 1 : READY
 ═══════════════════════════════════════════════════════════ */
 function showReady() {
@@ -329,6 +379,7 @@ function showReady() {
     document.getElementById('pre-weight-input').value = preWeightVal || '';
   }
 
+  _updatePhaseStrip();
   showScreen('screen-ready');
 }
 
@@ -966,6 +1017,7 @@ function showRecap() {
     suggestionsEl.innerHTML = '';
   }
 
+  _renderRecapProgramme();
   showScreen('screen-recap');
 }
 

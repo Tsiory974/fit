@@ -413,6 +413,63 @@
   }
 
   /* ════════════════════════════════════════════════
+     PROGRAMME ACTIF
+  ════════════════════════════════════════════════ */
+
+  function renderProgramme() {
+    const card  = document.getElementById('home-programme-card');
+    const block = document.getElementById('home-programme-block');
+    if (!card || !block || !window.PROGRAMME_DB) return;
+
+    const prog = window.PROGRAMME_DB.get();
+    if (!prog) {
+      card.hidden = false;
+      block.innerHTML =
+        '<p class="home-prog-empty">Aucun programme actif. ' +
+        '<a href="profil.html">Configurer →</a></p>';
+      return;
+    }
+
+    const info       = window.PROGRAMME_DB.getActivePhase(prog);
+    const totalWeeks = window.PROGRAMME_DB.getTotalWeeks(prog);
+
+    card.hidden = false;
+
+    if (!info) {
+      // Programme terminé
+      block.innerHTML =
+        '<div class="home-prog-head">' +
+          '<span class="home-prog-name">' + _esc(prog.nom) + '</span>' +
+          '<span class="home-prog-week-badge">Terminé</span>' +
+        '</div>' +
+        '<p class="home-prog-deload">Semaine de décharge recommandée — réduire le volume de 40 %.</p>' +
+        '<a class="home-prog-link" href="profil.html">Gérer le programme →</a>';
+      return;
+    }
+
+    const { phase, weekInPhase, weekOverall } = info;
+    const phaseName   = phase.nom || ('Phase ' + (info.phaseIndex + 1));
+    const repsLabel   = 'Reps cibles : ' + phase.repsMin + '–' + phase.repsMax;
+    const pct         = Math.round((weekOverall / totalWeeks) * 100);
+    const barW        = Math.min(100, Math.max(2, pct));
+
+    block.innerHTML =
+      '<div class="home-prog-head">' +
+        '<span class="home-prog-name">' + _esc(prog.nom) + '</span>' +
+        '<span class="home-prog-week-badge">Sem. ' + weekOverall + ' / ' + totalWeeks + '</span>' +
+      '</div>' +
+      '<p class="home-prog-phase">' + _esc(phaseName) + '</p>' +
+      '<p class="home-prog-reps">' + repsLabel + '</p>' +
+      '<div class="home-prog-bar-wrap">' +
+        '<div class="home-prog-bar" style="width:' + barW + '%"></div>' +
+      '</div>' +
+      '<div class="home-prog-footer">' +
+        '<span>Sem. ' + weekInPhase + ' / ' + phase.durationWeeks + ' de cette phase</span>' +
+        '<span>' + pct + ' % du programme</span>' +
+      '</div>';
+  }
+
+  /* ════════════════════════════════════════════════
      INIT
   ════════════════════════════════════════════════ */
 
@@ -424,6 +481,7 @@
 
     renderHeader(data, ctx);
     _applyPriority(ctx);
+    renderProgramme();
     renderMuscuBlock(data, ctx);
     renderAlimBlock(data, ctx);
     renderHydraBlock(data.today);

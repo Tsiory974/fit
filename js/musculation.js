@@ -369,6 +369,7 @@ function _openSessionDetail(plannedId) {
   _renderSdSummary(p);
   _renderSdExoList(p.completed);
   _renderSdModifiedBadge(tpl);
+  _renderSdPhaseBanner();
 
   // Bouton démarrer / supprimer
   const startBtn  = document.getElementById('sd-start');
@@ -382,6 +383,22 @@ function _openSessionDetail(plannedId) {
 
   const sheet = document.getElementById('musc-session-detail');
   if (sheet) sheet.hidden = false;
+}
+
+function _renderSdPhaseBanner() {
+  const banner = document.getElementById('sd-phase-banner');
+  if (!banner || !window.PROGRAMME_DB) return;
+
+  const prog = window.PROGRAMME_DB.get();
+  if (!prog) { banner.hidden = true; return; }
+
+  const info = window.PROGRAMME_DB.getActivePhase(prog);
+  if (!info) { banner.hidden = true; return; }
+
+  const { phase, phaseIndex, weekInPhase } = info;
+  const phaseName = phase.nom || ('Phase ' + (phaseIndex + 1));
+  banner.textContent = phaseName + ' · ' + phase.repsMin + '–' + phase.repsMax + ' reps · Sem. ' + weekInPhase;
+  banner.hidden = false;
 }
 
 function _renderSdSummary(p) {

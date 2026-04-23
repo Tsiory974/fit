@@ -507,6 +507,198 @@
   }
 
   /* ════════════════════════════════════════════════
+     PROGRAMME
+  ════════════════════════════════════════════════ */
+
+  const DEFAULT_PHASES = [
+    { nom: 'Phase 1 – Base hypertrophie',  orientation: 'Base hypertrophie',  durationWeeks: 8, repsMin: 8,  repsMax: 12 },
+    { nom: 'Phase 2 – Tension progressive', orientation: 'Tension progressive', durationWeeks: 8, repsMin: 6,  repsMax: 10 },
+    { nom: 'Phase 3 – Congestion',          orientation: 'Congestion',          durationWeeks: 8, repsMin: 10, repsMax: 15 },
+  ];
+
+  function _renderPhasesForm(phases) {
+    const list = document.getElementById('prog-phases-list');
+    if (!list) return;
+    list.innerHTML = phases.map((ph, i) => `
+      <div class="prog-phase-card" data-idx="${i}">
+        <div class="prog-phase-card__header">
+          <span class="prog-phase-card__num">Phase ${i + 1}</span>
+          <button type="button" class="prog-phase-card__remove" data-idx="${i}"
+                  aria-label="Supprimer cette phase" ${phases.length <= 1 ? 'disabled' : ''}>✕</button>
+        </div>
+        <div class="profil-form-row">
+          <div class="profil-form-field">
+            <label class="profil-form-label" for="ph-nom-${i}">Nom</label>
+            <input type="text" id="ph-nom-${i}" class="profil-input ph-nom"
+                   value="${_esc(ph.nom)}" placeholder="Phase ${i + 1}" data-idx="${i}">
+          </div>
+          <div class="profil-form-field">
+            <label class="profil-form-label" for="ph-weeks-${i}">Durée (sem.)</label>
+            <input type="number" id="ph-weeks-${i}" class="profil-input ph-weeks"
+                   value="${ph.durationWeeks}" min="1" max="52" step="1" data-idx="${i}">
+          </div>
+        </div>
+        <div class="profil-form-row">
+          <div class="profil-form-field">
+            <label class="profil-form-label" for="ph-rmin-${i}">Reps min</label>
+            <input type="number" id="ph-rmin-${i}" class="profil-input ph-rmin"
+                   value="${ph.repsMin}" min="1" max="50" step="1" data-idx="${i}">
+          </div>
+          <div class="profil-form-field">
+            <label class="profil-form-label" for="ph-rmax-${i}">Reps max</label>
+            <input type="number" id="ph-rmax-${i}" class="profil-input ph-rmax"
+                   value="${ph.repsMax}" min="1" max="50" step="1" data-idx="${i}">
+          </div>
+        </div>
+      </div>`).join('');
+
+    list.querySelectorAll('.prog-phase-card__remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.idx);
+        const cur = _readPhasesFromForm();
+        cur.splice(idx, 1);
+        _renderPhasesForm(cur);
+        _updateTotalWeeks();
+      });
+    });
+
+    list.querySelectorAll('.ph-weeks, .ph-rmin, .ph-rmax').forEach(inp => {
+      inp.addEventListener('input', _updateTotalWeeks);
+    });
+  }
+
+  function _readPhasesFromForm() {
+    const list = document.getElementById('prog-phases-list');
+    if (!list) return [];
+    const cards = list.querySelectorAll('.prog-phase-card');
+    return Array.from(cards).map((_, i) => ({
+      nom:           (document.getElementById('ph-nom-' + i)?.value   || '').trim() || ('Phase ' + (i + 1)),
+      orientation:   '',
+      durationWeeks: parseInt(document.getElementById('ph-weeks-' + i)?.value) || 8,
+      repsMin:       parseInt(document.getElementById('ph-rmin-' + i)?.value)  || 8,
+      repsMax:       parseInt(document.getElementById('ph-rmax-' + i)?.value)  || 12,
+    }));
+  }
+
+  function _updateTotalWeeks() {
+    const phases = _readPhasesFromForm();
+    const total  = phases.reduce((s, p) => s + p.durationWeeks, 0);
+    const el     = document.getElementById('prog-total-weeks');
+    if (el) el.textContent = 'Durée totale : ' + total + ' semaines';
+  }
+
+  function _esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function _renderProgSummary() {
+    const block = document.getElementById('prog-summary-block');
+    if (!block || !window.PROGRAMME_DB) return;
+
+    const prog = window.PROGRAMME_DB.get();
+    if (!prog) { block.hidden = true; return; }
+
+    const info       = window.PROGRAMME_DB.getActivePhase(prog);
+    const totalWeeks = window.PROGRAMME_DB.getTotalWeeks(prog);
+    const weekNow    = window.PROGRAMME_DB.getCurrentWeek(prog);
+
+    const phaseText = info
+      ? (info.phase.nom || ('Phase ' + (info.phaseIndex + 1))) +
+        ' · ' + info.phase.repsMin + '–' + info.phase.repsMax + ' reps' +
+        ' · Sem. ' + info.weekInPhase + '/' + info.totalWeeksInPhase
+      : 'Programme terminé';
+
+    block.innerHTML =
+      '<div class="profil-section__header">' +
+        '<span class="prog-summary-icon" aria-hidden="true">' +
+          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"' +
+          ' stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+          '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>' +
+          '<polyline points="22 4 12 14.01 9 11.01"/></svg>' +
+        '</span>' +
+        '<div>' +
+          '<h2 class="profil-section__title">' + _esc(prog.nom) + '</h2>' +
+          '<p class="profil-section__desc">' + phaseText + '</p>' +
+        '</div>' +
+      '</div>' +
+      '<div class="prog-summary-bar-wrap">' +
+        '<div class="prog-summary-bar" style="width:' + Math.min(100, Math.round(weekNow / totalWeeks * 100)) + '%"></div>' +
+      '</div>' +
+      '<p class="prog-summary-weeks">Semaine ' + Math.min(weekNow, totalWeeks) + ' / ' + totalWeeks + '</p>';
+
+    block.hidden = false;
+  }
+
+  function _loadProgForm() {
+    const prog     = window.PROGRAMME_DB?.get();
+    const titleEl  = document.getElementById('prog-form-title');
+    const deleteBtn = document.getElementById('btn-delete-prog');
+
+    if (prog) {
+      if (titleEl) titleEl.textContent = 'Modifier le programme';
+      if (deleteBtn) deleteBtn.hidden = false;
+      const nomEl   = document.getElementById('prog-nom');
+      const startEl = document.getElementById('prog-start');
+      if (nomEl)   nomEl.value   = prog.nom || '';
+      if (startEl) startEl.value = prog.startDate || '';
+      _renderPhasesForm(prog.phases || DEFAULT_PHASES);
+    } else {
+      if (titleEl) titleEl.textContent = 'Créer un programme';
+      if (deleteBtn) deleteBtn.hidden = true;
+      const startEl = document.getElementById('prog-start');
+      if (startEl) startEl.value = window.localDateStr ? window.localDateStr() : new Date().toISOString().slice(0, 10);
+      _renderPhasesForm(DEFAULT_PHASES);
+    }
+    _updateTotalWeeks();
+  }
+
+  function _bindProgramme() {
+    if (!window.PROGRAMME_DB) return;
+
+    _renderProgSummary();
+    _loadProgForm();
+
+    document.getElementById('btn-add-phase')?.addEventListener('click', () => {
+      const cur = _readPhasesFromForm();
+      cur.push({ nom: 'Phase ' + (cur.length + 1), orientation: '', durationWeeks: 8, repsMin: 8, repsMax: 12 });
+      _renderPhasesForm(cur);
+      _updateTotalWeeks();
+    });
+
+    document.getElementById('prog-form')?.addEventListener('submit', e => {
+      e.preventDefault();
+      const nom    = document.getElementById('prog-nom')?.value.trim();
+      const start  = document.getElementById('prog-start')?.value;
+      const phases = _readPhasesFromForm();
+
+      if (!nom)   { showToast('Saisis un nom de programme.', true); return; }
+      if (!start) { showToast('Sélectionne une date de début.', true); return; }
+      if (phases.length === 0) { showToast('Ajoute au moins une phase.', true); return; }
+
+      const existing = window.PROGRAMME_DB.get();
+      const prog = {
+        id:         existing?.id || ('prog-' + Date.now()),
+        nom,
+        startDate:  start,
+        phases,
+      };
+      window.PROGRAMME_DB.save(prog);
+      _renderProgSummary();
+      document.getElementById('prog-form-title').textContent = 'Modifier le programme';
+      document.getElementById('btn-delete-prog').hidden = false;
+      showToast('Programme enregistré ✓');
+    });
+
+    document.getElementById('btn-delete-prog')?.addEventListener('click', () => {
+      if (!confirm('Supprimer le programme ? Cette action est irréversible.')) return;
+      window.PROGRAMME_DB.remove();
+      _loadProgForm();
+      _renderProgSummary();
+      showToast('Programme supprimé.');
+    });
+  }
+
+  /* ════════════════════════════════════════════════
      BIND EVENTS
   ════════════════════════════════════════════════ */
 
@@ -530,6 +722,9 @@
     _refreshQuickSaveUI();
     document.getElementById('btn-quick-save')?.addEventListener('click', quickSave);
     document.getElementById('btn-quick-restore')?.addEventListener('click', quickRestore);
+
+    // Programme
+    _bindProgramme();
 
     // Export
     document.getElementById('btn-export')?.addEventListener('click', exportData);

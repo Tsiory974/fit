@@ -3113,6 +3113,18 @@ body {
   border-color: rgba(239, 68, 68, 0.35);
 }
 
+/* ── Bandeau phase du programme ── */
+.sd-phase-banner {
+  padding: 0.45rem 1rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: rgba(57, 224, 122, 0.06);
+  border-bottom: 1px solid rgba(57, 224, 122, 0.12);
+  letter-spacing: 0.01em;
+  flex-shrink: 0;
+}
+
 /* ── Scroll zone (exercices + ajouter + picker) ── */
 .sd-scroll-zone {
   flex: 1;

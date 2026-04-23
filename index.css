@@ -479,3 +479,113 @@ body {
   background: #60a5fa;
 }
 
+/* ============================================================
+   BLOC PROGRAMME ACTIF
+   ============================================================ */
+.home-programme-card {
+  border-color: rgba(57, 224, 122, 0.2);
+  background: linear-gradient(135deg, rgba(57,224,122,0.04) 0%, transparent 80%);
+}
+
+#home-programme-block {
+  padding: 0.875rem 1.125rem;
+}
+
+.home-prog-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.home-prog-name {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #f0f0f0;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-prog-week-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: rgba(57, 224, 122, 0.1);
+  border: 1px solid rgba(57, 224, 122, 0.25);
+  border-radius: 6px;
+  padding: 2px 7px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.home-prog-phase {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #e5e7eb;
+  margin-bottom: 0.2rem;
+}
+
+.home-prog-reps {
+  font-size: 0.72rem;
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin-bottom: 0.75rem;
+}
+
+.home-prog-bar-wrap {
+  background: rgba(255,255,255,0.07);
+  border-radius: 4px;
+  height: 5px;
+  overflow: hidden;
+  margin-bottom: 0.3rem;
+}
+
+.home-prog-bar {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+  min-width: 4px;
+}
+
+.home-prog-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.66rem;
+  color: var(--text-idle);
+}
+
+.home-prog-deload {
+  font-size: 0.78rem;
+  color: #f59e0b;
+  font-weight: 600;
+  padding: 0.5rem 0 0.25rem;
+}
+
+.home-prog-link {
+  display: inline-block;
+  font-size: 0.72rem;
+  color: var(--accent);
+  font-weight: 600;
+  margin-top: 0.5rem;
+  text-decoration: none;
+  opacity: 0.8;
+}
+
+.home-prog-empty {
+  font-size: 0.78rem;
+  color: var(--text-idle);
+  padding: 0.125rem 0 0.25rem;
+}
+
+.home-prog-empty a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+

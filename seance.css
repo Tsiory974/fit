@@ -1114,3 +1114,63 @@ body {
   padding: 2px 8px;
   text-transform: capitalize;
 }
+
+/* ============================================================
+   PHASE STRIP — bande programme pendant la séance
+   ============================================================ */
+.ws-phase-strip {
+  background: rgba(57, 224, 122, 0.06);
+  border: 1px solid rgba(57, 224, 122, 0.18);
+  border-radius: 10px;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.01em;
+  margin-bottom: 0.875rem;
+}
+
+/* ============================================================
+   RÉCAP PROGRAMME — bloc fin de séance
+   ============================================================ */
+.ws-recap-programme {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  background: rgba(57, 224, 122, 0.05);
+  border: 1px solid rgba(57, 224, 122, 0.15);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.ws-recap-programme[hidden] { display: none; }
+
+.ws-recap-prog__icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+
+.ws-recap-prog__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ws-recap-prog__phase {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.ws-recap-prog__reps {
+  font-size: 0.75rem;
+  color: #e5e7eb;
+  font-weight: 600;
+}
+
+.ws-recap-prog__week {
+  font-size: 0.68rem;
+  color: var(--text-idle);
+}

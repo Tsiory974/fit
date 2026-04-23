@@ -38,6 +38,9 @@
     ══════════════════════════════════════════ -->
     <div class="ws-screen" id="screen-ready">
 
+      <!-- Bande phase du programme (masquée si aucun programme) -->
+      <div class="ws-phase-strip" id="ws-phase-strip" hidden></div>
+
       <!-- Carte exercice -->
       <div class="ws-exo-card">
         <span class="ws-muscle-tag" id="ready-muscle-tag">—</span>
@@ -365,6 +368,9 @@
 
       <!-- Bilan & suggestions (injectés par JS) -->
       <div id="recap-suggestions" class="ws-recap-suggestions"></div>
+
+      <!-- Bloc programme (injecté par JS si programme actif) -->
+      <div id="recap-programme" class="ws-recap-programme" hidden></div>
 
       <div class="ws-screen__cta">
         <a href="musculation.html" class="ws-btn ws-btn--primary">
