@@ -397,7 +397,9 @@ function _renderSdPhaseBanner() {
 
   const { phase, phaseIndex, weekInPhase } = info;
   const phaseName = phase.nom || ('Phase ' + (phaseIndex + 1));
-  banner.textContent = phaseName + ' · ' + phase.repsMin + '–' + phase.repsMax + ' reps · Sem. ' + weekInPhase;
+  const mc        = window.PROGRAMME_DB.getMicroCycle(prog);
+  const cycleLabel = mc ? ' · ' + mc.label : '';
+  banner.textContent = phaseName + ' · ' + phase.repsMin + '–' + phase.repsMax + ' reps · Sem. ' + weekInPhase + cycleLabel;
   banner.hidden = false;
 }
 
@@ -1210,6 +1212,10 @@ function openExoConfigModal(mode, idx) {
       document.getElementById('exo-config-repos').value  = block.repos;
       const radio = document.querySelector(`[name="exo-config-obj"][value="${block.objectif}"]`);
       if (radio) radio.checked = true;
+      const rirEl  = document.getElementById('exo-config-rir');
+      const noteEl = document.getElementById('exo-config-note');
+      if (rirEl)  rirEl.value  = block.rir != null ? block.rir : '';
+      if (noteEl) noteEl.value = block.noteTechnique || '';
     }
   }
 
@@ -1235,9 +1241,11 @@ function _exoConfigToggleCardio(isCardio) {
   const standardRows = document.getElementById('exo-config-standard-rows');
   const cardioRow    = document.getElementById('exo-config-cardio-row');
   const objRow       = document.getElementById('exo-config-obj-row');
+  const extraRow     = document.getElementById('exo-config-muscu-extra');
   if (standardRows) standardRows.style.display = isCardio ? 'none' : '';
   if (cardioRow)    cardioRow.style.display    = isCardio ? '' : 'none';
   if (objRow)       objRow.style.display       = isCardio ? 'none' : '';
+  if (extraRow)     extraRow.style.display     = isCardio ? 'none' : '';
 }
 
 /** Câble le bottom sheet de configuration exercice */
@@ -1270,13 +1278,16 @@ function bindExoConfigModal() {
           duree,
         };
       } else {
-        const series   = parseInt(document.getElementById('exo-config-series').value) || 3;
-        const reps     = parseInt(document.getElementById('exo-config-reps').value)   || 10;
-        const repos    = document.getElementById('exo-config-repos').value.trim()     || '90 s';
-        const objectif = document.querySelector('[name="exo-config-obj"]:checked')?.value ?? 'hypertrophie';
+        const series        = parseInt(document.getElementById('exo-config-series').value) || 3;
+        const reps          = parseInt(document.getElementById('exo-config-reps').value)   || 10;
+        const repos         = document.getElementById('exo-config-repos').value.trim()     || '90 s';
+        const objectif      = document.querySelector('[name="exo-config-obj"]:checked')?.value ?? 'hypertrophie';
+        const rirRaw        = document.getElementById('exo-config-rir')?.value;
+        const rir           = rirRaw !== '' && rirRaw != null ? parseInt(rirRaw) : null;
+        const noteTechnique = (document.getElementById('exo-config-note')?.value || '').trim();
         templateDraftExercices[editingExoIdx] = {
           ...templateDraftExercices[editingExoIdx],
-          series, reps, repos, objectif,
+          series, reps, repos, objectif, rir, noteTechnique,
         };
       }
     } else {
@@ -1286,11 +1297,14 @@ function bindExoConfigModal() {
         const duree = parseInt(document.getElementById('exo-config-duree').value) || 30;
         templateDraftExercices.push({ exoId, duree, distance: '', intensite: '' });
       } else {
-        const series   = parseInt(document.getElementById('exo-config-series').value) || 3;
-        const reps     = parseInt(document.getElementById('exo-config-reps').value)   || 10;
-        const repos    = document.getElementById('exo-config-repos').value.trim()     || '90 s';
-        const objectif = document.querySelector('[name="exo-config-obj"]:checked')?.value ?? 'hypertrophie';
-        templateDraftExercices.push({ exoId, series, reps, repos, objectif });
+        const series        = parseInt(document.getElementById('exo-config-series').value) || 3;
+        const reps          = parseInt(document.getElementById('exo-config-reps').value)   || 10;
+        const repos         = document.getElementById('exo-config-repos').value.trim()     || '90 s';
+        const objectif      = document.querySelector('[name="exo-config-obj"]:checked')?.value ?? 'hypertrophie';
+        const rirRaw        = document.getElementById('exo-config-rir')?.value;
+        const rir           = rirRaw !== '' && rirRaw != null ? parseInt(rirRaw) : null;
+        const noteTechnique = (document.getElementById('exo-config-note')?.value || '').trim();
+        templateDraftExercices.push({ exoId, series, reps, repos, objectif, rir, noteTechnique });
       }
     }
 

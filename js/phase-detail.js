@@ -38,11 +38,16 @@ window.PhaseDetail = (function () {
 
     '.pd-meta{font-size:.75rem;color:#6b7280;margin:0;}',
 
+    '.pd-meta .pd-meta__cycle{color:#39e07a;font-weight:600;}',
+
     '.pd-close{background:none;border:none;color:#6b7280;font-size:1.1rem;',
     'padding:.25rem .25rem .25rem .5rem;cursor:pointer;flex-shrink:0;line-height:1;}',
 
     '.pd-body{flex:1;min-height:0;overflow-y:auto;',
     'padding:1.125rem 1.25rem;display:flex;flex-direction:column;gap:1.25rem;}',
+
+    '.pd-objectif{font-size:.85rem;color:#e5e7eb;',
+    'font-style:italic;margin:0;line-height:1.4;}',
 
     '.pd-reps-badge{display:inline-flex;align-items:center;gap:.5rem;',
     'background:rgba(57,224,122,.1);border:1px solid rgba(57,224,122,.25);',
@@ -59,9 +64,13 @@ window.PhaseDetail = (function () {
 
     '.pd-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.4rem;}',
 
-    '.pd-list li{font-size:.85rem;color:#e5e7eb;display:flex;align-items:baseline;gap:.5rem;}',
+    '.pd-list li{font-size:.85rem;color:#e5e7eb;',
+    'display:flex;align-items:baseline;gap:.5rem;}',
 
     '.pd-list li::before{content:"·";color:#39e07a;font-weight:700;flex-shrink:0;}',
+
+    /* Surcharge pour la section "Ce que l'app surveille" (ton plus discret) */
+    '.pd-section--auto .pd-list li{color:#9ca3af;font-size:.8rem;}',
 
     '.pd-footer{border-top:1px solid #1f2a22;padding:.875rem 1.25rem;',
     'display:flex;flex-direction:column;gap:.5rem;flex-shrink:0;}',
@@ -130,6 +139,33 @@ window.PhaseDetail = (function () {
   }
 
   /* ════════════════════════════════════════════════
+     "Ce que l'app surveille" — adapté au micro-cycle
+  ════════════════════════════════════════════════ */
+
+  function _surveilleItems(phase, mcType) {
+    const plage = phase.repsMin + '–' + phase.repsMax;
+    if (mcType === 'overreaching') {
+      return [
+        'Fatigue accumulée — récupération prioritaire',
+        'Maintien du volume, pas de progression forcée',
+        'Signal de deload si performance en baisse',
+      ];
+    }
+    if (mcType === 'metabolique') {
+      return [
+        'Séries dans la plage ' + plage,
+        'Progression ou maintien selon performance',
+        'Volume maintenu semaine après semaine',
+      ];
+    }
+    return [
+      'Qualité d’exécution et maîtrise de la charge',
+      'Séries dans la plage ' + plage,
+      'Mise en place des habitudes de progression',
+    ];
+  }
+
+  /* ════════════════════════════════════════════════
      API PUBLIQUE
   ════════════════════════════════════════════════ */
 
@@ -142,51 +178,76 @@ window.PhaseDetail = (function () {
     const isCurrentPhase = info && info.phaseIndex === phaseIndex;
     const isPastPhase    = info ? phaseIndex < info.phaseIndex : true;
 
+    /* ── Micro-cycle (moteur interne, utilisateur voit début/milieu/fin) ── */
+    const mc = (isCurrentPhase && window.PROGRAMME_DB)
+      ? window.PROGRAMME_DB.getMicroCycle(prog)
+      : null;
+
     /* ── En-tête ── */
     document.getElementById('pd-title').textContent =
       phase.nom || ('Phase ' + (phaseIndex + 1));
 
-    let metaTxt;
+    let metaHtml;
     if (isCurrentPhase) {
-      metaTxt = 'Semaine ' + info.weekInPhase + ' / ' + info.totalWeeksInPhase +
-                ' · ' + phase.durationWeeks + ' sem. au total';
+      const weekStr = 'Semaine ' + info.weekInPhase + ' / ' + info.totalWeeksInPhase;
+      const cycleStr = mc ? ' · <span class="pd-meta__cycle">' + mc.label + '</span>' : '';
+      metaHtml = weekStr + cycleStr;
     } else if (isPastPhase) {
-      metaTxt = 'Terminée · ' + phase.durationWeeks + ' sem.';
+      metaHtml = 'Terminée · ' + phase.durationWeeks + ' sem.';
     } else {
-      metaTxt = 'À venir · ' + phase.durationWeeks + ' sem.';
+      metaHtml = 'À venir · ' + phase.durationWeeks + ' sem.';
     }
-    document.getElementById('pd-meta').textContent = metaTxt;
+    document.getElementById('pd-meta').innerHTML = metaHtml;
 
     /* ── Corps ── */
-    document.getElementById('pd-body').innerHTML =
+    let bodyHtml = '';
+
+    // Objectif de la phase (texte utilisateur)
+    if (phase.objectif) {
+      bodyHtml += '<p class="pd-objectif">' + _esc(phase.objectif) + '</p>';
+    }
+
+    // Badge reps cibles
+    bodyHtml +=
       '<div class="pd-reps-badge">' +
         '<span class="pd-reps-badge__val">' + phase.repsMin + '–' + phase.repsMax + '</span>' +
         '<span class="pd-reps-badge__label">reps cibles</span>' +
-      '</div>' +
+      '</div>';
+
+    // Règles (custom si définies par l'utilisateur, sinon génériques)
+    const regles = (phase.regles && phase.regles.length)
+      ? phase.regles
+      : ['Priorité reps avant charge', '1–2 reps en réserve (RIR)', 'Échec musculaire non recherché'];
+
+    bodyHtml +=
       '<div class="pd-section">' +
-        '<p class="pd-section__title">Règles d\'entraînement</p>' +
+        '<p class="pd-section__title">Règles</p>' +
         '<ul class="pd-list">' +
           '<li>Fourchette : ' + phase.repsMin + '–' + phase.repsMax + ' reps</li>' +
-          '<li>Priorité reps avant charge</li>' +
-          '<li>1–2 reps en réserve (RIR)</li>' +
-          '<li>Échec musculaire non recherché</li>' +
-        '</ul>' +
-      '</div>' +
-      '<div class="pd-section">' +
-        '<p class="pd-section__title">Ce que l\'app surveille</p>' +
-        '<ul class="pd-list">' +
-          '<li>Séries dans la plage ' + phase.repsMin + '–' + phase.repsMax + '</li>' +
-          '<li>Progression ou maintien selon performance</li>' +
-          '<li>Fatigue accumulée</li>' +
+          regles.map(function (r) { return '<li>' + _esc(r) + '</li>'; }).join('') +
         '</ul>' +
       '</div>';
+
+    // Ce que l'app surveille (adapté au micro-cycle, ton discret)
+    const mcType = mc ? mc.type : 'mecanique';
+    const items  = _surveilleItems(phase, mcType);
+
+    bodyHtml +=
+      '<div class="pd-section pd-section--auto">' +
+        '<p class="pd-section__title">Ce que l’app surveille</p>' +
+        '<ul class="pd-list">' +
+          items.map(function (s) { return '<li>' + _esc(s) + '</li>'; }).join('') +
+        '</ul>' +
+      '</div>';
+
+    document.getElementById('pd-body').innerHTML = bodyHtml;
 
     /* ── Pied ── */
     const next = prog.phases[phaseIndex + 1];
     let footerHtml = next
-      ? '<p class="pd-next-phase">Prochaine — <strong>' + _esc(next.nom) +
-        '</strong> · ' + next.repsMin + '–' + next.repsMax + ' reps</p>'
-      : '<p class="pd-deload">Fin de cycle — semaine allégée (deload) recommandée.</p>';
+      ? '<p class="pd-next-phase">Prochaine — <strong>' + _esc(next.nom) +
+        '</strong> · ' + next.repsMin + '–' + next.repsMax + ' reps</p>'
+      : '<p class="pd-deload">Fin de cycle — semaine allégée (deload) recommandée.</p>';
 
     footerHtml += '<a class="pd-link" href="musculation.html">Voir le planning →</a>';
     document.getElementById('pd-footer').innerHTML = footerHtml;

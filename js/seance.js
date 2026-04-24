@@ -247,8 +247,10 @@ function _updatePhaseStrip() {
   if (!info) { strip.hidden = true; return; }
 
   const { phase, phaseIndex } = info;
-  const phaseName = phase.nom || ('Phase ' + (phaseIndex + 1));
-  strip.textContent = phaseName + ' · ' + phase.repsMin + '–' + phase.repsMax + ' reps · Garder 1–2 reps en réserve';
+  const phaseName  = phase.nom || ('Phase ' + (phaseIndex + 1));
+  const mc         = window.PROGRAMME_DB.getMicroCycle(prog);
+  const cycleLabel = mc ? ' · ' + mc.label : '';
+  strip.textContent = phaseName + ' · ' + phase.repsMin + '–' + phase.repsMax + ' reps' + cycleLabel;
   strip.hidden = false;
 }
 
@@ -300,6 +302,21 @@ function showReady() {
 
   setMuscleTag('ready-muscle-tag', exo.groupe, exo.couleur);
   document.getElementById('ready-exo-name').textContent    = exo.nom;
+
+  // ── RIR + Note technique ──────────────────────────────────
+  const hintsEl = document.getElementById('ready-exo-hints');
+  const rirEl   = document.getElementById('ready-rir-chip');
+  const noteEl  = document.getElementById('ready-note-chip');
+  if (hintsEl && rirEl && noteEl) {
+    const hasRir  = block.rir != null && block.rir !== '';
+    const hasNote = !!(block.noteTechnique && block.noteTechnique.trim());
+    rirEl.textContent  = hasRir  ? 'RIR ' + block.rir : '';
+    noteEl.textContent = hasNote ? block.noteTechnique : '';
+    rirEl.hidden  = !hasRir;
+    noteEl.hidden = !hasNote;
+    hintsEl.hidden = !hasRir && !hasNote;
+  }
+
   document.getElementById('ready-serie-num').textContent   = currentSerie;
   document.getElementById('ready-serie-total').textContent = block.series || '?';
   document.getElementById('ready-reps').textContent        = block.reps   || '?';

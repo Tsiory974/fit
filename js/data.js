@@ -1089,4 +1089,22 @@ window.PROGRAMME_DB = {
     }
     return null; // programme terminé
   },
+
+  /**
+   * Retourne le micro-cycle interne de la phase active :
+   *   - 'mecanique'     (début de phase, ~3/8 du temps)
+   *   - 'metabolique'   (milieu de phase, ~3/8 du temps)
+   *   - 'overreaching'  (fin de phase, ~2/8 du temps)
+   * L'utilisateur voit 'début / milieu / fin de phase', pas les termes techniques.
+   */
+  getMicroCycle(prog) {
+    const info = this.getActivePhase(prog);
+    if (!info) return null;
+    const { weekInPhase, totalWeeksInPhase: N } = info;
+    const mecEnd = Math.ceil(N * 3 / 8);
+    const metEnd = Math.ceil(N * 6 / 8);
+    if (weekInPhase <= mecEnd) return { type: 'mecanique',    label: 'début de phase' };
+    if (weekInPhase <= metEnd) return { type: 'metabolique',  label: 'milieu de phase' };
+    return                             { type: 'overreaching', label: 'fin de phase' };
+  },
 };

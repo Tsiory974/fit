@@ -472,6 +472,14 @@ body {
   color: #4b5563;
 }
 
+.profil-form-label--hint {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #4b5563;
+  font-size: 0.68rem;
+}
+
 /* Input numérique avec unité */
 .profil-input-unit {
   display: flex;
@@ -1046,6 +1054,27 @@ body {
   color: #39e07a;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+/* Inputs dans les cartes de phase */
+.prog-phase-card .profil-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid #2a3038;
+  border-radius: 8px;
+}
+
+.prog-phase-card .profil-input:focus {
+  border-color: rgba(57, 224, 122, 0.4);
+  outline: none;
+}
+
+.prog-phase-card textarea.profil-input {
+  resize: none;
+  line-height: 1.45;
+  font-size: 0.88rem;
+  font-weight: 400;
 }
 
 .prog-phase-card__remove {

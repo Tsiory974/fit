@@ -511,9 +511,15 @@
   ════════════════════════════════════════════════ */
 
   const DEFAULT_PHASES = [
-    { nom: 'Phase 1 – Base hypertrophie',  orientation: 'Base hypertrophie',  durationWeeks: 8, repsMin: 8,  repsMax: 12 },
-    { nom: 'Phase 2 – Tension progressive', orientation: 'Tension progressive', durationWeeks: 8, repsMin: 6,  repsMax: 10 },
-    { nom: 'Phase 3 – Congestion',          orientation: 'Congestion',          durationWeeks: 8, repsMin: 10, repsMax: 15 },
+    { nom: 'Phase 1 – Base hypertrophie',  orientation: 'Base hypertrophie',  durationWeeks: 8, repsMin: 8,  repsMax: 12,
+      objectif: 'Hypertrophie – base et progression',
+      regles: ['Garder 1–2 reps en réserve', 'Pas d\'échec forcé', 'Compatible cardio élevé'] },
+    { nom: 'Phase 2 – Tension progressive', orientation: 'Tension progressive', durationWeeks: 8, repsMin: 6,  repsMax: 10,
+      objectif: 'Charge progressive – tension musculaire',
+      regles: ['Garder 1–2 reps en réserve', 'Progression hebdomadaire visée'] },
+    { nom: 'Phase 3 – Congestion',          orientation: 'Congestion',          durationWeeks: 8, repsMin: 10, repsMax: 15,
+      objectif: 'Volume et pump – finition du cycle',
+      regles: ['Volume élevé', 'Repos courts', '1–2 reps en réserve'] },
   ];
 
   function _renderPhasesForm(phases) {
@@ -550,6 +556,17 @@
                    value="${ph.repsMax}" min="1" max="50" step="1" data-idx="${i}">
           </div>
         </div>
+        <div class="profil-form-field">
+          <label class="profil-form-label" for="ph-obj-${i}">Objectif de la phase</label>
+          <input type="text" id="ph-obj-${i}" class="profil-input ph-obj"
+                 value="${_esc(ph.objectif || '')}"
+                 placeholder="ex : Hypertrophie – base et progression" maxlength="80" data-idx="${i}">
+        </div>
+        <div class="profil-form-field">
+          <label class="profil-form-label" for="ph-regles-${i}">Règles clés <span class="profil-form-label--hint">(une par ligne, optionnel)</span></label>
+          <textarea id="ph-regles-${i}" class="profil-input ph-regles"
+                    rows="2" placeholder="ex : Garder 1–2 reps en réserve" data-idx="${i}">${_esc((ph.regles || []).join('\n'))}</textarea>
+        </div>
       </div>`).join('');
 
     list.querySelectorAll('.prog-phase-card__remove').forEach(btn => {
@@ -571,13 +588,18 @@
     const list = document.getElementById('prog-phases-list');
     if (!list) return [];
     const cards = list.querySelectorAll('.prog-phase-card');
-    return Array.from(cards).map((_, i) => ({
-      nom:           (document.getElementById('ph-nom-' + i)?.value   || '').trim() || ('Phase ' + (i + 1)),
-      orientation:   '',
-      durationWeeks: parseInt(document.getElementById('ph-weeks-' + i)?.value) || 8,
-      repsMin:       parseInt(document.getElementById('ph-rmin-' + i)?.value)  || 8,
-      repsMax:       parseInt(document.getElementById('ph-rmax-' + i)?.value)  || 12,
-    }));
+    return Array.from(cards).map((_, i) => {
+      const reglesRaw = (document.getElementById('ph-regles-' + i)?.value || '').trim();
+      return {
+        nom:           (document.getElementById('ph-nom-' + i)?.value   || '').trim() || ('Phase ' + (i + 1)),
+        orientation:   '',
+        durationWeeks: parseInt(document.getElementById('ph-weeks-' + i)?.value) || 8,
+        repsMin:       parseInt(document.getElementById('ph-rmin-' + i)?.value)  || 8,
+        repsMax:       parseInt(document.getElementById('ph-rmax-' + i)?.value)  || 12,
+        objectif:      (document.getElementById('ph-obj-' + i)?.value    || '').trim(),
+        regles:        reglesRaw ? reglesRaw.split('\n').map(l => l.trim()).filter(Boolean) : [],
+      };
+    });
   }
 
   function _updateTotalWeeks() {
