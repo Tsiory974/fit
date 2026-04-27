@@ -462,19 +462,37 @@ function validateReps(actual) {
 }
 
 function showWeightScreen(actualReps, block) {
-  const { exo } = exercises[currentExoIdx];
+  const { exo }      = exercises[currentExoIdx];
   const isBodyweight = exo.materiel === 'Poids du corps';
   const isHalteres   = exo.materiel === 'Haltères';
+  const totalSeries  = parseInt(block.series) || 1;
+  const isLastSerie  = currentSerie >= totalSeries;
 
-  // Réinitialiser le ressenti → OK par défaut
-  ressentiVal = 'ok';
-  document.querySelectorAll('.ws-ressenti__chip').forEach(c => {
-    const isOk = c.dataset.ressenti === 'ok';
-    c.classList.toggle('ws-ressenti__chip--selected', isOk);
-    c.setAttribute('aria-pressed', isOk ? 'true' : 'false');
-  });
+  // Ressenti : uniquement sur la dernière série, basé sur le poids réellement utilisé.
+  // Les séries intermédiaires stockent null — elles n'influencent pas l'analyse.
+  const ressentiEl = document.getElementById('weight-ressenti');
+  if (isLastSerie || isBodyweight) {
+    // Réinitialiser à OK avant d'afficher
+    ressentiVal = 'ok';
+    document.querySelectorAll('.ws-ressenti__chip').forEach(c => {
+      const isOk = c.dataset.ressenti === 'ok';
+      c.classList.toggle('ws-ressenti__chip--selected', isOk);
+      c.setAttribute('aria-pressed', isOk ? 'true' : 'false');
+    });
+    const labelEl = document.getElementById('ressenti-label');
+    if (labelEl) {
+      labelEl.textContent = isBodyweight
+        ? 'Comment s\'était cette série ?'
+        : `Ressenti global · ${exo.nom}`;
+    }
+    if (ressentiEl) ressentiEl.style.display = '';
+  } else {
+    // Série intermédiaire : pas de question ressenti
+    ressentiVal = null;
+    if (ressentiEl) ressentiEl.style.display = 'none';
+  }
 
-  // Mettre à jour le label de la question
+  // Label de la question poids
   const labelEl = document.querySelector('.ws-weight-label');
   if (labelEl) {
     labelEl.textContent = isBodyweight
@@ -491,13 +509,10 @@ function showWeightScreen(actualReps, block) {
   const weightCenter = document.querySelector('.ws-weight-center');
   if (weightCenter) weightCenter.style.display = isBodyweight ? 'none' : '';
 
-  // Bouton "Sans poids / ignorer" — n'a pas de sens en poids du corps
-  // (la confirmation = ressenti capturé, pas un skip).
   const skipBtn = document.getElementById('btn-weight-skip');
   if (skipBtn) skipBtn.style.display = isBodyweight ? 'none' : '';
 
   if (!isBodyweight) {
-    // Utiliser le poids pré-décidé sur l'écran READY (ou fallback suggestion)
     weightVal = preWeightVal > 0
       ? preWeightVal
       : calculerSuggestionPoids(exo, block).poids;
@@ -505,11 +520,10 @@ function showWeightScreen(actualReps, block) {
     const input = document.getElementById('weight-input');
     input.value = weightVal || '';
 
-    // Hint : confirmer le poids prévu
     const hintEl = document.getElementById('weight-hint');
     if (weightVal > 0) {
       const kgLabel = isHalteres ? 'kg/haltère' : 'kg';
-      hintEl.textContent = `Prévu : ${weightVal} ${kgLabel} — ajuste si tu as utilisé autre chose`;
+      hintEl.textContent = `Prévu : ${weightVal} ${kgLabel} · ajuste au poids réel utilisé`;
       hintEl.style.display = '';
     } else {
       hintEl.style.display = 'none';
@@ -551,7 +565,7 @@ function commitSerie(actualReps, poids) {
     actual:   actualReps,
     duration: Math.floor((Date.now() - stopwatchStart) / 1000),
     poids:    poids,
-    ressenti: ressentiVal, // toujours stocké — utile aussi en poids du corps
+    ressenti: ressentiVal, // null pour les séries intermédiaires, valeur réelle sur la dernière
   });
 
   const isLastSerie = currentSerie >= totalSeries;
@@ -567,7 +581,13 @@ function commitSerie(actualReps, poids) {
   }
 
   pendingLastSerie = isLastSerie;
-  startRest(parseRepos(block.repos), isLastSerie);
+  if (isLastSerie && !isLastExo) {
+    // Transition entre exercices — durée neutre définie au niveau de la séance
+    startRest(session.repos_inter || 120, 'transition');
+  } else {
+    // Repos entre séries du même exercice
+    startRest(parseRepos(block.repos), 'serie');
+  }
 }
 
 /**
@@ -605,6 +625,9 @@ function getHistByDate(exo) {
  * Règle clé : la première série est l'indicateur de référence.
  * La fatigue entraîne une baisse naturelle des séries suivantes (ex : 10/9/8 est normal).
  * "Chute extrême" = dernière série < 60 % de l'objectif (ex : 10 → 5 reps).
+ *
+ * Ressenti : stocké uniquement sur la dernière série (global par exercice).
+ * Les séries intermédiaires ont ressenti=null — elles ne contribuent pas à anyDur/anyFacile.
  */
 function analyzeSessionEntries(entries, target) {
   if (!entries.length) return null;
@@ -865,18 +888,34 @@ function playRestEndSound() {
 /* ═══════════════════════════════════════════════════════════
    ÉCRAN 4 : REST
 ═══════════════════════════════════════════════════════════ */
-function startRest(secs, isLastSerie) {
+function startRest(secs, mode) {  // mode: 'serie' | 'transition'
   currentState = 'rest';
   restTotal    = secs || 90;
   restEndTime  = Date.now() + restTotal * 1000;
 
-  let nextText;
-  if (isLastSerie && currentExoIdx + 1 < exercises.length) {
-    nextText = `Prochain : ${exercises[currentExoIdx + 1].exo.nom}`;
-  } else {
-    nextText = `Prochain : Série ${currentSerie + 1}`;
+  const isTransition = mode === 'transition';
+
+  // Label et note contextuelle
+  const labelEl = document.getElementById('rest-label');
+  if (labelEl) labelEl.textContent = isTransition ? 'Exercice terminé' : 'Récupération';
+
+  const noteEl = document.getElementById('rest-transition-note');
+  if (noteEl) noteEl.hidden = !isTransition;
+
+  // Texte "prochain"
+  const nextTextEl = document.getElementById('rest-next-text');
+  if (nextTextEl) {
+    if (isTransition) {
+      const nextExo = exercises[currentExoIdx + 1];
+      nextTextEl.textContent = nextExo ? `Prochain · ${nextExo.exo.nom}` : '';
+    } else {
+      nextTextEl.textContent = `Prochain · Série ${currentSerie + 1}`;
+    }
   }
-  document.getElementById('rest-next-text').textContent = nextText;
+
+  // Classe CSS pour distinguer visuellement la transition
+  const screenEl = document.getElementById('screen-rest');
+  if (screenEl) screenEl.classList.toggle('screen-rest--transition', isTransition);
 
   // Reset arc sans transition parasite
   const arc = document.getElementById('rest-arc');
@@ -980,6 +1019,12 @@ function showRecap() {
         </div>`;
     }).join('');
 
+    const globalRessenti = r.series.length ? r.series[r.series.length - 1].ressenti : null;
+    const RESSENTI_LABEL = { facile: 'Séance facile', ok: 'Séance OK', dur: 'Séance difficile' };
+    const ressentiLine   = globalRessenti
+      ? `<div class="ws-recap-exo__ressenti">${RESSENTI_ICON[globalRessenti]} ${RESSENTI_LABEL[globalRessenti] || ''}</div>`
+      : '';
+
     return `
       <div class="ws-recap-exo">
         <div class="ws-recap-exo__header">
@@ -987,6 +1032,7 @@ function showRecap() {
           <span class="ws-recap-exo__name">${r.nom}</span>
         </div>
         ${seriesHtml || '<div style="padding:.75rem 1rem;font-size:.8rem;color:#4b5563">Aucune série</div>'}
+        ${ressentiLine}
       </div>`;
   }).join('');
 

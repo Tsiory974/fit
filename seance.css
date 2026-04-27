@@ -706,6 +706,25 @@ body {
   margin: 0;
 }
 
+/* Mode transition entre exercices */
+.screen-rest--transition .ws-rest-next {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #e5e7eb;
+}
+
+.screen-rest--transition .ws-ring__arc {
+  stroke: #38bdf8;  /* bleu neutre — pas la couleur de performance */
+}
+
+.ws-rest-transition-note {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #4b5563;
+  text-align: center;
+  margin: -0.5rem 0 0;
+}
+
 /* Toggle son de fin de repos */
 .ws-rest-sound {
   display: flex;
@@ -839,6 +858,16 @@ body {
 .ws-recap-serie__ressenti {
   font-size: 0.85rem;
   flex-shrink: 0;
+}
+
+/* Ressenti global par exercice en bas du bloc recap */
+.ws-recap-exo__ressenti {
+  padding: 0.5rem 1rem 0.625rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-idle);
+  border-top: 1px solid #1f2428;
+  margin-top: 0.25rem;
 }
 
 .ws-recap-serie__time {

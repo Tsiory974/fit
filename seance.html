@@ -198,9 +198,9 @@
         <p class="ws-weight-hint" id="weight-hint"></p>
       </div>
 
-      <!-- Ressenti — inline sur l'écran poids -->
+      <!-- Ressenti — affiché uniquement sur la dernière série de l'exercice -->
       <div class="ws-ressenti" id="weight-ressenti">
-        <p class="ws-ressenti__label">Comment tu te sens ?</p>
+        <p class="ws-ressenti__label" id="ressenti-label">Ressenti global sur cet exercice</p>
         <div class="ws-ressenti__chips">
           <button class="ws-ressenti__chip ws-ressenti__chip--dur"
                   data-ressenti="dur" type="button" aria-pressed="false">😰 Trop dur</button>
@@ -233,7 +233,7 @@
     ══════════════════════════════════════════ -->
     <div class="ws-screen" id="screen-rest">
 
-      <p class="ws-rest-label">Récupération</p>
+      <p class="ws-rest-label" id="rest-label">Récupération</p>
 
       <div class="ws-rest-center">
         <div class="ws-ring-wrap">
@@ -245,6 +245,7 @@
         </div>
 
         <p class="ws-rest-next" id="rest-next-text">Prochain : Série 2</p>
+        <p class="ws-rest-transition-note" id="rest-transition-note" hidden>Temps conseillé · passe quand tu es prêt·e</p>
       </div>
 
       <!-- Toggle son de fin de repos -->
