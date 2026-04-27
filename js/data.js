@@ -225,6 +225,13 @@ const DB = {
     this.saveExercice(exo);
   },
 
+  deleteHistoriqueSession(id, dateKey) {
+    const exo = this.getExercice(id);
+    if (!exo) return;
+    exo.historique = exo.historique.filter(e => (e.date || '').slice(0, 10) !== dateKey);
+    this.saveExercice(exo);
+  },
+
   /* Notes et photos d'un exercice — stockées séparément pour ne pas
      alourdir l'objet exercice (qui est chargé souvent).
      Structure : { notes: string, images: string[] }            */

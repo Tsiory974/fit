@@ -159,8 +159,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const rmDateEl = document.querySelector('[data-rm-date]');
     if (rmDateEl) {
+      const sessionCount = countSessions(exo);
       rmDateEl.textContent = rm
-        ? `Estimé sur ${(exo.historique || []).filter(e => e.poids > 0).length} séance(s)`
+        ? `Estimé sur ${sessionCount} séance${sessionCount !== 1 ? 's' : ''}`
         : 'Aucune donnée — réalise des séances pour estimer ton 1RM';
     }
 
@@ -314,21 +315,63 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  /* ── Helpers session ── */
+
+  function countSessions(exo) {
+    const dates = new Set((exo.historique || []).map(e => (e.date || '').slice(0, 10)).filter(Boolean));
+    return dates.size;
+  }
+
+  function groupBySession(exo) {
+    const byDate = {};
+    (exo.historique || []).forEach(e => {
+      const key = (e.date || '').slice(0, 10);
+      if (!key) return;
+      if (!byDate[key]) byDate[key] = [];
+      byDate[key].push(e);
+    });
+    return Object.keys(byDate)
+      .sort().reverse()
+      .map(dateKey => ({
+        dateKey,
+        entries: byDate[dateKey].sort((a, b) => (a.series || 0) - (b.series || 0)),
+      }));
+  }
+
+  function _evalSession(series) {
+    if (!series.length) return null;
+    const target = series[0].repsObjectif;
+    if (!target) return null;
+    const last = series[series.length - 1];
+    if (series.length > 1 && last.reps < target * 0.60) return 'hard';
+    const hits = series.filter(s => s.reps >= target).length;
+    return hits > series.length / 2 ? 'success' : 'partial';
+  }
+
+  function _statusBadge(status) {
+    if (status === 'success') return '<span class="session-status session-status--ok">✓ Réussie</span>';
+    if (status === 'hard')    return '<span class="session-status session-status--hard">⚠ Difficile</span>';
+    if (status === 'partial') return '<span class="session-status session-status--partial">◑ Partielle</span>';
+    return '';
+  }
+
   /**
-   * Rend la liste des entrées d'historique.
+   * Rend la liste de l'historique — une carte par SÉANCE (groupées par date),
+   * pas par série. Chaque carte détaille les séries en chips internes.
    */
   function renderHistorique(exo) {
     const listEl  = document.querySelector('.history-list');
     const countEl = document.querySelector('.history-header__count');
     if (!listEl) return;
 
-    const rm      = calculateRM(exo);  // source unique — jamais exo.rm (deprecated)
-    const entries = exo.historique;
+    const rm       = calculateRM(exo);
+    const sessions = groupBySession(exo);
+
     if (countEl) {
-      countEl.textContent = entries.length + ' séance' + (entries.length !== 1 ? 's' : '');
+      countEl.textContent = sessions.length + ' séance' + (sessions.length !== 1 ? 's' : '');
     }
 
-    if (entries.length === 0) {
+    if (sessions.length === 0) {
       listEl.innerHTML = `
         <li class="history-empty">
           Aucune séance enregistrée pour cet exercice.
@@ -336,15 +379,15 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    listEl.innerHTML = entries.map((entry, idx) => {
-      const d      = new Date(entry.date);
-      const day    = d.toLocaleDateString('fr-FR', { day: '2-digit' });
-      const month  = d.toLocaleDateString('fr-FR', { month: 'short' });
-      const year   = d.getFullYear();
+    listEl.innerHTML = sessions.map(({ dateKey, entries }) => {
+      const first = entries[0];
+      const d     = new Date(first.date);
+      const day   = d.toLocaleDateString('fr-FR', { day: '2-digit' });
+      const month = d.toLocaleDateString('fr-FR', { month: 'short' });
+      const year  = d.getFullYear();
 
-      const isCardioEntry = entry.duree !== undefined && entry.duree !== null;
-
-      if (isCardioEntry) {
+      // Séance cardio (une entrée unique avec duree)
+      if (first.duree !== undefined && first.duree !== null) {
         return `
           <li>
             <article class="history-entry">
@@ -354,34 +397,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="history-entry__year">${year}</span>
               </div>
               <div class="history-entry__body">
-                <div class="history-entry__title">${entry.titre || 'Activité cardio'}</div>
+                <div class="history-entry__title">${first.titre || 'Activité cardio'}</div>
                 <div class="history-entry__stats">
-                  <span class="history-entry__stat">
-                    <span class="history-entry__stat-icon">⏱</span>${entry.duree} min
-                  </span>
-                  ${entry.distance ? `
-                  <span class="history-entry__stat">
-                    <span class="history-entry__stat-icon">📍</span>${entry.distance} km
-                  </span>` : ''}
-                  ${entry.intensite ? `
-                  <span class="history-entry__stat">
-                    <span class="history-entry__stat-icon">🔥</span>${entry.intensite}
-                  </span>` : ''}
+                  <span class="history-entry__stat"><span class="history-entry__stat-icon">⏱</span>${first.duree} min</span>
+                  ${first.distance ? `<span class="history-entry__stat"><span class="history-entry__stat-icon">📍</span>${first.distance} km</span>` : ''}
+                  ${first.intensite ? `<span class="history-entry__stat"><span class="history-entry__stat-icon">🔥</span>${first.intensite}</span>` : ''}
                 </div>
-                <div class="history-entry__cardio-badge">${entry.duree} min</div>
+                <div class="history-entry__cardio-badge">${first.duree} min</div>
               </div>
-              <button class="history-entry__delete" data-index="${idx}"
-                      aria-label="Supprimer cette entrée" title="Supprimer">✕</button>
+              <button class="history-entry__delete" data-date="${dateKey}"
+                      aria-label="Supprimer cette séance" title="Supprimer">✕</button>
             </article>
           </li>`;
       }
 
-      // Entrée musculation classique
+      // Séance musculation
+      const muscSeries  = entries.filter(e => typeof e.reps === 'number');
+      const bestPoids   = muscSeries.reduce((m, e) => Math.max(m, e.poids || 0), 0);
+      const totalReps   = muscSeries.reduce((s, e) => s + (e.reps || 0), 0);
+
       let badgeClass = '';
-      if (rm) {
-        if (entry.poids >= rm * 0.9) badgeClass = 'history-entry__weight-badge--max';
-        else if (entry.poids >= rm * 0.8) badgeClass = 'history-entry__weight-badge--heavy';
+      if (rm && bestPoids) {
+        if (bestPoids >= rm * 0.9)      badgeClass = 'history-entry__weight-badge--max';
+        else if (bestPoids >= rm * 0.8) badgeClass = 'history-entry__weight-badge--heavy';
       }
+
+      const status    = _evalSession(muscSeries);
+      const serieHtml = muscSeries.map(s => {
+        const miss = s.repsObjectif && s.reps < s.repsObjectif;
+        return `<span class="history-entry__serie-chip${miss ? ' history-entry__serie-chip--miss' : ''}">S${s.series}&nbsp;·&nbsp;${s.reps}${s.repsObjectif ? '/' + s.repsObjectif : ''} reps${s.poids ? '&nbsp;·&nbsp;' + s.poids + 'kg' : ''}</span>`;
+      }).join('');
 
       return `
         <li>
@@ -392,39 +437,29 @@ document.addEventListener('DOMContentLoaded', () => {
               <span class="history-entry__year">${year}</span>
             </div>
             <div class="history-entry__body">
-              <div class="history-entry__title">${entry.titre || 'Séance'}</div>
+              <div class="history-entry__title">${first.titre || 'Séance'}</div>
               <div class="history-entry__stats">
-                <span class="history-entry__stat">
-                  <span class="history-entry__stat-icon">📋</span>Série ${entry.series}
-                </span>
-                <span class="history-entry__stat">
-                  <span class="history-entry__stat-icon">↩</span>${entry.reps} reps
-                </span>
-                ${entry.poids ? `
-                <span class="history-entry__stat history-entry__stat--poids">
-                  <span class="history-entry__stat-icon">🏋️</span>${entry.poids} kg
-                </span>` : ''}
-                ${entry.repos ? `
-                <span class="history-entry__stat">
-                  <span class="history-entry__stat-icon">⏱</span>${entry.repos}
-                </span>` : ''}
+                <span class="history-entry__stat"><span class="history-entry__stat-icon">📦</span>${muscSeries.length} série${muscSeries.length !== 1 ? 's' : ''}</span>
+                <span class="history-entry__stat"><span class="history-entry__stat-icon">↩</span>${totalReps} reps</span>
+                ${bestPoids ? `<span class="history-entry__stat history-entry__stat--poids"><span class="history-entry__stat-icon">🏋️</span>${bestPoids} kg max</span>` : ''}
               </div>
-              ${entry.poids
-                ? `<div class="history-entry__weight-badge ${badgeClass}">${entry.poids} kg</div>`
-                : ''}
+              <div class="history-entry__series-row">${serieHtml}</div>
+              <div class="history-entry__footer">
+                ${bestPoids ? `<span class="history-entry__weight-badge ${badgeClass}">${bestPoids} kg</span>` : ''}
+                ${_statusBadge(status)}
+              </div>
             </div>
-            <button class="history-entry__delete" data-index="${idx}"
-                    aria-label="Supprimer cette entrée" title="Supprimer">✕</button>
+            <button class="history-entry__delete" data-date="${dateKey}"
+                    aria-label="Supprimer cette séance" title="Supprimer">✕</button>
           </article>
         </li>`;
     }).join('');
 
-    // Boutons de suppression individuels
     listEl.querySelectorAll('.history-entry__delete').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
-        if (confirm('Supprimer cette entrée ?')) {
-          DB.deleteHistoriqueEntry(id, parseInt(btn.dataset.index));
+        if (confirm('Supprimer cette séance ?')) {
+          DB.deleteHistoriqueSession(id, btn.dataset.date);
           showPage(DB.getExercice(id));
         }
       });
