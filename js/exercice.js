@@ -318,24 +318,27 @@ document.addEventListener('DOMContentLoaded', () => {
   /* ── Helpers session ── */
 
   function countSessions(exo) {
-    const dates = new Set((exo.historique || []).map(e => (e.date || '').slice(0, 10)).filter(Boolean));
-    return dates.size;
+    const keys = new Set((exo.historique || []).map(e => {
+      const date = (e.date || '').slice(0, 10);
+      if (!date) return null;
+      return e.templateId ? `${e.templateId}__${date}` : date;
+    }).filter(Boolean));
+    return keys.size;
   }
 
   function groupBySession(exo) {
-    const byDate = {};
+    const byKey = {};
     (exo.historique || []).forEach(e => {
-      const key = (e.date || '').slice(0, 10);
-      if (!key) return;
-      if (!byDate[key]) byDate[key] = [];
-      byDate[key].push(e);
+      const date = (e.date || '').slice(0, 10);
+      if (!date) return;
+      // Clé composite (templateId + date) pour séparer les contextes de séance
+      const key = e.templateId ? `${e.templateId}__${date}` : date;
+      if (!byKey[key]) byKey[key] = { dateKey: date, templateId: e.templateId || null, entries: [] };
+      byKey[key].entries.push(e);
     });
-    return Object.keys(byDate)
-      .sort().reverse()
-      .map(dateKey => ({
-        dateKey,
-        entries: byDate[dateKey].sort((a, b) => (a.series || 0) - (b.series || 0)),
-      }));
+    return Object.values(byKey)
+      .sort((a, b) => b.dateKey.localeCompare(a.dateKey))
+      .map(g => ({ ...g, entries: g.entries.sort((a, b) => (a.series || 0) - (b.series || 0)) }));
   }
 
   function _evalSession(series) {
@@ -379,7 +382,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    listEl.innerHTML = sessions.map(({ dateKey, entries }) => {
+    listEl.innerHTML = sessions.map(({ dateKey, templateId, entries }) => {
       const first = entries[0];
       const d     = new Date(first.date);
       const day   = d.toLocaleDateString('fr-FR', { day: '2-digit' });
@@ -406,6 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="history-entry__cardio-badge">${first.duree} min</div>
               </div>
               <button class="history-entry__delete" data-date="${dateKey}"
+                      ${templateId ? `data-template-id="${templateId}"` : ''}
                       aria-label="Supprimer cette séance" title="Supprimer">✕</button>
             </article>
           </li>`;
@@ -450,6 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             </div>
             <button class="history-entry__delete" data-date="${dateKey}"
+                    ${templateId ? `data-template-id="${templateId}"` : ''}
                     aria-label="Supprimer cette séance" title="Supprimer">✕</button>
           </article>
         </li>`;
@@ -459,7 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
         if (confirm('Supprimer cette séance ?')) {
-          DB.deleteHistoriqueSession(id, btn.dataset.date);
+          DB.deleteHistoriqueSession(id, btn.dataset.date, btn.dataset.templateId || null);
           showPage(DB.getExercice(id));
         }
       });

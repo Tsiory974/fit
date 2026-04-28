@@ -604,8 +604,13 @@ function getPasAjustement(materiel) {
  * Retourne les sessions triées du plus récent au plus ancien.
  * Chaque session est un tableau d'entrées triées par numéro de série (1 → N).
  */
-function getHistByDate(exo) {
-  const hist = (exo.historique || []).filter(e => typeof e.reps === 'number');
+function getHistByDate(exo, templateId = null) {
+  const hist = (exo.historique || []).filter(e => {
+    if (typeof e.reps !== 'number') return false;
+    // Filtre par contexte de séance : les entrées sans templateId (legacy) passent toujours
+    if (templateId && e.templateId && e.templateId !== templateId) return false;
+    return true;
+  });
   const byDate = {};
   hist.forEach(e => {
     const d = e.date ? e.date.slice(0, 10) : 'unknown';
@@ -656,7 +661,8 @@ function calculerSuggestionPoids(exo, block) {
   const step     = getPasAjustement(exo.materiel);
   const target   = parseInt(block.reps) || 10;
   // Garder uniquement les sessions où au moins une série a un poids renseigné
-  const sessions = getHistByDate(exo).filter(s => s.some(e => e.poids > 0));
+  // Filtrage par templateId : progression indépendante par contexte de séance
+  const sessions = getHistByDate(exo, session.id).filter(s => s.some(e => e.poids > 0));
 
   // ── Cas 1 : historique disponible ──
   if (sessions.length) {
@@ -1113,8 +1119,8 @@ function getRepRange(block, exo) {
  *
  * @returns {{ type: 'increase'|'decrease', target: number, suggested: number }|null}
  */
-function analyzeRepsProgression(exo, block) {
-  const sessions = getHistByDate(exo);
+function analyzeRepsProgression(exo, block, templateId = null) {
+  const sessions = getHistByDate(exo, templateId);
   // On analyse les sessions PRÉCÉDENTES uniquement (sessions[0] = aujourd'hui)
   const prev = sessions.slice(1);
   if (!prev.length) return null;
@@ -1225,7 +1231,7 @@ function buildRecapSuggestions() {
     if (exo.groupe === 'Cardio') return; // pas de progression stricte pour le cardio
     const freshExo    = DB.getExercice(exo.id) || exo;
     const isBodyweight = exo.materiel === 'Poids du corps';
-    const analysis    = analyzeRepsProgression(freshExo, block);
+    const analysis    = analyzeRepsProgression(freshExo, block, session.id);
     if (!analysis) return;
 
     // Règle (charges seulement) : ne jamais ajuster poids ET reps dans le même sens.
@@ -1234,7 +1240,7 @@ function buildRecapSuggestions() {
     // En poids du corps, il n'y a pas de progression de charge → la suggestion reps
     // est l'unique levier mécanique, on ne la déduplique pas.
     if (!isBodyweight) {
-      const sessionsAvecPoids = getHistByDate(freshExo).filter(s => s.some(e => e.poids > 0));
+      const sessionsAvecPoids = getHistByDate(freshExo, session.id).filter(s => s.some(e => e.poids > 0));
       if (sessionsAvecPoids.length) {
         const lastPoids           = sessionsAvecPoids[0].find(e => e.poids > 0)?.poids || 0;
         const { poids: newPoids } = calculerSuggestionPoids(freshExo, block);
@@ -1422,10 +1428,11 @@ function saveAllResults() {
       const c = r.cardio;
       if (c && c.duree) {
         DB.addHistoriqueEntry(r.exoId, {
-          titre:     session.nom,
-          duree:     c.duree,
-          distance:  c.distance ?? null,
-          intensite: c.intensite ?? null,
+          titre:      session.nom,
+          templateId: session.id,
+          duree:      c.duree,
+          distance:   c.distance ?? null,
+          intensite:  c.intensite ?? null,
         });
       }
       return;
@@ -1436,12 +1443,13 @@ function saveAllResults() {
     // Sauvegarder chaque série individuellement pour un 1RM précis
     r.series.forEach((s, idx) => {
       DB.addHistoriqueEntry(r.exoId, {
-        titre:       session.nom,
-        series:      idx + 1,
-        reps:        s.actual,
-        repos:       block.repos || '',
-        poids:       s.poids ?? null,
-        ressenti:    s.ressenti || null,
+        titre:        session.nom,
+        templateId:   session.id,
+        series:       idx + 1,
+        reps:         s.actual,
+        repos:        block.repos || '',
+        poids:        s.poids ?? null,
+        ressenti:     s.ressenti || null,
         repsObjectif: parseInt(block.reps) || null,
       });
     });

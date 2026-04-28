@@ -225,10 +225,17 @@ const DB = {
     this.saveExercice(exo);
   },
 
-  deleteHistoriqueSession(id, dateKey) {
+  deleteHistoriqueSession(id, dateKey, templateId = null) {
     const exo = this.getExercice(id);
     if (!exo) return;
-    exo.historique = exo.historique.filter(e => (e.date || '').slice(0, 10) !== dateKey);
+    exo.historique = exo.historique.filter(e => {
+      const sameDate = (e.date || '').slice(0, 10) === dateKey;
+      if (!sameDate) return true;
+      // Si templateId fourni : ne supprimer que les entrées de ce contexte
+      if (templateId) return e.templateId && e.templateId !== templateId;
+      // Legacy (pas de templateId) : supprimer toutes les entrées de cette date
+      return false;
+    });
     this.saveExercice(exo);
   },
 
