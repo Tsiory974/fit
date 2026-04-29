@@ -629,6 +629,25 @@ function getHistByDate(exo, templateId = null) {
 }
 
 /**
+ * Retourne les sessions filtrées par contexte de séance :
+ *   1. templateId (entrées taguées) ou legacy sans templateId
+ *   2. repsObjectif compatible avec block.reps (évite que les sessions lourdes
+ *      contaminent un contexte volume et vice-versa pour les données legacy)
+ *
+ * Tolérance : max(3, 40 % de la cible). Ex : cible 20 reps → ±8 → accepte 12–28.
+ * Un objectif 8 reps (lourd) est rejeté depuis un contexte 20 reps (volume) et vice-versa.
+ */
+function getContextSessions(exo, block, templateId) {
+  const repsTarget = parseInt(block.reps) || 10;
+  const tolerance  = Math.max(3, Math.round(repsTarget * 0.4));
+  return getHistByDate(exo, templateId).filter(s => {
+    const ref = s.find(e => e.repsObjectif != null);
+    if (!ref) return true; // legacy sans repsObjectif → inclure (contexte inconnu)
+    return Math.abs(ref.repsObjectif - repsTarget) <= tolerance;
+  });
+}
+
+/**
  * Analyse les indicateurs de performance d'une session.
  * Les entrées doivent être triées par numéro de série (série 1 en premier).
  *
@@ -665,9 +684,8 @@ function analyzeSessionEntries(entries, target) {
 function calculerSuggestionPoids(exo, block) {
   const step     = getPasAjustement(exo.materiel);
   const target   = parseInt(block.reps) || 10;
-  // Garder uniquement les sessions où au moins une série a un poids renseigné
-  // Filtrage par templateId : progression indépendante par contexte de séance
-  const sessions = getHistByDate(exo, session.id).filter(s => s.some(e => e.poids > 0));
+  // Contexte strict : templateId + plage de reps compatible (filtre legacy lourd/volume)
+  const sessions = getContextSessions(exo, block, session.id).filter(s => s.some(e => e.poids > 0));
 
   // ── Cas 1 : historique disponible ──
   if (sessions.length) {
@@ -1125,7 +1143,7 @@ function getRepRange(block, exo) {
  * @returns {{ type: 'increase'|'decrease', target: number, suggested: number }|null}
  */
 function analyzeRepsProgression(exo, block, templateId = null) {
-  const sessions = getHistByDate(exo, templateId);
+  const sessions = getContextSessions(exo, block, templateId);
   // On analyse les sessions PRÉCÉDENTES uniquement (sessions[0] = aujourd'hui)
   const prev = sessions.slice(1);
   if (!prev.length) return null;
@@ -1245,7 +1263,7 @@ function buildRecapSuggestions() {
     // En poids du corps, il n'y a pas de progression de charge → la suggestion reps
     // est l'unique levier mécanique, on ne la déduplique pas.
     if (!isBodyweight) {
-      const sessionsAvecPoids = getHistByDate(freshExo, session.id).filter(s => s.some(e => e.poids > 0));
+      const sessionsAvecPoids = getContextSessions(freshExo, block, session.id).filter(s => s.some(e => e.poids > 0));
       if (sessionsAvecPoids.length) {
         const lastPoids           = sessionsAvecPoids[0].find(e => e.poids > 0)?.poids || 0;
         const { poids: newPoids } = calculerSuggestionPoids(freshExo, block);
