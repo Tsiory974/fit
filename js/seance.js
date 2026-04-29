@@ -374,11 +374,16 @@ function showReady() {
       }
       hintEl.style.display = 'none';
     } else {
-      // Première série : suggestion depuis l'historique + objectif
-      const lastHist = (exo.historique || []).find(e => e.poids > 0);
+      // Première série : dernière perf du MÊME contexte (même templateId)
+      const ctxSessions = getHistByDate(exo, session.id).filter(s => s.some(e => e.poids > 0));
+      const lastHist    = ctxSessions.length ? ctxSessions[0].find(e => e.poids > 0) : null;
       if (lastHist) {
         const icon = RESSENTI_ICON[lastHist.ressenti] || '';
         lastEl.textContent = `Dernière séance · ${lastHist.poids} ${kgLabel} · ${lastHist.reps} reps ${icon}`.trim();
+        lastEl.style.display = '';
+      } else if ((exo.historique || []).some(e => e.poids > 0)) {
+        // Des perfs existent mais dans un autre contexte → signaler le nouveau cycle
+        lastEl.textContent = 'Nouveau cycle · première fois dans cette séance';
         lastEl.style.display = '';
       } else {
         lastEl.style.display = 'none';
